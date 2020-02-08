@@ -1,8 +1,10 @@
 use crate::{
     command::*,
     consts::*,
-    pos::*,
+    fox::Fox,
     lapin::Lapin,
+    pos::*,
+    world::*,
 };
 
 /// the game state
@@ -11,18 +13,45 @@ pub struct Board {
     pub height: Int,
     grid: Vec<Cell>,
     pub lapin: Lapin,
+    pub foxes: Vec<Fox>,
 }
 
 impl Board {
     pub fn new(width: usize, height: usize) -> Self {
         let grid = vec![VOID; width * height];
         let lapin = Lapin::new(10, 10);
+        let foxes = vec![
+            Fox::new(50, 5),
+            Fox::new(40, 15),
+        ];
         Self {
             width: width as Int,
             height: height as Int,
             grid,
             lapin,
+            foxes,
         }
+    }
+
+    pub fn is_enterable(&self, pos: Pos) -> bool {
+        match self.get(pos) {
+            VOID => true,
+            FOREST => true,
+            _ => false,
+        }
+    }
+
+    pub fn reachable_neighbours(&self, p: Pos) -> Vec<Pos> {
+        let mut reachable_neighbours = Vec::new();
+        let up = Pos { x:p.x, y:p.y-1 };
+        if self.is_enterable(up) { reachable_neighbours.push(up) }
+        let right = Pos { x:p.x+1, y:p.y };
+        if self.is_enterable(right) { reachable_neighbours.push(right) }
+        let down = Pos { x:p.x, y:p.y+1 };
+        if self.is_enterable(down) { reachable_neighbours.push(down) }
+        let left = Pos { x:p.x-1, y:p.y };
+        if self.is_enterable(left) { reachable_neighbours.push(left) }
+        reachable_neighbours
     }
 
     pub fn set_borders(&mut self, cell: Cell) {
@@ -63,22 +92,29 @@ impl Board {
         }
     }
 
-    pub fn apply(&mut self, cmd: Command) {
+    pub fn apply_player_move(&mut self, cmd: Command) -> bool {
         match cmd {
-            Command::Move(Dir::Up) => {
-                self.lapin.pos.y -= 1;
-            }
-            Command::Move(Dir::Right) => {
-                self.lapin.pos.x += 1;
-            }
-            Command::Move(Dir::Down) => {
-                self.lapin.pos.y += 1;
-            }
-            Command::Move(Dir::Left) => {
-                self.lapin.pos.x -= 1;
+            Command::Move(dir) => {
+                let pos = self.lapin.pos.in_dir(dir);
+                if self.is_enterable(pos) {
+                    self.lapin.pos = pos;
+                    true
+                } else {
+                    debug!("can't go there");
+                    false
+                }
             }
             _ => {
                 debug!("a pa capito");
+                false
+            }
+        }
+    }
+
+    pub fn apply_world_move(&mut self, world_move: WorldMove) {
+        for (fox, fox_move) in self.foxes.iter_mut().zip(world_move.fox_moves) {
+            if let Some(dir) = fox_move {
+                fox.pos = fox.pos.in_dir(dir);
             }
         }
     }

@@ -7,7 +7,7 @@ use {
         QueueableCommand,
     },
     std::io::Write,
-    termimad::{Area, CompoundStyle, InputField, MadSkin},
+    termimad::{Area},
 };
 
 pub struct Screen {
@@ -37,9 +37,9 @@ impl Screen {
         self.width = w;
         self.height = h;
         self.board_area.left = 2;
-        self.board_area.top = 2;
+        self.board_area.top = 1;
         self.board_area.width = w - 3;
-        self.board_area.height = h - 6; // might crash
+        self.board_area.height = h - 2; // might crash
     }
     pub fn read_size(&mut self) -> Result<()> {
         let (w, h) = termimad::terminal_size();

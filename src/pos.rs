@@ -7,7 +7,6 @@ use {
         cursor,
         QueueableCommand,
     },
-    std::io::Write,
     termimad::{
         Area,
     },
@@ -16,10 +15,24 @@ use {
 pub type Int = i16;
 
 // a position in the real world (the one full of rabbits and wolves)
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Pos {
     pub x: Int,
     pub y: Int,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum Dir {
+    Up,
+    Right,
+    Down,
+    Left,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct ScreenPos {
+    pub x: u16,
+    pub y: u16,
 }
 
 impl Pos {
@@ -47,13 +60,37 @@ impl Pos {
             None
         }
     }
+    pub fn manhattan_distance(a: Pos, b: Pos) -> Int {
+        (a.x-b.x).abs() + (a.y-b.y).abs()
+    }
+    /// return the first direction to follow on a path
+    /// (or none if we're yet on destination or if the
+    /// path doesn't starts from there)
+    pub fn first_dir(&self, path: &Vec<Pos>) -> Option<Dir> {
+        path.get(0).and_then(|dst| self.dir_to(*dst))
+    }
+    /// return the direction to follow to directly reach
+    /// the dst. Return None if the other pos isn't a
+    /// direct neighbour.
+    pub fn dir_to(&self, dst: Pos) -> Option<Dir> {
+        match (dst.x-self.x, dst.y-self.y) {
+            (0, -1) => Some(Dir::Up),
+            (1, 0)  => Some(Dir::Right),
+            (0, 1)  => Some(Dir::Down),
+            (-1, 0) => Some(Dir::Left),
+            _ => None,
+        }
+    }
+    pub fn in_dir(&self, dir: Dir) -> Self {
+        match dir {
+            Dir::Up => Pos { x:self.x, y:self.y-1 },
+            Dir::Right => Pos { x:self.x+1, y:self.y },
+            Dir::Down => Pos { x:self.x, y:self.y+1 },
+            Dir::Left => Pos { x:self.x-1, y:self.y },
+        }
+    }
 }
 
-#[derive(Debug, Clone, Copy)]
-pub struct ScreenPos {
-    pub x: u16,
-    pub y: u16,
-}
 
 impl ScreenPos {
     pub fn goto(self, w: &mut W) -> Result<()> {
@@ -62,3 +99,7 @@ impl ScreenPos {
     }
 }
 
+pub trait Mobile {
+    fn get_pos(&self) -> Pos;
+    fn set_pos(&mut self, pos: Pos) -> Pos;
+}

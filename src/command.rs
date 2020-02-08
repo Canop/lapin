@@ -1,16 +1,11 @@
 use {
+    crate::{
+        pos::*,
+    },
     crossterm::{
         event::{KeyCode},
     },
 };
-
-#[derive(Debug, Clone, Copy)]
-pub enum Dir {
-    Up,
-    Right,
-    Down,
-    Left,
-}
 
 #[derive(Debug, Clone, Copy)]
 pub enum Command {

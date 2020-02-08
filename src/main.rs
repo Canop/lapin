@@ -6,13 +6,10 @@ use {
     anyhow::Result,
     crossterm::{
         cursor,
-        event::{self, Event, KeyCode::*, KeyEvent},
-        queue,
-        style::{Attribute, Attributes, Color::*},
-        terminal::{self, Clear, ClearType, EnterAlternateScreen, LeaveAlternateScreen},
+        terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
         QueueableCommand,
     },
-    lapin::{editor::Editor, game_runner, io::W},
+    lapin::{game_runner, io::W},
     log::LevelFilter,
     simplelog,
     std::{
@@ -21,7 +18,6 @@ use {
         io::Write,
         str::FromStr,
     },
-    termimad::*,
 };
 
 /// configure the application log according to env variable.

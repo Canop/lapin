@@ -1,18 +1,18 @@
 use {
     crate::{
         board::Board,
+        draw_board::BoardDrawer,
         command::Command,
         consts::*,
         io::W,
         screen::Screen,
+        world,
     },
     anyhow::Result,
     crossterm::{
         event::{self, Event, KeyCode::*, KeyEvent},
-        style::{Attributes, Color},
     },
     std::io::Write,
-    termimad::{CompoundStyle},
 };
 
 pub struct GameRunner {
@@ -32,6 +32,9 @@ impl GameRunner {
         for x in 5..11 {
             board.set_at(x, 0, FOREST);
         }
+        for y in 0..12 {
+            board.set_at(46, y, WATER);
+        }
         board.lapin.pos.x = 30;
         let screen = Screen::new()?;
         Ok(Self {
@@ -40,9 +43,11 @@ impl GameRunner {
         })
     }
     pub fn write(&self, w: &mut W) -> Result<()> {
-        let style = CompoundStyle::new(Some(Color::Blue), None, Attributes::default());
-        style.queue_str(w, "Lapin!")?;
-        self.board.draw(w, &self.screen)?;
+        //let style = CompoundStyle::new(Some(Color::Blue), None, Attributes::default());
+        //style.queue_str(w, "Lapin!")?;
+        //self.board.draw(w, &self.screen)?;
+        let mut bd = BoardDrawer::new(&self.board, w, &self.screen);
+        bd.draw()?;
         Ok(())
     }
 }
@@ -57,7 +62,10 @@ pub fn run(w: &mut W) -> Result<()> {
                 None => { }
                 Some(Command::Quit) => break,
                 Some(cmd) => {
-                    gr.board.apply(cmd);
+                    gr.board.apply_player_move(cmd);
+                    let world_move = world::play(&gr.board);
+                    debug!("world_move: {:?}", &world_move);
+                    gr.board.apply_world_move(world_move);
                 }
             }
         }
