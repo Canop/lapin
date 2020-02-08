@@ -16,7 +16,16 @@ pub struct Board {
     pub foxes: Vec<Fox>,
 }
 
+/// what we get on applying a world or player move
+pub enum MoveResult {
+    Ok, // RAS
+    Invalid, // move does nothing,
+    PlayerWin,
+    PlayerLose,
+}
+
 impl Board {
+
     pub fn new(width: usize, height: usize) -> Self {
         let grid = vec![VOID; width * height];
         let lapin = Lapin::new(10, 10);
@@ -93,30 +102,42 @@ impl Board {
         }
     }
 
-    pub fn apply_player_move(&mut self, cmd: Command) -> bool {
+    pub fn apply_player_move(&mut self, cmd: Command) -> MoveResult {
         match cmd {
             Command::Move(dir) => {
                 let pos = self.lapin.pos.in_dir(dir);
                 if self.is_enterable(pos) {
                     self.lapin.pos = pos;
-                    true
+                    if self.get(pos) == FOREST {
+                        return MoveResult::PlayerWin;
+                    }
+                    for fox in &self.foxes {
+                        if self.lapin.pos == fox.pos {
+                            return MoveResult::PlayerLose;
+                        }
+                    }
+                    MoveResult::Ok
                 } else {
                     debug!("can't go there");
-                    false
+                    MoveResult::Invalid
                 }
             }
             _ => {
                 debug!("a pa capito");
-                false
+                MoveResult::Invalid
             }
         }
     }
 
-    pub fn apply_world_move(&mut self, world_move: WorldMove) {
+    pub fn apply_world_move(&mut self, world_move: WorldMove) -> MoveResult {
         for (fox, fox_move) in self.foxes.iter_mut().zip(world_move.fox_moves) {
             if let Some(dir) = fox_move {
                 fox.pos = fox.pos.in_dir(dir);
+                if self.lapin.pos == fox.pos {
+                    return MoveResult::PlayerLose;
+                }
             }
         }
+        MoveResult::Ok
     }
 }

@@ -1,6 +1,7 @@
 use {
     crate::{
-        board::Board,
+        app::AppState,
+        board::*,
         draw_board::BoardDrawer,
         command::Command,
         consts::*,
@@ -46,16 +47,27 @@ impl GameRunner {
         })
     }
     pub fn write(&self, w: &mut W) -> Result<()> {
-        //let style = CompoundStyle::new(Some(Color::Blue), None, Attributes::default());
-        //style.queue_str(w, "Lapin!")?;
-        //self.board.draw(w, &self.screen)?;
         let mut bd = BoardDrawer::new(&self.board, w, &self.screen);
         bd.draw()?;
         Ok(())
     }
 }
 
-pub fn run(w: &mut W) -> Result<()> {
+fn end_message(move_result: &MoveResult) -> Result<AppState> {
+    match move_result {
+        MoveResult::PlayerWin => {
+            return Ok(AppState::Message("You WIN!".to_string()));
+        }
+        MoveResult::PlayerLose => {
+            return Ok(AppState::Message("You LOSE!".to_string()));
+        }
+        _ => Err(anyhow!("Invalid Internal State"))
+
+    }
+}
+
+/// return the next state
+pub fn run(w: &mut W) -> Result<AppState> {
     let mut gr = GameRunner::new()?;
     loop {
         gr.write(w)?;
@@ -65,16 +77,25 @@ pub fn run(w: &mut W) -> Result<()> {
                 None => { }
                 Some(Command::Quit) => break,
                 Some(cmd) => {
-                    gr.board.apply_player_move(cmd);
-                    let world_move = world::play(&gr.board);
-                    debug!("world_move: {:?}", &world_move);
-                    let mut bd = BoardDrawer::new(&gr.board, w, &gr.screen);
-                    bd.draw()?;
-                    bd.animate(&world_move)?;
-                    gr.board.apply_world_move(world_move);
+                    let move_result = gr.board.apply_player_move(cmd);
+                    match &move_result {
+                        MoveResult::Invalid => { continue; }
+                        MoveResult::Ok => {
+                            let mut bd = BoardDrawer::new(&gr.board, w, &gr.screen);
+                            bd.draw()?;
+                            let world_move = world::play(&gr.board);
+                            debug!("world_move: {:?}", &world_move);
+                            bd.animate(&world_move)?;
+                            match gr.board.apply_world_move(world_move) {
+                                MoveResult::Ok => { continue; }
+                                _ => { return end_message(&move_result); }
+                            }
+                        }
+                        _ => { return end_message(&move_result); }
+                    }
                 }
             }
         }
     }
-    Ok(())
+    Ok(AppState::Quit)
 }

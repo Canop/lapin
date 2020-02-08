@@ -13,14 +13,14 @@ readme = "README.md"
 [dependencies]
 anyhow = "1.0"
 clap = "2.33"
-crossterm = "0.15.0"
+crossterm = "0.16.0"
 lazy_static = "1.4"
 log = "0.4"
 minimad = "0.6.3"
 simplelog = "0.6"
-termimad = "0.8.8"
+termimad = "0.8.13"
 
 [patch.crates-io]
 # minimad = { path = "../minimad" }
-termimad = { path = "../termimad" }
-crossterm = { path = "../crossterm-rs/crossterm" }
+# termimad = { path = "../termimad" }
+# crossterm = { path = "../crossterm-rs/crossterm" }

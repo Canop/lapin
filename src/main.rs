@@ -1,7 +1,6 @@
 #[macro_use]
 extern crate log;
 
-
 use {
     anyhow::Result,
     crossterm::{
@@ -9,7 +8,9 @@ use {
         terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
         QueueableCommand,
     },
-    lapin::{game_runner, io::W},
+    lapin::{
+        app,
+    },
     log::LevelFilter,
     simplelog,
     std::{
@@ -46,19 +47,13 @@ fn configure_log() {
     }
 }
 
-fn run(w: &mut W) {
-    if let Err(e) = game_runner::run(w) {
-        println!("damn: {:?}", e);
-    }
-}
-
 fn main() -> Result<()> {
     configure_log();
     let mut w = std::io::stderr();
     w.queue(EnterAlternateScreen)?;
     w.queue(cursor::Hide)?; // hiding the cursor
     terminal::enable_raw_mode()?;
-    run(&mut w);
+    app::run(&mut w);
     terminal::disable_raw_mode()?;
     w.queue(cursor::Show)?;
     w.queue(LeaveAlternateScreen)?;

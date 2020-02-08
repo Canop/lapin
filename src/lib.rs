@@ -1,8 +1,11 @@
 
 #[macro_use]
+extern crate anyhow;
+#[macro_use]
 extern crate log;
 
 pub mod animate;
+pub mod app;
 pub mod board;
 pub mod command;
 pub mod consts;
@@ -12,6 +15,7 @@ pub mod fox;
 pub mod game_runner;
 pub mod io;
 pub mod lapin;
+pub mod message_runner;
 pub mod path;
 pub mod pos;
 pub mod screen;
