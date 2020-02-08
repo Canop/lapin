@@ -11,23 +11,20 @@ use {
     crossterm::{
         cursor,
         style::{
-            Attribute,
             Attributes,
-            Color,
             ContentStyle,
+            Color,
             Print,
             PrintStyledContent,
         },
         QueueableCommand,
     },
-    std::io::Write,
-    termimad::{Area, CompoundStyle, InputField, MadSkin},
 };
 
 pub struct BoardDrawer<'d> {
-    board: &'d Board,
-    w: &'d mut W,
-    screen: &'d Screen,
+    pub board: &'d Board,
+    pub w: &'d mut W,
+    pub screen: &'d Screen,
 }
 impl<'d> BoardDrawer<'d> {
     pub fn new(
@@ -37,23 +34,37 @@ impl<'d> BoardDrawer<'d> {
     ) -> Self {
         Self { board, w, screen }
     }
+
+    pub fn to_screen(&self, pos: Pos) -> Option<ScreenPos> {
+        pos.to_screen(self.board.lapin.pos, &self.screen.board_area)
+    }
+
     fn draw_chr(
         &mut self,
         pos: Pos,
-        fg_skin: &FgSkin,
+        chr: char,
+        color: Color,
     ) -> Result<()> {
         if let Some(sp) = pos.to_screen(self.board.lapin.pos, &self.screen.board_area) {
             debug!("sp: {:?}", sp);
             let cell = self.board.get(pos);
             let cs = ContentStyle {
-                foreground_color: Some(fg_skin.color),
+                foreground_color: Some(color),
                 background_color: Some(self.screen.skin.bg(cell)),
                 attributes: Attributes::default(),
             };
             self.w.queue(cursor::MoveTo(sp.x, sp.y))?;
-            self.w.queue(PrintStyledContent(cs.apply(fg_skin.chr)))?;
+            self.w.queue(PrintStyledContent(cs.apply(chr)))?;
         }
         Ok(())
+    }
+
+    fn draw_fg(
+        &mut self,
+        pos: Pos,
+        fg_skin: &FgSkin,
+    ) -> Result<()> {
+        self.draw_chr(pos, fg_skin.chr, fg_skin.color)
     }
 
     pub fn draw(
@@ -87,11 +98,11 @@ impl<'d> BoardDrawer<'d> {
         }
 
         // le lapin!
-        self.draw_chr(lapin_pos, &self.screen.skin.lapin)?;
+        self.draw_fg(lapin_pos, &self.screen.skin.lapin)?;
 
         // foxes
         for fox in &self.board.foxes {
-            self.draw_chr(fox.pos, &self.screen.skin.fox)?;
+            self.draw_fg(fox.pos, &self.screen.skin.fox)?;
         }
 
         Ok(())

@@ -10,7 +10,7 @@ use {
     },
     anyhow::Result,
     crossterm::{
-        event::{self, Event, KeyCode::*, KeyEvent},
+        event::{self, Event, KeyEvent},
     },
     std::io::Write,
 };
@@ -23,10 +23,13 @@ pub struct GameRunner {
 impl GameRunner {
     pub fn new() -> Result<Self> {
         let mut board = Board::new(60, 20);
-        board.set_borders(WALL);
+        //board.set_borders(WALL);
         board.set_at(2, 3, WALL);
         for x in 6..17 {
             board.set_at(x, 4, WALL);
+        }
+        for x in 8..37 {
+            board.set_at(x, 8, WALL);
         }
         board.set_at(6, 5, WALL);
         for x in 5..11 {
@@ -65,6 +68,9 @@ pub fn run(w: &mut W) -> Result<()> {
                     gr.board.apply_player_move(cmd);
                     let world_move = world::play(&gr.board);
                     debug!("world_move: {:?}", &world_move);
+                    let mut bd = BoardDrawer::new(&gr.board, w, &gr.screen);
+                    bd.draw()?;
+                    bd.animate(&world_move)?;
                     gr.board.apply_world_move(world_move);
                 }
             }

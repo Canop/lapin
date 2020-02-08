@@ -23,6 +23,7 @@ impl Board {
         let foxes = vec![
             Fox::new(50, 5),
             Fox::new(40, 15),
+            Fox::new(4, 17),
         ];
         Self {
             width: width as Int,

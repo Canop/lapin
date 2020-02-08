@@ -2,6 +2,7 @@
 #[macro_use]
 extern crate log;
 
+pub mod animate;
 pub mod board;
 pub mod command;
 pub mod consts;
