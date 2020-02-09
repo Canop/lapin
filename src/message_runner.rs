@@ -33,7 +33,7 @@ pub fn run(w: &mut W, message: String) -> Result<AppState> {
         background_color: Some(gray(1)),
         attributes: Attribute::Bold.into(),
     };
-    w.queue(cursor::MoveTo(10, screen.height-1))?;
+    w.queue(cursor::MoveTo(10, screen.height-2))?;
     w.queue(PrintStyledContent(cs.apply(message)))?;
     w.flush()?;
     loop {

@@ -11,9 +11,22 @@ use {
     },
     anyhow::Result,
     crossterm::{
-        event::{self, Event, KeyEvent},
+        cursor,
+        event::{
+            self,
+            Event,
+            KeyEvent,
+        },
+        style::{
+            Attribute,
+            Color,
+            ContentStyle,
+            PrintStyledContent,
+        },
+        QueueableCommand,
     },
     std::io::Write,
+    termimad::gray,
 };
 
 pub struct GameRunner {
@@ -40,10 +53,10 @@ impl GameRunner {
 fn end_message(move_result: &MoveResult) -> Result<AppState> {
     match move_result {
         MoveResult::PlayerWin => {
-            return Ok(AppState::Message("You WIN!   hit 'q' to quit".to_string()));
+            return Ok(AppState::Message("You WIN!".to_string()));
         }
         MoveResult::PlayerLose => {
-            return Ok(AppState::Message("You LOSE!   hit 'q' to quit".to_string()));
+            return Ok(AppState::Message("You LOSE!".to_string()));
         }
         _ => Err(anyhow!("Invalid Internal State"))
 
@@ -53,6 +66,14 @@ fn end_message(move_result: &MoveResult) -> Result<AppState> {
 /// return the next state
 pub fn run(w: &mut W) -> Result<AppState> {
     let mut gr = GameRunner::new()?;
+    let screen = Screen::new()?;
+    let cs = ContentStyle {
+        foreground_color: Some(gray(15)),
+        background_color: None,
+        attributes: Attribute::Bold.into(),
+    };
+    w.queue(cursor::MoveTo(10, screen.height-1))?;
+    w.queue(PrintStyledContent(cs.apply("hit arrows to move, 'q' to quit".to_string())))?;
     loop {
         gr.write(w)?;
         w.flush()?;

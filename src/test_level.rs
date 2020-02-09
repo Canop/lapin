@@ -27,7 +27,9 @@ pub fn build() -> Board {
     board.set_range(2..9, 20..25, WALL);
     board.set_range(3..8, 21..24, VOID);
     board.set_h_line(8..36, 22, VOID);
-    board.add_knight_in(14, 22);
+    board.add_knight_in(4, 22);
+
+    board.set_range(40..43, 23..26, VOID);
 
     board.add_fox_in(50, 5);
     board.add_fox_in(40, 16);

@@ -46,7 +46,11 @@ pub fn play(board: &Board) -> WorldMove {
     let knight_moves = board.knights.iter()
         .map(|knight| {
             if let Some(path) = path_finder.shortest(knight.pos, &knight_targets) {
-                if let Some(&first_pos) = path.get(0) {
+                if Pos::mh_distance(knight.pos, path[1]) == 1 {
+                    // a diagonal move is possible -> we can just make a diagonal attack
+                    debug!("knight attack in diagonal");
+                    knight.pos.dir_to(path[1])
+                } else if let Some(&first_pos) = path.get(0) {
                     path_finder.reserve(first_pos);
                     knight.pos.dir_to(first_pos)
                 } else {
