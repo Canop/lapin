@@ -1,7 +1,6 @@
 use {
     anyhow::Result,
     crate::{
-        consts::*,
         draw_board::*,
         pos::*,
         world::*,
@@ -92,7 +91,20 @@ impl<'d> BoardDrawer<'d> {
                 self.draw_bicolor_horizontal(sp_dst, color, dst_bg, av)?;
             }
             _ => {
-                // FIXME
+                // for diagonals, for now, we just alternate between one
+                // and the other. This is about OK because diagonals are for
+                // kills
+                if av%2==1 {
+                    self.draw_chr(start, '█', color)?;
+                    if self.board.lapin.pos == dst {
+                        self.draw_chr(dst, self.screen.skin.lapin.chr, Color::Red)?;
+                    } else {
+                        // FIXME kill no lapin
+                    }
+                } else {
+                    self.draw_chr(start, ' ', color)?;
+                    self.draw_chr(dst, '█', color)?;
+                }
             }
         }
         Ok(())

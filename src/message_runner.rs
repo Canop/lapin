@@ -1,6 +1,7 @@
 use {
     crate::{
         app::AppState,
+        command::Command,
         io::W,
         screen::Screen,
     },
@@ -10,6 +11,7 @@ use {
         event::{
             self,
             Event,
+            KeyEvent,
         },
         style::{
             Attribute,
@@ -35,9 +37,13 @@ pub fn run(w: &mut W, message: String) -> Result<AppState> {
     w.queue(PrintStyledContent(cs.apply(message)))?;
     w.flush()?;
     loop {
-        if let Ok(Event::Key(_)) = event::read() {
-            return Ok(AppState::Quit);
+        if let Ok(Event::Key(KeyEvent { code, .. })) = event::read() {
+            match Command::from(code) {
+                Some(Command::Quit) => break,
+                _ => { }
+            }
         }
     }
+    Ok(AppState::Quit)
 }
 

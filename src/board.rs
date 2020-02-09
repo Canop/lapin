@@ -28,19 +28,18 @@ impl Board {
 
     pub fn new(width: usize, height: usize) -> Self {
         let grid = vec![VOID; width * height];
-        let lapin = Lapin::new(10, 10);
-        let foxes = vec![
-            Fox::new(50, 5),
-            Fox::new(40, 15),
-            Fox::new(4, 17),
-        ];
+        let lapin = Lapin::new(0, 0);
         Self {
             width: width as Int,
             height: height as Int,
             grid,
             lapin,
-            foxes,
+            foxes: Vec::new(),
         }
+    }
+
+    pub fn add_fox_in(&mut self, x: Int, y: Int) {
+        self.foxes.push(Fox::new(x, y));
     }
 
     pub fn is_enterable(&self, pos: Pos) -> bool {

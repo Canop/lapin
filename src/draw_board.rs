@@ -66,23 +66,34 @@ impl<'d> BoardDrawer<'d> {
         Pos { x, y }
     }
 
-    fn draw_chr(
+    pub fn draw_chr_bg(
         &mut self,
         pos: Pos,
         chr: char,
-        color: Color,
+        fg_color: Color,
+        bg_color: Color,
     ) -> Result<()> {
         if let Some(sp) = self.to_screen(pos) {
             let cell = self.board.get(pos);
             let cs = ContentStyle {
-                foreground_color: Some(color),
-                background_color: Some(self.screen.skin.bg(cell)),
+                foreground_color: Some(fg_color),
+                background_color: Some(bg_color),
                 attributes: Attributes::default(),
             };
             self.w.queue(cursor::MoveTo(sp.x, sp.y))?;
             self.w.queue(PrintStyledContent(cs.apply(chr)))?;
         }
         Ok(())
+    }
+
+    pub fn draw_chr(
+        &mut self,
+        pos: Pos,
+        chr: char,
+        color: Color,
+    ) -> Result<()> {
+        let cell = self.board.get(pos);
+        self.draw_chr_bg(pos, chr, color, self.screen.skin.bg(cell))
     }
 
     fn draw_fg(
@@ -96,11 +107,6 @@ impl<'d> BoardDrawer<'d> {
     pub fn draw(
         &mut self,
     ) -> Result<()> {
-        let lapin_pos = self.board.lapin.pos;
-        // (area_x, area_y) is the top left corner of the area in real coordinates
-        let area_x = lapin_pos.x - (self.screen.board_area.width as Int) / 2;
-        let area_y = lapin_pos.y - (self.screen.board_area.height as Int) / 2;
-
         let pt = Pos::new(7, 11);
         let spt = self.to_screen(pt).unwrap();
         assert_eq!(self.to_real(spt), pt);
@@ -125,7 +131,7 @@ impl<'d> BoardDrawer<'d> {
         }
 
         // le lapin!
-        self.draw_fg(lapin_pos, &self.screen.skin.lapin)?;
+        self.draw_fg(self.board.lapin.pos, &self.screen.skin.lapin)?;
 
         // foxes
         for fox in &self.board.foxes {
