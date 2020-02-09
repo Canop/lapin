@@ -1,10 +1,18 @@
-use crate::{
-    command::*,
-    consts::*,
-    fox::Fox,
-    lapin::Lapin,
-    pos::*,
-    world::*,
+use {
+    crate::{
+        command::*,
+        consts::*,
+        fox::Fox,
+        knight::Knight,
+        lapin::Lapin,
+        pos::*,
+        world::*,
+    },
+    std::{
+        ops::{
+            Range,
+        },
+    },
 };
 
 /// the game state
@@ -14,6 +22,7 @@ pub struct Board {
     grid: Vec<Cell>,
     pub lapin: Lapin,
     pub foxes: Vec<Fox>,
+    pub knights: Vec<Knight>,
 }
 
 /// what we get on applying a world or player move
@@ -35,11 +44,15 @@ impl Board {
             grid,
             lapin,
             foxes: Vec::new(),
+            knights: Vec::new(),
         }
     }
 
     pub fn add_fox_in(&mut self, x: Int, y: Int) {
         self.foxes.push(Fox::new(x, y));
+    }
+    pub fn add_knight_in(&mut self, x: Int, y: Int) {
+        self.knights.push(Knight::new(x, y));
     }
 
     pub fn is_enterable(&self, pos: Pos) -> bool {
@@ -73,6 +86,19 @@ impl Board {
         if let Some(idx) = self.idx(pos) {
             self.grid[idx] = cell;
         }
+    }
+    pub fn set_range(&mut self, rx: Range<Int>, ry: Range<Int>, cell: Cell) {
+        for x in rx {
+            for y in ry.clone() {
+                self.set_at(x, y, cell);
+            }
+        }
+    }
+    pub fn set_h_line(&mut self, rx: Range<Int>, y: Int, cell: Cell) {
+        self.set_range(rx, y..y+1, cell);
+    }
+    pub fn set_v_line(&mut self, x: Int, ry: Range<Int>, cell: Cell) {
+        self.set_range(x..x+1, ry, cell);
     }
 
     pub fn set_at(&mut self, x: Int, y: Int, cell: Cell) {
@@ -116,6 +142,11 @@ impl Board {
     }
 
     pub fn apply_world_move(&mut self, world_move: WorldMove) -> MoveResult {
+        for (knight, knight_move) in self.knights.iter_mut().zip(world_move.knight_moves) {
+            if let Some(dir) = knight_move {
+                knight.pos = knight.pos.in_dir(dir);
+            }
+        }
         for (fox, fox_move) in self.foxes.iter_mut().zip(world_move.fox_moves) {
             if let Some(dir) = fox_move {
                 fox.pos = fox.pos.in_dir(dir);
@@ -124,6 +155,18 @@ impl Board {
                 }
             }
         }
+        for knight in &self.knights {
+            let mut i = 0;
+            while i < self.foxes.len() {
+                if self.foxes[i].pos == knight.pos {
+                    debug!("dead fox!");
+                    self.foxes.remove(i);
+                } else {
+                    i += 1;
+                }
+            }
+        }
+
         MoveResult::Ok
     }
 }

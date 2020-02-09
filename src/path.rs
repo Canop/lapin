@@ -31,11 +31,36 @@ impl<'b> PathFinder<'b> {
     pub fn reserve(&mut self, pos: Pos) {
         self.taken_set.insert(pos);
     }
+    pub fn unreserve(&mut self, pos: Pos) {
+        self.taken_set.remove(&pos);
+    }
     pub fn can_enter(&self, pos: Pos) -> bool {
         self.board.is_enterable(pos) && !self.taken_set.contains(&pos)
     }
     pub fn dirs(&self) -> impl Iterator<Item = Dir> {
         [Dir::Up, Dir::Right, Dir::Down, Dir::Left].iter().copied()
+    }
+
+    pub fn shortest(
+        &self,
+        start: Pos,
+        goals: &[Pos],
+    ) -> Option<Vec<Pos>> {
+        let mut shortest: Option<Vec<Pos>> = None;
+        for goal in goals {
+            if let Some(path) = self.find(start, *goal) {
+                shortest = Some(if let Some(sh) = shortest {
+                    if sh.len() < path.len() {
+                        sh
+                    } else {
+                        path
+                    }
+                } else {
+                    path
+                });
+            }
+        }
+        shortest
     }
 
     /// Find the shortest path between start and goal using A*.

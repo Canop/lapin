@@ -12,6 +12,7 @@ pub mod consts;
 pub mod draw_board;
 pub mod editor;
 pub mod fox;
+pub mod knight;
 pub mod game_runner;
 pub mod io;
 pub mod lapin;

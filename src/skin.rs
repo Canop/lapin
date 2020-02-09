@@ -30,6 +30,7 @@ pub struct Skin {
     pub cell_bg: [Color; 4],
     pub lapin: FgSkin,
     pub fox: FgSkin,
+    pub knight: FgSkin,
 }
 
 impl Skin {
@@ -46,7 +47,7 @@ impl Skin {
             //lapin: FgSkin::new('◆', gray(13)),
             lapin: FgSkin::new('▮', gray(16)),
             fox: FgSkin::new('█', ansi(166)),
-            // full:'█'
+            knight: FgSkin::new('█', ansi(206)),
         }
     }
     pub fn bg_command(&self, cell: Cell) -> SetBackgroundColor {

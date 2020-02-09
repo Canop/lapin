@@ -74,7 +74,6 @@ impl<'d> BoardDrawer<'d> {
         bg_color: Color,
     ) -> Result<()> {
         if let Some(sp) = self.to_screen(pos) {
-            let cell = self.board.get(pos);
             let cs = ContentStyle {
                 foreground_color: Some(fg_color),
                 background_color: Some(bg_color),
@@ -107,9 +106,6 @@ impl<'d> BoardDrawer<'d> {
     pub fn draw(
         &mut self,
     ) -> Result<()> {
-        let pt = Pos::new(7, 11);
-        let spt = self.to_screen(pt).unwrap();
-        assert_eq!(self.to_real(spt), pt);
 
         // drawing the background
         let mut last_cell = VOID;
@@ -133,9 +129,12 @@ impl<'d> BoardDrawer<'d> {
         // le lapin!
         self.draw_fg(self.board.lapin.pos, &self.screen.skin.lapin)?;
 
-        // foxes
+        // other characters
         for fox in &self.board.foxes {
             self.draw_fg(fox.pos, &self.screen.skin.fox)?;
+        }
+        for knight in &self.board.knights {
+            self.draw_fg(knight.pos, &self.screen.skin.knight)?;
         }
 
         Ok(())
