@@ -86,7 +86,8 @@ pub fn run(w: &mut W) -> Result<AppState> {
                             let world_move = world::play(&gr.board);
                             debug!("world_move: {:?}", &world_move);
                             bd.animate(&world_move)?;
-                            match gr.board.apply_world_move(world_move) {
+                            let move_result = gr.board.apply_world_move(world_move);
+                            match move_result {
                                 MoveResult::Ok => { continue; }
                                 _ => { return end_message(&move_result); }
                             }

@@ -12,7 +12,7 @@ use {
     },
 };
 
-pub type Int = i16;
+pub type Int = i32;
 
 // a position in the real world (the one full of rabbits and wolves)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -27,6 +27,10 @@ pub enum Dir {
     Right,
     Down,
     Left,
+    UpRight,
+    RightDown,
+    DownLeft,
+    LeftUp
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -36,6 +40,9 @@ pub struct ScreenPos {
 }
 
 impl Pos {
+    pub fn new(x: Int, y: Int) -> Self {
+        Self { x, y }
+    }
     pub fn center_of(area: &Area) -> Self {
         Self {
             x: (area.left+area.width/2) as Int,
@@ -45,20 +52,8 @@ impl Pos {
     pub fn in_grid(self, width: Int, height: Int) -> bool {
         self.x>=0 && self.y>=0 && self.x<width && self.y<height
     }
-    pub fn to_screen(self, lapin_pos: Pos, area: &Area) -> Option<ScreenPos> {
-        let (w, h) = (area.width as Int, area.height as Int);
-        let x = (self.x - lapin_pos.x)  + w / 2;
-        let y = (self.y - lapin_pos.y)  + h / 2;
-        if x>=0 && y>=0 && x<w && y<h {
-            let x = x as u16;
-            let y = y as u16;
-            Some(ScreenPos {
-                x: x - 1 + area.left,
-                y: y - 1 + area.top,
-            })
-        } else {
-            None
-        }
+    pub fn mh_distance(a: Pos, b: Pos) -> Int {
+        (a.x-b.x).abs().max((a.y-b.y).abs())
     }
     pub fn manhattan_distance(a: Pos, b: Pos) -> Int {
         (a.x-b.x).abs() + (a.y-b.y).abs()
@@ -78,6 +73,10 @@ impl Pos {
             (1, 0)  => Some(Dir::Right),
             (0, 1)  => Some(Dir::Down),
             (-1, 0) => Some(Dir::Left),
+            (1, -1) => Some(Dir::UpRight),
+            (1, 1)  => Some(Dir::RightDown),
+            (-1, 1)  => Some(Dir::DownLeft),
+            (-1, -1) => Some(Dir::LeftUp),
             _ => None,
         }
     }
@@ -87,12 +86,18 @@ impl Pos {
             Dir::Right => Pos { x:self.x+1, y:self.y },
             Dir::Down => Pos { x:self.x, y:self.y+1 },
             Dir::Left => Pos { x:self.x-1, y:self.y },
+            Dir::UpRight => Pos { x:self.x+1, y:self.y-1 },
+            Dir::RightDown => Pos { x:self.x+1, y:self.y+1 },
+            Dir::DownLeft => Pos { x:self.x-1, y:self.y+1 },
+            Dir::LeftUp => Pos { x:self.x-1, y:self.y-1 },
         }
     }
 }
 
-
 impl ScreenPos {
+    pub fn new(x: u16, y:u16) -> Self {
+        Self { x, y }
+    }
     pub fn goto(self, w: &mut W) -> Result<()> {
         w.queue(cursor::MoveTo(self.x, self.y))?;
         Ok(())

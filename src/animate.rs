@@ -91,6 +91,9 @@ impl<'d> BoardDrawer<'d> {
                 self.draw_bicolor_horizontal(sp_start, start_bg, color, av)?;
                 self.draw_bicolor_horizontal(sp_dst, color, dst_bg, av)?;
             }
+            _ => {
+                // FIXME
+            }
         }
         Ok(())
     }

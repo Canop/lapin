@@ -36,10 +36,10 @@ impl Screen {
         }
         self.width = w;
         self.height = h;
-        self.board_area.left = 2;
-        self.board_area.top = 1;
-        self.board_area.width = w - 3;
-        self.board_area.height = h - 2; // might crash
+        self.board_area.left = 0;
+        self.board_area.top = 0;
+        self.board_area.width = w;
+        self.board_area.height = h - 3; // should crash on small screens
     }
     pub fn read_size(&mut self) -> Result<()> {
         let (w, h) = termimad::terminal_size();

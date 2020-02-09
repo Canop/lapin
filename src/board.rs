@@ -51,19 +51,6 @@ impl Board {
         }
     }
 
-    pub fn reachable_neighbours(&self, p: Pos) -> Vec<Pos> {
-        let mut reachable_neighbours = Vec::new();
-        let up = Pos { x:p.x, y:p.y-1 };
-        if self.is_enterable(up) { reachable_neighbours.push(up) }
-        let right = Pos { x:p.x+1, y:p.y };
-        if self.is_enterable(right) { reachable_neighbours.push(right) }
-        let down = Pos { x:p.x, y:p.y+1 };
-        if self.is_enterable(down) { reachable_neighbours.push(down) }
-        let left = Pos { x:p.x-1, y:p.y };
-        if self.is_enterable(left) { reachable_neighbours.push(left) }
-        reachable_neighbours
-    }
-
     pub fn set_borders(&mut self, cell: Cell) {
         for x in 0..self.width {
             self.set_at(x, 0, cell);

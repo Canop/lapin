@@ -9,8 +9,9 @@ use {
         },
     },
     termimad::{
-        gray,
         ansi,
+        gray,
+        rgb,
     },
 };
 
@@ -34,7 +35,8 @@ pub struct Skin {
 impl Skin {
     pub fn new() -> Self {
         let cell_bg = [
-            gray(2),  // VOID
+            //rgb(49, 41, 34),  // VOID
+            rgb(27, 23, 19),  // VOID
             ansi(59), // WALL
             ansi(22), // FOREST
             ansi(25), // WATER

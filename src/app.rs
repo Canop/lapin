@@ -1,19 +1,11 @@
 
 use {
-    anyhow::Result,
     crossterm::{
-        cursor,
-        terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
-        QueueableCommand,
     },
     crate::{
         game_runner,
         message_runner,
         io::W,
-    },
-    std::{
-        env,
-        io::Write,
     },
 };
 

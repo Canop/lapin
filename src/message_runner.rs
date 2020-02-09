@@ -1,7 +1,6 @@
 use {
     crate::{
         app::AppState,
-        consts::*,
         io::W,
         screen::Screen,
     },
@@ -11,7 +10,6 @@ use {
         event::{
             self,
             Event,
-            KeyEvent,
         },
         style::{
             Attribute,
