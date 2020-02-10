@@ -19,6 +19,10 @@ use {
         io::Write,
         str::FromStr,
     },
+    termimad::{
+        Event,
+        EventSource,
+    },
 };
 
 /// configure the application log according to env variable.
@@ -53,7 +57,11 @@ fn main() -> Result<()> {
     w.queue(EnterAlternateScreen)?;
     w.queue(cursor::Hide)?; // hiding the cursor
     terminal::enable_raw_mode()?;
-    app::run(&mut w);
+    let event_source = EventSource::new()?;
+    app::run(&mut w, &event_source);
+    event_source.unblock(true);
+    let event_source_end = event_source.receiver().recv();
+    debug!("event_source_end : {:?}", event_source_end);
     terminal::disable_raw_mode()?;
     w.queue(cursor::Show)?;
     w.queue(LeaveAlternateScreen)?;

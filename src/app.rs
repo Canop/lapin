@@ -5,6 +5,10 @@ use {
         message_runner,
         io::W,
     },
+    termimad::{
+        Event,
+        EventSource,
+    },
 };
 
 pub enum AppState {
@@ -13,16 +17,19 @@ pub enum AppState {
     Quit,
 }
 
-pub fn run(w: &mut W) {
+pub fn run(
+    w: &mut W,
+    event_source: &EventSource,
+) {
     let mut state = Ok(AppState::Level);
     loop {
         state = match state {
             Ok(AppState::Level) => {
                 let mut game_runner = GameRunner::new();
-                game_runner.run(w)
+                game_runner.run(w, event_source)
             }
             Ok(AppState::Message(s)) => {
-                message_runner::run(w, s)
+                message_runner::run(w, s, event_source)
             }
             Ok(AppState::Quit) => { return; }
             Err(e) => {

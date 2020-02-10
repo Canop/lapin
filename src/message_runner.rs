@@ -10,7 +10,6 @@ use {
         cursor,
         event::{
             self,
-            Event,
             KeyEvent,
         },
         style::{
@@ -22,11 +21,38 @@ use {
         QueueableCommand,
     },
     std::io::Write,
-    termimad::gray,
+    termimad::{
+        Event,
+        EventSource,
+        gray,
+    },
 };
 
+fn handle_event(
+    event: Event,
+) -> Result<Option<AppState>> {
+    Ok(match event {
+        Event::Key(KeyEvent { code, .. }) => {
+            match Command::from(code) {
+                Some(Command::Move(_)) => None,
+                _ => {
+                    Some(AppState::Quit)
+                }
+            }
+        }
+        _ => {
+            debug!("ignored event: {:?}", event);
+            None
+        }
+    })
+}
+
 /// return the next state
-pub fn run(w: &mut W, message: String) -> Result<AppState> {
+pub fn run(
+    w: &mut W,
+    message: String,
+    event_source: &EventSource,
+) -> Result<AppState> {
     let screen = Screen::new()?;
     let cs = ContentStyle {
         foreground_color: Some(Color::Yellow),
@@ -36,11 +62,18 @@ pub fn run(w: &mut W, message: String) -> Result<AppState> {
     w.queue(cursor::MoveTo(10, screen.height-2))?;
     w.queue(PrintStyledContent(cs.apply(message)))?;
     w.flush()?;
+    let rx_events = event_source.receiver();
     loop {
-        if let Ok(Event::Key(KeyEvent { code, .. })) = event::read() {
-            match Command::from(code) {
-                Some(Command::Quit) => break,
-                _ => { }
+        event_source.unblock(false); // bof...
+        let e = rx_events.recv();
+        match e {
+            Ok(event) => {
+                if let Some(state) = handle_event(event)? {
+                    return Ok(state);
+                }
+            }
+            Err(e) => {
+                debug!("error in event channel : {:?}", e);
             }
         }
     }

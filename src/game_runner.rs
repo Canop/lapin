@@ -9,6 +9,7 @@ use {
         test_level,
         world,
     },
+    crossbeam::channel::{Receiver, Sender},
     anyhow::Result,
     crossterm::{
         cursor,
@@ -48,18 +49,17 @@ impl GameRunner {
         &mut self,
         w: &mut W,
         event: Event,
+        rx_events: &Receiver<Event>,
     ) -> Result<Option<AppState>> {
         let screen = Screen::new()?;
         Ok(match event {
             Event::Key(KeyEvent { code, .. }) => {
-                debug!("key code : {:?}", code);
                 match Command::from(code) {
                     None => None,
                     Some(Command::Quit) => {
                         Some(AppState::Quit)
                     }
                     Some(cmd) => {
-                        debug!("cmd: {:?}", &cmd);
                         let move_result = self.board.apply_player_move(cmd);
                         let mut bd = BoardDrawer::new(&self.board, w, &screen);
                         bd.draw()?;
@@ -87,6 +87,7 @@ impl GameRunner {
     pub fn run(
         &mut self,
         w: &mut W,
+        event_source: &EventSource,
     ) -> Result<AppState> {
         let screen = Screen::new()?;
         let cs = ContentStyle {
@@ -96,34 +97,16 @@ impl GameRunner {
         };
         w.queue(cursor::MoveTo(10, screen.height-1))?;
         w.queue(PrintStyledContent(cs.apply("hit arrows to move, 'q' to quit".to_string())))?;
-        let event_source = EventSource::new()?;
         let rx_events = event_source.receiver();
-        let mut next_state = None;
         loop {
             let mut bd = BoardDrawer::new(&self.board, w, &screen);
             bd.draw()?;
             w.flush()?;
-            let e = rx_events.recv();
-            debug!(" {:?} <--", e);
-            match e {
-                Ok(event) => {
-                    next_state = self.handle_event(w, event)?;
-                }
-                Err(_) => {
-                    debug!("channel err -> normal end");
-                    break; // normal end of application
-                }
+            let event = rx_events.recv().unwrap();
+            if let Some(next_state) = self.handle_event(w, event, &rx_events)? {
+                return Ok(next_state);
             }
-            debug!("event handled");
-            event_source.unblock(next_state.is_some());
-            debug!("unblocked");
-        }
-        match next_state {
-            Some(state) => Ok(state), // normal
-            None => {
-                debug!("unexpected lack of next state!");
-                Ok(AppState::Quit)
-            }
+            event_source.unblock(false);
         }
     }
 }

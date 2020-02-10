@@ -12,7 +12,7 @@ use {
     },
 };
 
-const MAX_OPEN_SIZE: usize = 1000;
+const MAX_OPEN_SIZE: usize = 100;
 const INFINITY: Int = 32_767;
 
 pub struct PathFinder<'b> {
