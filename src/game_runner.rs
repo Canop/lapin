@@ -14,7 +14,6 @@ use {
         cursor,
         event::{
             self,
-            Event,
             KeyEvent,
         },
         style::{
@@ -26,82 +25,119 @@ use {
         QueueableCommand,
     },
     std::io::Write,
-    termimad::gray,
+    termimad::{
+        Event,
+        EventSource,
+        gray,
+    },
 };
 
 pub struct GameRunner {
     pub board: Board,
-    pub screen: Screen,
 }
 
 impl GameRunner {
-    pub fn new() -> Result<Self> {
+    pub fn new() -> Self {
         let board = test_level::build();
-        let screen = Screen::new()?;
-        Ok(Self {
+        Self {
             board,
-            screen,
-        })
-    }
-    pub fn write(&self, w: &mut W) -> Result<()> {
-        let mut bd = BoardDrawer::new(&self.board, w, &self.screen);
-        bd.draw()?;
-        Ok(())
-    }
-}
-
-fn end_message(move_result: &MoveResult) -> Result<AppState> {
-    match move_result {
-        MoveResult::PlayerWin => {
-            return Ok(AppState::Message("You WIN!".to_string()));
         }
-        MoveResult::PlayerLose => {
-            return Ok(AppState::Message("You LOSE!".to_string()));
-        }
-        _ => Err(anyhow!("Invalid Internal State"))
-
     }
-}
 
-/// return the next state
-pub fn run(w: &mut W) -> Result<AppState> {
-    let mut gr = GameRunner::new()?;
-    let screen = Screen::new()?;
-    let cs = ContentStyle {
-        foreground_color: Some(gray(15)),
-        background_color: None,
-        attributes: Attribute::Bold.into(),
-    };
-    w.queue(cursor::MoveTo(10, screen.height-1))?;
-    w.queue(PrintStyledContent(cs.apply("hit arrows to move, 'q' to quit".to_string())))?;
-    loop {
-        gr.write(w)?;
-        w.flush()?;
-        if let Ok(Event::Key(KeyEvent { code, .. })) = event::read() {
-            match Command::from(code) {
-                None => { }
-                Some(Command::Quit) => break,
-                Some(cmd) => {
-                    let move_result = gr.board.apply_player_move(cmd);
-                    let mut bd = BoardDrawer::new(&gr.board, w, &gr.screen);
-                    bd.draw()?;
-                    match &move_result {
-                        MoveResult::Invalid => { continue; }
-                        MoveResult::Ok => {
-                            let world_move = world::play(&gr.board);
-                            //debug!("world_move: {:?}", &world_move);
-                            bd.animate(&world_move)?;
-                            let move_result = gr.board.apply_world_move(world_move);
-                            match move_result {
-                                MoveResult::Ok => { continue; }
-                                _ => { return end_message(&move_result); }
+    fn handle_event(
+        &mut self,
+        w: &mut W,
+        event: Event,
+    ) -> Result<Option<AppState>> {
+        let screen = Screen::new()?;
+        Ok(match event {
+            Event::Key(KeyEvent { code, .. }) => {
+                debug!("key code : {:?}", code);
+                match Command::from(code) {
+                    None => None,
+                    Some(Command::Quit) => {
+                        Some(AppState::Quit)
+                    }
+                    Some(cmd) => {
+                        debug!("cmd: {:?}", &cmd);
+                        let move_result = self.board.apply_player_move(cmd);
+                        let mut bd = BoardDrawer::new(&self.board, w, &screen);
+                        bd.draw()?;
+                        match move_result {
+                            MoveResult::Ok => {
+                                let world_move = world::play(&self.board);
+                                debug!("world_move: {:?}", &world_move);
+                                bd.animate(&world_move)?;
+                                let move_result = self.board.apply_world_move(world_move);
+                                next_state(move_result)
                             }
+                            _ => next_state(move_result)
                         }
-                        _ => { return end_message(&move_result); }
                     }
                 }
             }
+            _ => {
+                debug!("ignored event: {:?}", event);
+                None
+            }
+        })
+    }
+
+    /// return the next state
+    pub fn run(
+        &mut self,
+        w: &mut W,
+    ) -> Result<AppState> {
+        let screen = Screen::new()?;
+        let cs = ContentStyle {
+            foreground_color: Some(gray(15)),
+            background_color: None,
+            attributes: Attribute::Bold.into(),
+        };
+        w.queue(cursor::MoveTo(10, screen.height-1))?;
+        w.queue(PrintStyledContent(cs.apply("hit arrows to move, 'q' to quit".to_string())))?;
+        let event_source = EventSource::new()?;
+        let rx_events = event_source.receiver();
+        let mut next_state = None;
+        loop {
+            let mut bd = BoardDrawer::new(&self.board, w, &screen);
+            bd.draw()?;
+            w.flush()?;
+            let e = rx_events.recv();
+            debug!(" {:?} <--", e);
+            match e {
+                Ok(event) => {
+                    next_state = self.handle_event(w, event)?;
+                }
+                Err(_) => {
+                    debug!("channel err -> normal end");
+                    break; // normal end of application
+                }
+            }
+            debug!("event handled");
+            event_source.unblock(next_state.is_some());
+            debug!("unblocked");
+        }
+        match next_state {
+            Some(state) => Ok(state), // normal
+            None => {
+                debug!("unexpected lack of next state!");
+                Ok(AppState::Quit)
+            }
         }
     }
-    Ok(AppState::Quit)
 }
+
+fn next_state(move_result: MoveResult) -> Option<AppState> {
+    match move_result {
+        MoveResult::PlayerWin => {
+            Some(AppState::Message("You WIN!".to_string()))
+        }
+        MoveResult::PlayerLose => {
+            Some(AppState::Message("You LOSE!".to_string()))
+        }
+        _ => None,
+    }
+}
+
+

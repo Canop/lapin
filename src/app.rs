@@ -1,7 +1,7 @@
 
 use {
     crate::{
-        game_runner,
+        game_runner::GameRunner,
         message_runner,
         io::W,
     },
@@ -17,8 +17,13 @@ pub fn run(w: &mut W) {
     let mut state = Ok(AppState::Level);
     loop {
         state = match state {
-            Ok(AppState::Level) => game_runner::run(w),
-            Ok(AppState::Message(s)) => message_runner::run(w, s),
+            Ok(AppState::Level) => {
+                let mut game_runner = GameRunner::new();
+                game_runner.run(w)
+            }
+            Ok(AppState::Message(s)) => {
+                message_runner::run(w, s)
+            }
             Ok(AppState::Quit) => { return; }
             Err(e) => {
                 println!("damn: {:?}", e);
