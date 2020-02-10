@@ -6,6 +6,7 @@ use {
         draw_board::BoardDrawer,
         io::W,
         screen::Screen,
+        task_sync::TaskLifetime,
         test_level,
         world,
     },
@@ -49,7 +50,7 @@ impl GameRunner {
         &mut self,
         w: &mut W,
         event: Event,
-        rx_events: &Receiver<Event>,
+        tl: TaskLifetime,
     ) -> Result<Option<AppState>> {
         let screen = Screen::new()?;
         Ok(match event {
@@ -67,7 +68,7 @@ impl GameRunner {
                             MoveResult::Ok => {
                                 let world_move = world::play(&self.board);
                                 debug!("world_move: {:?}", &world_move);
-                                bd.animate(&world_move)?;
+                                bd.animate(&world_move, tl)?;
                                 let move_result = self.board.apply_world_move(world_move);
                                 next_state(move_result)
                             }
@@ -103,10 +104,11 @@ impl GameRunner {
             bd.draw()?;
             w.flush()?;
             let event = rx_events.recv().unwrap();
-            if let Some(next_state) = self.handle_event(w, event, &rx_events)? {
+            event_source.unblock(false);
+            let tl = TaskLifetime::new(event_source.shared_event_count());
+            if let Some(next_state) = self.handle_event(w, event, tl)? {
                 return Ok(next_state);
             }
-            event_source.unblock(false);
         }
     }
 }

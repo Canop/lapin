@@ -21,5 +21,6 @@ pub mod path;
 pub mod pos;
 pub mod screen;
 pub mod skin;
+pub mod task_sync;
 pub mod test_level;
 pub mod world;

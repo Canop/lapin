@@ -64,7 +64,6 @@ pub fn run(
     w.flush()?;
     let rx_events = event_source.receiver();
     loop {
-        event_source.unblock(false); // bof...
         let e = rx_events.recv();
         match e {
             Ok(event) => {

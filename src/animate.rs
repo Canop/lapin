@@ -3,8 +3,10 @@ use {
     crate::{
         draw_board::*,
         pos::*,
+        task_sync::TaskLifetime,
         world::*,
     },
+    crossbeam::channel::{Receiver, Sender},
     crossterm::{
         cursor,
         style::{
@@ -18,6 +20,9 @@ use {
     std::{
         thread,
         time::Duration,
+    },
+    termimad::{
+        Event,
     },
 };
 
@@ -111,8 +116,16 @@ impl<'d> BoardDrawer<'d> {
     }
     /// the board is presumed already drawn on the state pre-move,
     /// we draw only the moving things
-    pub fn animate(&mut self, world_move: &WorldMove) -> Result<()> {
+    pub fn animate(
+        &mut self,
+        world_move: &WorldMove,
+        tl: TaskLifetime,
+    ) -> Result<()> {
         for av in 0..=8 {
+            if tl.is_expired() {
+                debug!("EXPIRE");
+                break;
+            }
             for (fox, fox_move) in self.board.foxes.iter().zip(&world_move.fox_moves) {
                 if let Some(dir) = fox_move {
                     self.draw_move_step(fox.pos, *dir, self.screen.skin.fox.color, av)?;
