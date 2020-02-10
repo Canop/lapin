@@ -41,14 +41,14 @@ impl<'d> BoardDrawer<'d> {
             y: screen.board_area.height as Int,
         };
         let dec = Pos {
-            x: dim.x / 2 - board.lapin.pos.x,
-            y: dim.y / 2 - board.lapin.pos.y,
+            x: dim.x / 2 - board.lapin_pos().x,
+            y: dim.y / 2 - board.lapin_pos().y,
         };
         Self { board, w, screen, dec, dim }
     }
 
     pub fn to_screen(&self, pos: Pos) -> Option<ScreenPos> {
-        //pos.to_screen(self.board.lapin.pos, &self.screen.board_area)
+        //pos.to_screen(self.board.lapin_pos(), &self.screen.board_area)
         let x = pos.x + self.dec.x;
         let y = pos.y + self.dec.y;
         if x>=0 && y>=0 && x<self.dim.x && y<self.dim.y {
@@ -98,7 +98,7 @@ impl<'d> BoardDrawer<'d> {
     fn draw_fg(
         &mut self,
         pos: Pos,
-        fg_skin: &FgSkin,
+        fg_skin: FgSkin,
     ) -> Result<()> {
         self.draw_chr(pos, fg_skin.chr, fg_skin.color)
     }
@@ -126,15 +126,9 @@ impl<'d> BoardDrawer<'d> {
             }
         }
 
-        // le lapin!
-        self.draw_fg(self.board.lapin.pos, &self.screen.skin.lapin)?;
-
-        // other characters
-        for fox in &self.board.foxes {
-            self.draw_fg(fox.pos, &self.screen.skin.fox)?;
-        }
-        for knight in &self.board.knights {
-            self.draw_fg(knight.pos, &self.screen.skin.knight)?;
+        // actors
+        for actor in &self.board.actors {
+            self.draw_fg(actor.pos, actor.kind.skin(&self.screen.skin))?;
         }
 
         Ok(())

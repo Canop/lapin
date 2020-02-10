@@ -1,6 +1,7 @@
 
 use {
     crate::{
+        actor::*,
         board::Board,
         pos::*,
     },
@@ -16,39 +17,37 @@ const MAX_OPEN_SIZE: usize = 100;
 const INFINITY: Int = 32_767;
 
 pub struct PathFinder<'b> {
+    actor: Actor,
     board: &'b Board,
-    taken_set: HashSet<Pos>,
+    actors_map: &'b HashMap<Pos, Actor>,
 }
 
 impl<'b> PathFinder<'b> {
-    pub fn new(board: &'b Board) -> Self {
-        let taken_set = HashSet::new();
+    pub fn new(
+        actor: Actor,
+        board: &'b Board,
+        actors_map: &'b HashMap<Pos, Actor>,
+    ) -> Self {
         Self {
+            actor,
             board,
-            taken_set,
+            actors_map,
         }
     }
-    pub fn reserve(&mut self, pos: Pos) {
-        self.taken_set.insert(pos);
-    }
-    pub fn unreserve(&mut self, pos: Pos) {
-        self.taken_set.remove(&pos);
-    }
     pub fn can_enter(&self, pos: Pos) -> bool {
-        self.board.is_enterable(pos) && !self.taken_set.contains(&pos)
+        self.board.is_enterable(pos) && !self.actors_map.contains_key(&pos)
     }
     pub fn dirs(&self) -> impl Iterator<Item = Dir> {
         [Dir::Up, Dir::Right, Dir::Down, Dir::Left].iter().copied()
     }
 
-    pub fn shortest(
+    pub fn find_to_vec(
         &self,
-        start: Pos,
         goals: &[Pos],
     ) -> Option<Vec<Pos>> {
         let mut shortest: Option<Vec<Pos>> = None;
         for goal in goals {
-            if let Some(path) = self.find(start, *goal) {
+            if let Some(path) = self.find(*goal) {
                 shortest = Some(if let Some(sh) = shortest {
                     if sh.len() < path.len() {
                         sh
@@ -74,9 +73,10 @@ impl<'b> PathFinder<'b> {
     /// to the goal.
     pub fn find(
         &self,
-        start: Pos,
         goal: Pos,
     ) -> Option<Vec<Pos>> {
+
+        let start = self.actor.pos;
 
         // nodes already evaluated, we know they're not interesting
         let mut closed_set: HashSet<Pos> = HashSet::new();
@@ -113,7 +113,10 @@ impl<'b> PathFinder<'b> {
             closed_set.insert(current);
             for dir in self.dirs() {
                 let neighbour = current.in_dir(dir);
-                if !self.can_enter(neighbour) || closed_set.contains(&neighbour) {
+                if
+                    neighbour != goal
+                    && ( !self.can_enter(neighbour) || closed_set.contains(&neighbour) )
+                {
                     continue;
                 }
                 let tentative_g_score = g_score.get(&current).unwrap() + 1;

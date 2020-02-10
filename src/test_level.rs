@@ -3,6 +3,7 @@
 
 use {
     crate::{
+        actor::*,
         consts::*,
         board::Board,
         pos::*,
@@ -11,7 +12,7 @@ use {
 
 pub fn build() -> Board {
     let mut board = Board::new(60, 50);
-    board.lapin.pos = Pos::new(30, 10);
+    board.actors[0].pos = Pos::new(30, 10);
     board.set_at(2, 3, WALL);
     board.set_h_line(6..17, 4, WALL);
     board.set_h_line(8..37, 8, WALL);
@@ -27,13 +28,13 @@ pub fn build() -> Board {
     board.set_range(2..9, 20..25, WALL);
     board.set_range(3..8, 21..24, VOID);
     board.set_h_line(8..36, 22, VOID);
-    board.add_knight_in(4, 22);
+    board.add_in(Kind::Knight, 4, 22);
 
     board.set_range(40..43, 23..26, VOID);
 
-    board.add_fox_in(50, 5);
-    board.add_fox_in(40, 16);
-    board.add_fox_in(4, 17);
+    board.add_in(Kind::Fox, 50, 5);
+    board.add_in(Kind::Fox, 40, 16);
+    board.add_in(Kind::Fox, 4, 17);
     board
 }
 

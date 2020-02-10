@@ -6,7 +6,6 @@ use {
         task_sync::TaskLifetime,
         world::*,
     },
-    crossbeam::channel::{Receiver, Sender},
     crossterm::{
         cursor,
         style::{
@@ -20,9 +19,6 @@ use {
     std::{
         thread,
         time::Duration,
-    },
-    termimad::{
-        Event,
     },
 };
 
@@ -71,6 +67,7 @@ impl<'d> BoardDrawer<'d> {
         start: Pos,
         dir: Dir,
         color: Color,
+        killed_id: Option<usize>,
         av: usize, // in [0, 8]
     ) -> Result<()> {
         let sp_start = self.to_screen(start);
@@ -101,10 +98,8 @@ impl<'d> BoardDrawer<'d> {
                 // kills
                 if av%2==1 {
                     self.draw_chr(start, '█', color)?;
-                    if self.board.lapin.pos == dst {
-                        self.draw_chr(dst, self.screen.skin.lapin.chr, Color::Red)?;
-                    } else {
-                        // FIXME kill no lapin
+                    if let Some(kind) = killed_id.map(|id| self.board.actors[id].kind) {
+                        self.draw_chr(dst, kind.skin(&self.screen.skin).chr, Color::Red)?;
                     }
                 } else {
                     self.draw_chr(start, ' ', color)?;
@@ -126,11 +121,16 @@ impl<'d> BoardDrawer<'d> {
                 debug!("EXPIRE");
                 break;
             }
-            for (fox, fox_move) in self.board.foxes.iter().zip(&world_move.fox_moves) {
-                if let Some(dir) = fox_move {
-                    self.draw_move_step(fox.pos, *dir, self.screen.skin.fox.color, av)?;
-                    //self.draw_move_step(fox.pos, *dir, Color::Red, av)?;
-                }
+            for actor_move in &world_move.actor_moves {
+                let actor_id = actor_move.actor_id;
+                let actor = self.board.actors[actor_id];
+                self.draw_move_step(
+                    actor.pos,
+                    actor_move.dir,
+                    actor.kind.skin(&self.screen.skin).color,
+                    actor_move.target_id,
+                    av,
+                )?;
             }
             thread::sleep(Duration::from_millis(40));
         }

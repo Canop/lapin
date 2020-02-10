@@ -16,6 +16,7 @@ use {
 };
 
 /// skin for a foreground element
+#[derive(Debug, Clone, Copy)]
 pub struct FgSkin {
     pub color: Color,
     pub chr: char,
@@ -26,6 +27,7 @@ impl FgSkin {
     }
 }
 
+#[derive(Debug)]
 pub struct Skin {
     pub cell_bg: [Color; 4],
     pub lapin: FgSkin,

@@ -8,19 +8,16 @@ use {
         screen::Screen,
         task_sync::TaskLifetime,
         test_level,
-        world,
+        world::*,
     },
-    crossbeam::channel::{Receiver, Sender},
     anyhow::Result,
     crossterm::{
         cursor,
         event::{
-            self,
             KeyEvent,
         },
         style::{
             Attribute,
-            Color,
             ContentStyle,
             PrintStyledContent,
         },
@@ -66,8 +63,8 @@ impl GameRunner {
                         bd.draw()?;
                         match move_result {
                             MoveResult::Ok => {
-                                let world_move = world::play(&self.board);
-                                debug!("world_move: {:?}", &world_move);
+                                let world_player = WorldPlayer::new(&self.board);
+                                let world_move = world_player.play();
                                 bd.animate(&world_move, tl)?;
                                 let move_result = self.board.apply_world_move(world_move);
                                 next_state(move_result)

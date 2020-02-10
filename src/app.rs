@@ -6,7 +6,6 @@ use {
         io::W,
     },
     termimad::{
-        Event,
         EventSource,
     },
 };

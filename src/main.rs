@@ -5,7 +5,11 @@ use {
     anyhow::Result,
     crossterm::{
         cursor,
-        terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
+        terminal::{
+            self,
+            EnterAlternateScreen,
+            LeaveAlternateScreen,
+        },
         QueueableCommand,
     },
     lapin::{
@@ -20,7 +24,6 @@ use {
         str::FromStr,
     },
     termimad::{
-        Event,
         EventSource,
     },
 };

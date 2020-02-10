@@ -1,14 +1,18 @@
 use {
     crate::{
+        actor::{
+            Actor,
+            Kind,
+        },
         command::*,
         consts::*,
-        fox::Fox,
-        knight::Knight,
-        lapin::Lapin,
         pos::*,
         world::*,
     },
     std::{
+        collections::{
+            HashMap,
+        },
         ops::{
             Range,
         },
@@ -19,10 +23,9 @@ use {
 pub struct Board {
     pub width: Int,
     pub height: Int,
+    pub default_cell: Cell,
     grid: Vec<Cell>,
-    pub lapin: Lapin,
-    pub foxes: Vec<Fox>,
-    pub knights: Vec<Knight>,
+    pub actors: Vec<Actor>, // lapin always at index 0
 }
 
 /// what we get on applying a world or player move.
@@ -38,25 +41,28 @@ pub enum MoveResult {
 impl Board {
 
     pub fn new(width: usize, height: usize) -> Self {
+        let default_cell = VOID;
         let grid = vec![VOID; width * height];
-        let lapin = Lapin::new(0, 0);
+        let mut actors = Vec::new();
+        actors.push(Actor::new(Kind::Lapin, 0, 0));
         Self {
             width: width as Int,
             height: height as Int,
+            default_cell,
             grid,
-            lapin,
-            foxes: Vec::new(),
-            knights: Vec::new(),
+            actors,
         }
     }
 
-    pub fn add_fox_in(&mut self, x: Int, y: Int) {
-        self.foxes.push(Fox::new(x, y));
-    }
-    pub fn add_knight_in(&mut self, x: Int, y: Int) {
-        self.knights.push(Knight::new(x, y));
+    pub fn lapin_pos(&self) -> Pos {
+        self.actors[0].pos
     }
 
+    pub fn add_in(&mut self, kind: Kind, x: Int, y: Int) {
+        self.actors.push(Actor::new(kind, x, y));
+    }
+
+    // FIXME remove
     pub fn is_enterable(&self, pos: Pos) -> bool {
         match self.get(pos) {
             VOID => true,
@@ -65,28 +71,16 @@ impl Board {
         }
     }
 
-    pub fn set_borders(&mut self, cell: Cell) {
-        for x in 0..self.width {
-            self.set_at(x, 0, cell);
-            self.set_at(x, self.height-1, cell);
-        }
-        for y in 1..self.height-1 {
-            self.set_at(0, y, cell);
-            self.set_at(self.width-1, y, cell);
-        }
-    }
-
-    pub fn idx(&self, pos: Pos) -> Option<usize> {
+    pub fn grid_idx(&self, pos: Pos) -> Option<usize> {
         if pos.in_grid(self.width, self.height) {
             Some((self.width * pos.y + pos.x) as usize)
         } else {
             None
         }
     }
-
     pub fn set(&mut self, pos: Pos, cell: Cell) {
-        if let Some(idx) = self.idx(pos) {
-            self.grid[idx] = cell;
+        if let Some(grid_idx) = self.grid_idx(pos) {
+            self.grid[grid_idx] = cell;
         }
     }
     pub fn set_range(&mut self, rx: Range<Int>, ry: Range<Int>, cell: Cell) {
@@ -102,31 +96,29 @@ impl Board {
     pub fn set_v_line(&mut self, x: Int, ry: Range<Int>, cell: Cell) {
         self.set_range(x..x+1, ry, cell);
     }
-
     pub fn set_at(&mut self, x: Int, y: Int, cell: Cell) {
-        if let Some(idx) = self.idx(Pos{x, y}) {
-            self.grid[idx] = cell;
+        if let Some(grid_idx) = self.grid_idx(Pos{x, y}) {
+            self.grid[grid_idx] = cell;
         }
     }
-
     pub fn get(&self, pos: Pos) -> Cell {
-        match self.idx(pos) {
-            Some(idx) => self.grid[idx],
-            None => VOID,
+        match self.grid_idx(pos) {
+            Some(grid_idx) => self.grid[grid_idx],
+            None => self.default_cell,
         }
     }
 
     pub fn apply_player_move(&mut self, cmd: Command) -> MoveResult {
         match cmd {
             Command::Move(dir) => {
-                let pos = self.lapin.pos.in_dir(dir);
+                let pos = self.lapin_pos().in_dir(dir);
                 if self.is_enterable(pos) {
-                    self.lapin.pos = pos;
+                    self.actors[0].pos = pos;
                     if self.get(pos) == FOREST {
                         return MoveResult::PlayerWin;
                     }
-                    for fox in &self.foxes {
-                        if self.lapin.pos == fox.pos {
+                    for i in 1..self.actors.len() {
+                        if self.actors[i].pos == pos {
                             return MoveResult::PlayerLose;
                         }
                     }
@@ -143,32 +135,35 @@ impl Board {
         }
     }
 
-    pub fn apply_world_move(&mut self, world_move: WorldMove) -> MoveResult {
-        for (knight, knight_move) in self.knights.iter_mut().zip(world_move.knight_moves) {
-            if let Some(dir) = knight_move {
-                knight.pos = knight.pos.in_dir(dir);
-            }
+    pub fn actors_map(&self) -> HashMap<Pos, Actor> {
+        let mut actors_map = HashMap::new();
+        for &actor in &self.actors {
+            actors_map.insert(actor.pos, actor);
         }
-        for (fox, fox_move) in self.foxes.iter_mut().zip(world_move.fox_moves) {
-            if let Some(dir) = fox_move {
-                fox.pos = fox.pos.in_dir(dir);
-                if self.lapin.pos == fox.pos {
-                    return MoveResult::PlayerLose;
-                }
-            }
-        }
-        for knight in &self.knights {
-            let mut i = 0;
-            while i < self.foxes.len() {
-                if self.foxes[i].pos == knight.pos {
-                    debug!("dead fox!");
-                    self.foxes.remove(i);
-                } else {
-                    i += 1;
-                }
-            }
-        }
+        actors_map
+    }
 
-        MoveResult::Ok
+    pub fn apply_world_move(&mut self, world_move: WorldMove) -> MoveResult {
+        let mut killed = vec![false; self.actors.len()];
+        for actor_move in world_move.actor_moves {
+            let actor_id = actor_move.actor_id;
+            if let Some(target_id) = actor_move.target_id {
+                killed[target_id] = true;
+            }
+            let new_pos = self.actors[actor_id].pos.in_dir(actor_move.dir);
+            self.actors[actor_id].pos = new_pos;
+        }
+        if killed[0] {
+            MoveResult::PlayerLose
+        } else {
+            let mut i = self.actors.len() - 1;
+            while i > 0 {
+                if killed[i] {
+                    self.actors.remove(i);
+                }
+                i -= 1;
+            }
+            MoveResult::Ok
+        }
     }
 }

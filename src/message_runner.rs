@@ -9,7 +9,6 @@ use {
     crossterm::{
         cursor,
         event::{
-            self,
             KeyEvent,
         },
         style::{
@@ -35,9 +34,7 @@ fn handle_event(
         Event::Key(KeyEvent { code, .. }) => {
             match Command::from(code) {
                 Some(Command::Move(_)) => None,
-                _ => {
-                    Some(AppState::Quit)
-                }
+                _ => Some(AppState::Quit),
             }
         }
         _ => {
@@ -62,6 +59,7 @@ pub fn run(
     w.queue(cursor::MoveTo(10, screen.height-2))?;
     w.queue(PrintStyledContent(cs.apply(message)))?;
     w.flush()?;
+    event_source.unblock(false); // ?
     let rx_events = event_source.receiver();
     loop {
         let e = rx_events.recv();
@@ -76,6 +74,5 @@ pub fn run(
             }
         }
     }
-    Ok(AppState::Quit)
 }
 
