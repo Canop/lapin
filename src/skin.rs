@@ -42,6 +42,13 @@ pub struct Skin {
     pub fox: FgSkin,
     pub knight: FgSkin,
     pub carrot: FgSkin,
+    pub hunter: FgSkin,
+    pub aiming_up: char,
+    pub aiming_right: char,
+    pub aiming_down: char,
+    pub aiming_left: char,
+    pub fire_horizontal: FgSkin,
+    pub fire_vertical: FgSkin,
 }
 
 impl Skin {
@@ -55,11 +62,17 @@ impl Skin {
         ];
         Self {
             cell_bg,
-            //lapin: FgSkin::new('◆', gray(13)),
             lapin: FgSkin::new('▮', gray(16)),
             fox: FgSkin::new('█', ansi(166)),
             knight: FgSkin::new('█', ansi(206)),
             carrot: FgSkin::new('⬩', ansi(172)),
+            hunter: FgSkin::new('█', ansi(58)),
+            aiming_up: '▴',
+            aiming_right: '▸',
+            aiming_down: '▾',
+            aiming_left: '◂',
+            fire_horizontal: FgSkin::new('―', Color::White),
+            fire_vertical: FgSkin::new('│', Color::White),
         }
     }
     pub fn bg_command(&self, cell: Cell) -> SetBackgroundColor {

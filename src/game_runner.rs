@@ -5,6 +5,7 @@ use {
         command::Command,
         draw_board::BoardDrawer,
         io::W,
+        pos::*,
         screen::Screen,
         task_sync::*,
         test_level,
@@ -43,8 +44,8 @@ impl GameRunner {
 
     fn handle_event(
         &mut self,
-        w: &mut W,
         event: Event,
+        pos_converter: PosConverter,
     ) -> Result<Option<AppState>> {
         Ok(match event {
             Event::Key(KeyEvent { code, .. }) => {
@@ -58,6 +59,11 @@ impl GameRunner {
                         next_state(move_result)
                     }
                 }
+            }
+            Event::Click(x, y) => {
+                let sp = ScreenPos{ x, y };
+                debug!("click in {:?}", pos_converter.to_real(sp));
+                None
             }
             _ => {
                 debug!("ignored event: {:?}", event);
@@ -82,12 +88,13 @@ impl GameRunner {
         w.queue(PrintStyledContent(cs.apply("hit arrows to move, 'q' to quit".to_string())))?;
         loop {
             let mut bd = BoardDrawer::new(&self.board, w, &screen);
+            let pos_converter = bd.pos_converter;
             bd.draw()?;
             let next_state = match self.board.current_player {
                 Player::Lapin => {
                     let event = dam.next_event().unwrap();
                     dam.unblock();
-                    self.handle_event(w, event)?
+                    self.handle_event(event, pos_converter)?
                 }
                 Player::World => {
                     let world_player = WorldPlayer::new(&self.board);

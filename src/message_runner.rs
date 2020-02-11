@@ -23,7 +23,6 @@ use {
     std::io::Write,
     termimad::{
         Event,
-        EventSource,
         gray,
     },
 };

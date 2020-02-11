@@ -17,7 +17,6 @@ use {
         QueueableCommand,
     },
     std::{
-        thread,
         time::Duration,
     },
 };
@@ -70,9 +69,9 @@ impl<'d> BoardDrawer<'d> {
         killed_id: Option<usize>,
         av: usize, // in [0, 8]
     ) -> Result<()> {
-        let sp_start = self.to_screen(start);
+        let sp_start = self.pos_converter.to_screen(start);
         let dst = start.in_dir(dir);
-        let sp_dst = self.to_screen(dst);
+        let sp_dst = self.pos_converter.to_screen(dst);
         let start_bg = self.screen.skin.bg(self.board.get(start));
         let dst_bg = self.screen.skin.bg(self.board.get(dst));
         match dir {
@@ -93,19 +92,51 @@ impl<'d> BoardDrawer<'d> {
                 self.draw_bicolor_horizontal(sp_dst, color, dst_bg, av)?;
             }
             _ => {
-                // for diagonals, for now, we just alternate between one
-                // and the other. This is about OK because diagonals are for
-                // kills
-                if av%2==1 {
-                    self.draw_chr(start, '█', color)?;
-                    if let Some(kind) = killed_id.map(|id| self.board.actors[id].kind) {
-                        self.draw_chr(dst, kind.skin(&self.screen.skin).chr, Color::Red)?;
-                    }
-                } else {
-                    self.draw_chr(start, ' ', color)?;
-                    self.draw_chr(dst, '█', color)?;
+                // should not happen
+            }
+        }
+        Ok(())
+    }
+    fn draw_kill_step(
+        &mut self,
+        start: Pos,
+        dir: Dir,
+        color: Color,
+        killed_id: Option<usize>,
+        av: usize, // in [0, 8]
+    ) -> Result<()> {
+        let dst = start.in_dir(dir);
+        if av%2==1 {
+            self.draw_chr(start, '█', color)?;
+            if let Some(kind) = killed_id.map(|id| self.board.actors[id].kind) {
+                self.draw_chr(dst, kind.skin(&self.screen.skin).chr, Color::Red)?;
+            }
+        } else {
+            self.draw_chr(start, ' ', color)?;
+            self.draw_chr(dst, '█', color)?;
+        }
+        Ok(())
+    }
+    fn draw_fire_step(
+        &mut self,
+        start: Pos,
+        dir: Dir,
+        target_id: Option<usize>,
+        av: usize, // in [0, 8]
+    ) -> Result<()> {
+        let mut pos = start;
+        for _ in av/3..av {
+            pos = pos.in_dir(dir);
+            if let Some(target_id) = target_id {
+                if self.board.actors[target_id].pos == pos {
+                    break;
                 }
             }
+            let fg_skin = match dir {
+                Dir::Up | Dir::Down => self.screen.skin.fire_vertical,
+                _ => self.screen.skin.fire_horizontal,
+            };
+            self.draw_fg(pos, fg_skin)?;
         }
         Ok(())
     }
@@ -120,15 +151,37 @@ impl<'d> BoardDrawer<'d> {
             for actor_move in &world_move.actor_moves {
                 let actor_id = actor_move.actor_id;
                 let actor = self.board.actors[actor_id];
-                self.draw_move_step(
-                    actor.pos,
-                    actor_move.dir,
-                    actor.kind.skin(&self.screen.skin).color,
-                    actor_move.target_id,
-                    av,
-                )?;
+                match actor_move.action {
+                    Action::Moves(dir) => {
+                        self.draw_move_step(
+                            actor.pos,
+                            dir,
+                            actor.kind.skin(&self.screen.skin).color,
+                            actor_move.target_id,
+                            av,
+                        )?;
+                    }
+                    Action::Eats(dir) => {
+                        self.draw_kill_step(
+                            actor.pos,
+                            dir,
+                            actor.kind.skin(&self.screen.skin).color,
+                            actor_move.target_id,
+                            av,
+                        )?;
+                    }
+                    Action::Fires(dir) => {
+                        self.draw_fire_step(
+                            actor.pos,
+                            dir,
+                            actor_move.target_id,
+                            av,
+                        )?;
+                    }
+                    _ => {}
+                }
             }
-            if !dam.try_wait(Duration::from_millis(40)) {
+            if !dam.try_wait(Duration::from_millis(50)) {
                 debug!("break animation");
                 break;
             }

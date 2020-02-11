@@ -5,6 +5,7 @@ use {
     anyhow::Result,
     crossterm::{
         cursor,
+        event::{DisableMouseCapture, EnableMouseCapture},
         terminal::{
             self,
             EnterAlternateScreen,
@@ -58,9 +59,11 @@ fn main() -> Result<()> {
     w.queue(EnterAlternateScreen)?;
     w.queue(cursor::Hide)?; // hiding the cursor
     terminal::enable_raw_mode()?;
+    w.queue(EnableMouseCapture)?;
     let mut dam = Dam::new()?;
     app::run(&mut w, &mut dam);
     dam.kill();
+    w.queue(DisableMouseCapture)?;
     terminal::disable_raw_mode()?;
     w.queue(cursor::Show)?;
     w.queue(LeaveAlternateScreen)?;

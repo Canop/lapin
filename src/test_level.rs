@@ -31,8 +31,11 @@ pub fn build() -> Board {
     board.set_h_line(8..36, 22, VOID);
     board.add_actor_in(ActorKind::Knight, 4, 22);
 
+    // pont sud
     board.set_range(40..43, 23..26, VOID);
 
+    board.add_actor_in(ActorKind::Hunter, 15, -3);
+    board.add_actor_in(ActorKind::Hunter, 70, 20);
     board.add_actor_in(ActorKind::Fox, 50, 5);
     board.add_actor_in(ActorKind::Fox, 40, 16);
     board.add_actor_in(ActorKind::Fox, 4, 17);
@@ -41,6 +44,18 @@ pub fn build() -> Board {
     board.add_item_in(ItemKind::Carrot, 31, 13);
     board.add_item_in(ItemKind::Carrot, 33, 14);
     board.add_item_in(ItemKind::Carrot, 23, 11);
+    board.add_item_in(ItemKind::Carrot, 27, 22);
+    board.add_item_in(ItemKind::Carrot, 33, 22);
+    for x in -5..-1 {
+        for y in -7..-4 {
+            board.add_item_in(ItemKind::Carrot, x, y);
+        }
+    }
+    for x in 55..61 {
+        for y in 7..9 {
+            board.add_item_in(ItemKind::Carrot, x, y);
+        }
+    }
     board
 }
 

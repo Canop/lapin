@@ -25,8 +25,7 @@ pub struct BoardDrawer<'d> {
     pub board: &'d Board,
     pub w: &'d mut W,
     pub screen: &'d Screen,
-    dec: Pos,
-    dim: Pos,
+    pub pos_converter: PosConverter,
 }
 impl<'d> BoardDrawer<'d> {
     /// a new board_drawer must be created if the screen is resized
@@ -36,34 +35,8 @@ impl<'d> BoardDrawer<'d> {
         w: &'d mut W,
         screen: &'d Screen,
     ) -> Self {
-        let dim = Pos {
-            x: screen.board_area.width as Int,
-            y: screen.board_area.height as Int,
-        };
-        let dec = Pos {
-            x: dim.x / 2 - board.lapin_pos().x,
-            y: dim.y / 2 - board.lapin_pos().y,
-        };
-        Self { board, w, screen, dec, dim }
-    }
-
-    pub fn to_screen(&self, pos: Pos) -> Option<ScreenPos> {
-        //pos.to_screen(self.board.lapin_pos(), &self.screen.board_area)
-        let x = pos.x + self.dec.x;
-        let y = pos.y + self.dec.y;
-        if x>=0 && y>=0 && x<self.dim.x && y<self.dim.y {
-            Some(ScreenPos {
-                x: x as u16,
-                y: y as u16,
-            })
-        } else {
-            None
-        }
-    }
-    pub fn to_real(&self, sp: ScreenPos) -> Pos {
-        let x = sp.x as Int - self.dec.x;
-        let y = sp.y as Int - self.dec.y;
-        Pos { x, y }
+        let pos_converter = PosConverter::from(board.lapin_pos(), screen);
+        Self { board, w, screen, pos_converter }
     }
 
     pub fn draw_chr_bg(
@@ -73,7 +46,7 @@ impl<'d> BoardDrawer<'d> {
         fg_color: Color,
         bg_color: Color,
     ) -> Result<()> {
-        if let Some(sp) = self.to_screen(pos) {
+        if let Some(sp) = self.pos_converter.to_screen(pos) {
             let cs = ContentStyle {
                 foreground_color: Some(fg_color),
                 background_color: Some(bg_color),
@@ -95,7 +68,7 @@ impl<'d> BoardDrawer<'d> {
         self.draw_chr_bg(pos, chr, color, self.screen.skin.bg(cell))
     }
 
-    fn draw_fg(
+    pub fn draw_fg(
         &mut self,
         pos: Pos,
         fg_skin: FgSkin,
@@ -115,7 +88,7 @@ impl<'d> BoardDrawer<'d> {
             let mut sx = self.screen.board_area.left;
             self.w.queue(cursor::MoveTo(sx, sy))?;
             for _ in 0..self.screen.board_area.width {
-                let pos = self.to_real(ScreenPos::new(sx, sy));
+                let pos = self.pos_converter.to_real(ScreenPos::new(sx, sy));
                 let cell = self.board.get(pos);
                 if cell != last_cell {
                     self.w.queue(self.screen.skin.bg_command(cell))?;
@@ -134,7 +107,7 @@ impl<'d> BoardDrawer<'d> {
 
         // actors
         for actor in &self.board.actors {
-            self.draw_fg(actor.pos, actor.kind.skin(&self.screen.skin))?;
+            self.draw_fg(actor.pos, actor.skin(&self.screen.skin))?;
         }
 
         Ok(())

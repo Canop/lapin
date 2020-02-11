@@ -2,6 +2,7 @@ use {
     anyhow::Result,
     crate::{
         io::W,
+        screen::Screen,
     },
     crossterm::{
         cursor,
@@ -21,7 +22,7 @@ pub struct Pos {
     pub y: Int,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Dir {
     Up,
     Right,
@@ -80,6 +81,35 @@ impl Pos {
             _ => None,
         }
     }
+    pub fn quadrant_to(&self, dst:Pos) -> Dir {
+        let (dx, dy) = (dst.x-self.x, dst.y-self.y);
+        if dx.abs() < dy.abs() {
+            if dy < 0 {
+                Dir::Up
+            } else {
+                Dir::Down
+            }
+        } else {
+            if dx > 0 {
+                Dir::Right
+            } else {
+                Dir::Left
+            }
+        }
+    }
+    pub fn is_in_dir(&self, dst: Pos, dir: Dir) -> bool {
+        let (dx, dy) = (dst.x-self.x, dst.y-self.y);
+        match dir {
+            Dir::Up => dx == 0 && dy > 0,
+            Dir::Right => dy == 0 && dx > 0,
+            Dir::Down => dx == 0 && dy < 0,
+            Dir::Left => dy == 0 && dx < 0,
+            _ => {
+                warn!("not implemented");
+                false
+            }
+        }
+    }
     pub fn in_dir(&self, dir: Dir) -> Self {
         match dir {
             Dir::Up => Pos { x:self.x, y:self.y-1 },
@@ -104,7 +134,39 @@ impl ScreenPos {
     }
 }
 
-pub trait Mobile {
-    fn get_pos(&self) -> Pos;
-    fn set_pos(&mut self, pos: Pos) -> Pos;
+#[derive(Debug, Clone, Copy)]
+pub struct PosConverter {
+    dec: Pos,
+    dim: Pos,
 }
+impl PosConverter {
+    pub fn from(center: Pos, screen: &Screen) -> Self {
+        let dim = Pos {
+            x: screen.board_area.width as Int,
+            y: screen.board_area.height as Int,
+        };
+        let dec = Pos {
+            x: dim.x / 2 - center.x,
+            y: dim.y / 2 - center.y,
+        };
+        Self { dec, dim }
+    }
+    pub fn to_screen(&self, pos: Pos) -> Option<ScreenPos> {
+        let x = pos.x + self.dec.x;
+        let y = pos.y + self.dec.y;
+        if x>=0 && y>=0 && x<self.dim.x && y<self.dim.y {
+            Some(ScreenPos {
+                x: x as u16,
+                y: y as u16,
+            })
+        } else {
+            None
+        }
+    }
+    pub fn to_real(&self, sp: ScreenPos) -> Pos {
+        let x = sp.x as Int - self.dec.x;
+        let y = sp.y as Int - self.dec.y;
+        Pos { x, y }
+    }
+}
+

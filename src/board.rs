@@ -170,10 +170,26 @@ impl Board {
         for actor_move in world_move.actor_moves {
             let actor_id = actor_move.actor_id;
             if let Some(target_id) = actor_move.target_id {
-                killed[target_id] = true;
+                // following test is only valid now
+                if self.actors[target_id].kind.is_immune_to_fire() {
+                    debug!("target is is_immune_to_fire");
+                } else {
+                    killed[target_id] = true;
+                }
             }
-            let new_pos = self.actors[actor_id].pos.in_dir(actor_move.dir);
-            self.actors[actor_id].pos = new_pos;
+            match actor_move.action {
+                Action::Eats(dir) | Action::Moves(dir) => {
+                    let new_pos = self.actors[actor_id].pos.in_dir(dir);
+                    self.actors[actor_id].pos = new_pos;
+                }
+                Action::Aims(dir) => {
+                    self.actors[actor_id].state = ActorState::Aiming(dir);
+                }
+                Action::StopsAiming => {
+                    self.actors[actor_id].state = ActorState::Normal;
+                }
+                _ => { }
+            }
         }
         self.current_player = Player::Lapin;
         if killed[0] {
