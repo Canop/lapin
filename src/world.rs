@@ -169,7 +169,9 @@ impl<'t> WorldPlayer<'t> {
     fn find_actor_move(&self, actor_id: usize) -> Option<ActorMove> {
         let actor = self.board.actors[actor_id];
         match actor.kind {
-            ActorKind::Fox | ActorKind::Knight => self.find_eater_move(actor_id, actor),
+            ActorKind::Fox | ActorKind::Knight | ActorKind::Wolf => {
+                self.find_eater_move(actor_id, actor)
+            }
             ActorKind::Hunter => self.find_firer_move(actor_id, actor),
             _ => None, // No AI
         }

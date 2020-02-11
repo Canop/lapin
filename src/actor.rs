@@ -17,6 +17,7 @@ pub enum ActorState {
 pub enum ActorKind {
     Lapin,
     Knight,
+    Wolf,
     Fox,
     Hunter,
 }
@@ -25,6 +26,8 @@ impl ActorKind {
         match (self, other) {
             (Self::Knight, Self::Fox) => true,
             (Self::Knight, Self::Hunter) => true,
+            (Self::Wolf, Self::Hunter) => true,
+            (Self::Wolf, Self::Lapin) => true,
             (Self::Fox, Self::Lapin) => true,
             _ => false,
         }
@@ -33,6 +36,8 @@ impl ActorKind {
         match (self, other) {
             (Self::Knight, Self::Fox) => true,
             //(Self::Knight, Self::Hunter) => true,
+            (Self::Wolf, Self::Hunter) => true,
+            (Self::Wolf, Self::Lapin) => true,
             (Self::Fox, Self::Lapin) => true,
             (Self::Hunter, Self::Lapin) => true,
             _ => false,
@@ -54,6 +59,7 @@ impl ActorKind {
         match self {
             Self::Lapin => skin.lapin,
             Self::Knight => skin.knight,
+            Self::Wolf => skin.wolf,
             Self::Fox => skin.fox,
             Self::Hunter => skin.hunter,
         }

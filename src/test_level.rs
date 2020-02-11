@@ -36,6 +36,7 @@ pub fn build() -> Board {
 
     board.add_actor_in(ActorKind::Hunter, 15, -3);
     board.add_actor_in(ActorKind::Hunter, 70, 20);
+    board.add_actor_in(ActorKind::Wolf, 17, 30);
     board.add_actor_in(ActorKind::Fox, 50, 5);
     board.add_actor_in(ActorKind::Fox, 40, 16);
     board.add_actor_in(ActorKind::Fox, 4, 17);

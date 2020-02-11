@@ -40,6 +40,7 @@ pub struct Skin {
     pub cell_bg: [Color; 4],
     pub lapin: FgSkin,
     pub fox: FgSkin,
+    pub wolf: FgSkin,
     pub knight: FgSkin,
     pub carrot: FgSkin,
     pub hunter: FgSkin,
@@ -65,6 +66,7 @@ impl Skin {
             lapin: FgSkin::new('▮', gray(16)),
             fox: FgSkin::new('█', ansi(166)),
             knight: FgSkin::new('█', ansi(206)),
+            wolf: FgSkin::new('█', gray(0)),
             carrot: FgSkin::new('⬩', ansi(172)),
             hunter: FgSkin::new('█', ansi(58)),
             aiming_up: '▴',
@@ -90,6 +92,5 @@ impl Skin {
         };
         PrintStyledContent(cs.apply(fg_skin.chr))
     }
-
 
 }
