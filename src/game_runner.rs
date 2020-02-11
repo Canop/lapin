@@ -23,10 +23,8 @@ use {
         },
         QueueableCommand,
     },
-    std::io::Write,
     termimad::{
         Event,
-        EventSource,
         gray,
     },
 };
@@ -100,6 +98,8 @@ impl GameRunner {
                 }
             };
             if let Some(next_state) = next_state {
+                let mut bd = BoardDrawer::new(&self.board, w, &screen);
+                bd.draw()?;
                 return Ok(next_state);
             }
         }

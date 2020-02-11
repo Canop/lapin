@@ -6,9 +6,6 @@ use {
         io::W,
         task_sync::*,
     },
-    termimad::{
-        EventSource,
-    },
 };
 
 pub enum AppState {

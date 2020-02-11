@@ -24,9 +24,6 @@ use {
         io::Write,
         str::FromStr,
     },
-    termimad::{
-        EventSource,
-    },
 };
 
 /// configure the application log according to env variable.

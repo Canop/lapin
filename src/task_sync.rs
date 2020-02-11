@@ -1,9 +1,7 @@
 use {
     anyhow::Result,
     crossbeam::channel::{
-        self,
         after,
-        bounded,
         Receiver,
     },
     std::{
