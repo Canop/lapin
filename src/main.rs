@@ -14,6 +14,7 @@ use {
     },
     lapin::{
         app,
+        task_sync::*,
     },
     log::LevelFilter,
     simplelog,
@@ -60,11 +61,9 @@ fn main() -> Result<()> {
     w.queue(EnterAlternateScreen)?;
     w.queue(cursor::Hide)?; // hiding the cursor
     terminal::enable_raw_mode()?;
-    let event_source = EventSource::new()?;
-    app::run(&mut w, &event_source);
-    event_source.unblock(true);
-    let event_source_end = event_source.receiver().recv();
-    debug!("event_source_end : {:?}", event_source_end);
+    let mut dam = Dam::new()?;
+    app::run(&mut w, &mut dam);
+    dam.kill();
     terminal::disable_raw_mode()?;
     w.queue(cursor::Show)?;
     w.queue(LeaveAlternateScreen)?;

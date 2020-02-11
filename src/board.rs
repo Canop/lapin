@@ -1,11 +1,9 @@
 use {
     crate::{
-        actor::{
-            Actor,
-            Kind,
-        },
+        actor::*,
         command::*,
         consts::*,
+        item::*,
         pos::*,
         world::*,
     },
@@ -26,6 +24,8 @@ pub struct Board {
     pub default_cell: Cell,
     grid: Vec<Cell>,
     pub actors: Vec<Actor>, // lapin always at index 0
+    pub items: HashMap<Pos, Item>,
+    pub current_player: Player, // whose turn it is
 }
 
 /// what we get on applying a world or player move.
@@ -38,19 +38,28 @@ pub enum MoveResult {
     PlayerLose,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum Player {
+    Lapin, // played by a presumed human
+    World, // the rest
+}
+
 impl Board {
 
     pub fn new(width: usize, height: usize) -> Self {
         let default_cell = VOID;
         let grid = vec![VOID; width * height];
         let mut actors = Vec::new();
-        actors.push(Actor::new(Kind::Lapin, 0, 0));
+        actors.push(Actor::new(ActorKind::Lapin, 0, 0));
+        let items = HashMap::new();
         Self {
             width: width as Int,
             height: height as Int,
             default_cell,
             grid,
             actors,
+            items,
+            current_player: Player::Lapin,
         }
     }
 
@@ -58,8 +67,11 @@ impl Board {
         self.actors[0].pos
     }
 
-    pub fn add_in(&mut self, kind: Kind, x: Int, y: Int) {
+    pub fn add_actor_in(&mut self, kind: ActorKind, x: Int, y: Int) {
         self.actors.push(Actor::new(kind, x, y));
+    }
+    pub fn add_item_in(&mut self, kind: ItemKind, x: Int, y: Int) {
+        self.items.insert(Pos::new(x, y), Item { kind });
     }
 
     // FIXME remove
@@ -108,19 +120,37 @@ impl Board {
         }
     }
 
+    pub fn actors_map(&self) -> HashMap<Pos, Actor> {
+        let mut actors_map = HashMap::new();
+        for &actor in &self.actors {
+            actors_map.insert(actor.pos, actor);
+        }
+        actors_map
+    }
+
     pub fn apply_player_move(&mut self, cmd: Command) -> MoveResult {
         match cmd {
             Command::Move(dir) => {
+                let mut end_turn = true;
                 let pos = self.lapin_pos().in_dir(dir);
                 if self.is_enterable(pos) {
                     self.actors[0].pos = pos;
                     if self.get(pos) == FOREST {
                         return MoveResult::PlayerWin;
                     }
+                    if let Some(_item) = self.items.get(&pos) {
+                        // right now there are only carrots
+                        self.items.remove(&pos);
+                        info!("Lapin eat a carrot");
+                        end_turn = false;
+                    }
                     for i in 1..self.actors.len() {
                         if self.actors[i].pos == pos {
                             return MoveResult::PlayerLose;
                         }
+                    }
+                    if end_turn {
+                        self.current_player = Player::World;
                     }
                     MoveResult::Ok
                 } else {
@@ -135,14 +165,6 @@ impl Board {
         }
     }
 
-    pub fn actors_map(&self) -> HashMap<Pos, Actor> {
-        let mut actors_map = HashMap::new();
-        for &actor in &self.actors {
-            actors_map.insert(actor.pos, actor);
-        }
-        actors_map
-    }
-
     pub fn apply_world_move(&mut self, world_move: WorldMove) -> MoveResult {
         let mut killed = vec![false; self.actors.len()];
         for actor_move in world_move.actor_moves {
@@ -153,6 +175,7 @@ impl Board {
             let new_pos = self.actors[actor_id].pos.in_dir(actor_move.dir);
             self.actors[actor_id].pos = new_pos;
         }
+        self.current_player = Player::Lapin;
         if killed[0] {
             MoveResult::PlayerLose
         } else {

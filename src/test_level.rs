@@ -6,6 +6,7 @@ use {
         actor::*,
         consts::*,
         board::Board,
+        item::*,
         pos::*,
     },
 };
@@ -28,13 +29,18 @@ pub fn build() -> Board {
     board.set_range(2..9, 20..25, WALL);
     board.set_range(3..8, 21..24, VOID);
     board.set_h_line(8..36, 22, VOID);
-    board.add_in(Kind::Knight, 4, 22);
+    board.add_actor_in(ActorKind::Knight, 4, 22);
 
     board.set_range(40..43, 23..26, VOID);
 
-    board.add_in(Kind::Fox, 50, 5);
-    board.add_in(Kind::Fox, 40, 16);
-    board.add_in(Kind::Fox, 4, 17);
+    board.add_actor_in(ActorKind::Fox, 50, 5);
+    board.add_actor_in(ActorKind::Fox, 40, 16);
+    board.add_actor_in(ActorKind::Fox, 4, 17);
+
+    board.add_item_in(ItemKind::Carrot, 31, 12);
+    board.add_item_in(ItemKind::Carrot, 31, 13);
+    board.add_item_in(ItemKind::Carrot, 33, 14);
+    board.add_item_in(ItemKind::Carrot, 23, 11);
     board
 }
 

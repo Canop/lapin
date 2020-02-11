@@ -17,34 +17,31 @@ impl ActorState {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub enum Kind {
+pub enum ActorKind {
     Lapin, // there's only one
     Knight,
     Fox,
 }
-impl Kind {
-    pub fn eats(self, other: Kind) -> bool {
+impl ActorKind {
+    pub fn eats(self, other: ActorKind) -> bool {
         match (self, other) {
-            (Kind::Knight, Kind::Fox) => true,
-            (Kind::Fox, Kind::Lapin) => true,
+            (ActorKind::Knight, ActorKind::Fox) => true,
+            (ActorKind::Fox, ActorKind::Lapin) => true,
             _ => false,
         }
     }
     pub fn skin(self, skin: &Skin) -> FgSkin {
         match self {
-            Kind::Lapin => skin.lapin,
-            Kind::Knight => skin.knight,
-            Kind::Fox => skin.fox,
+            ActorKind::Lapin => skin.lapin,
+            ActorKind::Knight => skin.knight,
+            ActorKind::Fox => skin.fox,
         }
     }
 }
 
-// an actor id is only temporarly valid
-//put type ActorId = usize;
-
 #[derive(Debug, Clone, Copy)]
 pub struct Actor {
-    pub kind: Kind,
+    pub kind: ActorKind,
     pub pos: Pos,
     pub state: ActorState,
 }
@@ -52,7 +49,7 @@ impl Actor {
     pub fn eats(self, other: Actor) -> bool {
         self.kind.eats(other.kind)
     }
-    pub fn new(kind: Kind, x: Int, y: Int) -> Self {
+    pub fn new(kind: ActorKind, x: Int, y: Int) -> Self {
         Self {
             kind,
             pos: Pos::new(x, y),

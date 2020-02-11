@@ -3,7 +3,7 @@ use {
     crate::{
         draw_board::*,
         pos::*,
-        task_sync::TaskLifetime,
+        task_sync::*,
         world::*,
     },
     crossterm::{
@@ -114,13 +114,9 @@ impl<'d> BoardDrawer<'d> {
     pub fn animate(
         &mut self,
         world_move: &WorldMove,
-        tl: TaskLifetime,
+        dam: &mut Dam,
     ) -> Result<()> {
         for av in 0..=8 {
-            if tl.is_expired() {
-                debug!("EXPIRE");
-                break;
-            }
             for actor_move in &world_move.actor_moves {
                 let actor_id = actor_move.actor_id;
                 let actor = self.board.actors[actor_id];
@@ -132,7 +128,10 @@ impl<'d> BoardDrawer<'d> {
                     av,
                 )?;
             }
-            thread::sleep(Duration::from_millis(40));
+            if !dam.try_wait(Duration::from_millis(40)) {
+                debug!("break animation");
+                break;
+            }
         }
         Ok(())
     }

@@ -1,10 +1,15 @@
 use {
     crate::{
         consts::*,
+        item::*,
     },
     crossterm::{
         style::{
+            Attributes,
+            ContentStyle,
             Color,
+            PrintStyledContent,
+            SetForegroundColor,
             SetBackgroundColor,
         },
     },
@@ -25,6 +30,9 @@ impl FgSkin {
     pub fn new(chr: char, color: Color) -> Self {
         Self { chr, color }
     }
+    pub fn fg_command(&self) -> SetForegroundColor {
+        SetForegroundColor(self.color)
+    }
 }
 
 #[derive(Debug)]
@@ -33,6 +41,7 @@ pub struct Skin {
     pub lapin: FgSkin,
     pub fox: FgSkin,
     pub knight: FgSkin,
+    pub carrot: FgSkin,
 }
 
 impl Skin {
@@ -50,6 +59,7 @@ impl Skin {
             lapin: FgSkin::new('▮', gray(16)),
             fox: FgSkin::new('█', ansi(166)),
             knight: FgSkin::new('█', ansi(206)),
+            carrot: FgSkin::new('⬩', ansi(172)),
         }
     }
     pub fn bg_command(&self, cell: Cell) -> SetBackgroundColor {
@@ -57,6 +67,15 @@ impl Skin {
     }
     pub fn bg(&self, cell: Cell) -> Color {
         self.cell_bg[cell as usize]
+    }
+    pub fn styled_char(&self, item: Item, cell: Cell) -> PrintStyledContent<char> {
+        let fg_skin = item.kind.skin(self);
+        let cs = ContentStyle {
+            foreground_color: Some(fg_skin.color),
+            background_color: Some(self.bg(cell)),
+            attributes: Attributes::default(),
+        };
+        PrintStyledContent(cs.apply(fg_skin.chr))
     }
 
 

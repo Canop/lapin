@@ -107,7 +107,7 @@ impl<'d> BoardDrawer<'d> {
         &mut self,
     ) -> Result<()> {
 
-        // drawing the background
+        // background and items
         let mut last_cell = VOID;
         self.w.queue(self.screen.skin.bg_command(last_cell))?;
         for j in 0..self.screen.board_area.height {
@@ -121,10 +121,16 @@ impl<'d> BoardDrawer<'d> {
                     self.w.queue(self.screen.skin.bg_command(cell))?;
                     last_cell = cell;
                 }
-                self.w.queue(Print(' '))?;
+                if let Some(&item) = self.board.items.get(&pos) {
+                    self.w.queue(self.screen.skin.styled_char(item, cell))?;
+                    self.w.queue(self.screen.skin.bg_command(cell))?;
+                } else {
+                    self.w.queue(Print(' '))?;
+                }
                 sx += 1;
             }
         }
+
 
         // actors
         for actor in &self.board.actors {

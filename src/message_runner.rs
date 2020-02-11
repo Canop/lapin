@@ -4,6 +4,7 @@ use {
         command::Command,
         io::W,
         screen::Screen,
+        task_sync::*,
     },
     anyhow::Result,
     crossterm::{
@@ -48,7 +49,7 @@ fn handle_event(
 pub fn run(
     w: &mut W,
     message: String,
-    event_source: &EventSource,
+    dam: &mut Dam,
 ) -> Result<AppState> {
     let screen = Screen::new()?;
     let cs = ContentStyle {
@@ -59,19 +60,11 @@ pub fn run(
     w.queue(cursor::MoveTo(10, screen.height-2))?;
     w.queue(PrintStyledContent(cs.apply(message)))?;
     w.flush()?;
-    event_source.unblock(false); // ?
-    let rx_events = event_source.receiver();
     loop {
-        let e = rx_events.recv();
-        match e {
-            Ok(event) => {
-                if let Some(state) = handle_event(event)? {
-                    return Ok(state);
-                }
-            }
-            Err(e) => {
-                debug!("error in event channel : {:?}", e);
-            }
+        let event = dam.next_event().unwrap();
+        dam.unblock();
+        if let Some(state) = handle_event(event)? {
+            return Ok(state);
         }
     }
 }

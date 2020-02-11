@@ -6,7 +6,7 @@ use {
         draw_board::BoardDrawer,
         io::W,
         screen::Screen,
-        task_sync::TaskLifetime,
+        task_sync::*,
         test_level,
         world::*,
     },
@@ -47,9 +47,7 @@ impl GameRunner {
         &mut self,
         w: &mut W,
         event: Event,
-        tl: TaskLifetime,
     ) -> Result<Option<AppState>> {
-        let screen = Screen::new()?;
         Ok(match event {
             Event::Key(KeyEvent { code, .. }) => {
                 match Command::from(code) {
@@ -59,18 +57,7 @@ impl GameRunner {
                     }
                     Some(cmd) => {
                         let move_result = self.board.apply_player_move(cmd);
-                        let mut bd = BoardDrawer::new(&self.board, w, &screen);
-                        bd.draw()?;
-                        match move_result {
-                            MoveResult::Ok => {
-                                let world_player = WorldPlayer::new(&self.board);
-                                let world_move = world_player.play();
-                                bd.animate(&world_move, tl)?;
-                                let move_result = self.board.apply_world_move(world_move);
-                                next_state(move_result)
-                            }
-                            _ => next_state(move_result)
-                        }
+                        next_state(move_result)
                     }
                 }
             }
@@ -85,7 +72,7 @@ impl GameRunner {
     pub fn run(
         &mut self,
         w: &mut W,
-        event_source: &EventSource,
+        dam: &mut Dam,
     ) -> Result<AppState> {
         let screen = Screen::new()?;
         let cs = ContentStyle {
@@ -95,15 +82,24 @@ impl GameRunner {
         };
         w.queue(cursor::MoveTo(10, screen.height-1))?;
         w.queue(PrintStyledContent(cs.apply("hit arrows to move, 'q' to quit".to_string())))?;
-        let rx_events = event_source.receiver();
         loop {
             let mut bd = BoardDrawer::new(&self.board, w, &screen);
             bd.draw()?;
-            w.flush()?;
-            let event = rx_events.recv().unwrap();
-            event_source.unblock(false);
-            let tl = TaskLifetime::new(event_source.shared_event_count());
-            if let Some(next_state) = self.handle_event(w, event, tl)? {
+            let next_state = match self.board.current_player {
+                Player::Lapin => {
+                    let event = dam.next_event().unwrap();
+                    dam.unblock();
+                    self.handle_event(w, event)?
+                }
+                Player::World => {
+                    let world_player = WorldPlayer::new(&self.board);
+                    let world_move = world_player.play();
+                    bd.animate(&world_move, dam)?;
+                    let move_result = self.board.apply_world_move(world_move);
+                    next_state(move_result)
+                }
+            };
+            if let Some(next_state) = next_state {
                 return Ok(next_state);
             }
         }
