@@ -37,16 +37,16 @@ pub struct WorldMove {
 
 pub struct WorldPlayer<'t> {
     board: &'t Board,
-    actors_map: PosSet,
+    actor_pos_set: PosSet,
     killed: Vec<bool>,
 }
 impl<'t> WorldPlayer<'t> {
     pub fn new(board: &'t Board) -> Self {
-        let actors_map = board.actors_map();
+        let actor_pos_set = board.actor_pos_set();
         let killed = vec![false; board.actors.len()];
         Self {
             board,
-            actors_map,
+            actor_pos_set,
             killed,
         }
     }
@@ -78,7 +78,7 @@ impl<'t> WorldPlayer<'t> {
         actor: Actor,
         goals: Vec<Pos>,
     ) -> Option<ActorMove> {
-        let path_finder = PathFinder::new(actor, &self.board, &self.actors_map);
+        let path_finder = PathFinder::new(actor, &self.board, &self.actor_pos_set);
         path_finder.find_to_vec(&goals)
             .map(|path| path[0])
             .and_then(|pos| actor.pos.dir_to(pos))
@@ -191,12 +191,12 @@ impl<'t> WorldPlayer<'t> {
             if let Some(actor_move) = self.find_actor_move(id) {
                 if let Some(other_id) = actor_move.target_id {
                     self.killed[other_id] = true;
-                    self.actors_map.remove(self.actor_pos(other_id));
+                    self.actor_pos_set.remove(self.actor_pos(other_id));
                 }
                 match actor_move.action {
                     Action::Eats(dir) | Action::Moves(dir) => {
-                        self.actors_map.remove(actor.pos);
-                        self.actors_map.insert(actor.pos.in_dir(dir));
+                        self.actor_pos_set.remove(actor.pos);
+                        self.actor_pos_set.insert(actor.pos.in_dir(dir));
                     }
                     _ => {}
                 }

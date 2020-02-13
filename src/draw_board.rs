@@ -94,7 +94,7 @@ impl<'d> BoardDrawer<'d> {
                     self.w.queue(self.screen.skin.bg_command(cell))?;
                     last_cell = cell;
                 }
-                if let Some(&item) = self.board.items.get(&pos) {
+                if let Some(item) = self.board.items.get(pos) {
                     self.w.queue(self.screen.skin.styled_char(item, cell))?;
                     self.w.queue(self.screen.skin.bg_command(cell))?;
                 } else {

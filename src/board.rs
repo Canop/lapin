@@ -8,7 +8,6 @@ use {
         pos_map::*,
         world::*,
     },
-    fnv::FnvHashMap,
     std::{
         ops::{
             Range,
@@ -21,7 +20,7 @@ pub struct Board {
     pub area: PosArea,
     pub cells: PosMap<Cell>,
     pub actors: Vec<Actor>, // lapin always at index 0
-    pub items: FnvHashMap<Pos, Item>,
+    pub items: OptionPosMap<Item>,
     pub current_player: Player, // whose turn it is
 }
 
@@ -47,7 +46,7 @@ impl Board {
         let cells = PosMap::new(area, default_cell);
         let mut actors = Vec::new();
         actors.push(Actor::new(ActorKind::Lapin, 0, 0));
-        let items = FnvHashMap::default();
+        let items = OptionPosMap::new(area, None);
         Self {
             area,
             cells,
@@ -65,7 +64,7 @@ impl Board {
         self.actors.push(Actor::new(kind, x, y));
     }
     pub fn add_item_in(&mut self, kind: ItemKind, x: Int, y: Int) {
-        self.items.insert(Pos::new(x, y), Item { kind });
+        self.items.set_some(Pos::new(x, y), Item { kind });
     }
 
     // FIXME remove
@@ -98,12 +97,21 @@ impl Board {
     }
 
     /// return a pos_set with the positions of all actors preset
-    pub fn actors_map(&self) -> PosSet {
-        let mut actors_map = PosSet::from(self.area);
+    pub fn actor_pos_set(&self) -> PosSet {
+        let mut actor_pos_set = PosSet::from(self.area);
         for &actor in &self.actors {
-            actors_map.insert(actor.pos);
+            actor_pos_set.insert(actor.pos);
         }
-        actors_map
+        actor_pos_set
+    }
+
+    /// return a pos_map referencing all the actors
+    pub fn actor_pos_map(&self) -> ActorPosMap {
+        let mut actor_pos_map = ActorPosMap::from(self.area);
+        for &actor in &self.actors {
+            actor_pos_map.set(actor.pos, Some(actor));
+        }
+        actor_pos_map
     }
 
     pub fn apply_player_move(&mut self, cmd: Command) -> MoveResult {
@@ -116,9 +124,9 @@ impl Board {
                     if self.get(pos) == FOREST {
                         return MoveResult::PlayerWin;
                     }
-                    if let Some(_item) = self.items.get(&pos) {
+                    if let Some(_item) = self.items.get(pos) {
                         // right now there are only carrots
-                        self.items.remove(&pos);
+                        self.items.remove(pos);
                         info!("Lapin eat a carrot");
                         end_turn = false;
                     }
@@ -145,10 +153,10 @@ impl Board {
 
     pub fn apply_world_move(&mut self, world_move: WorldMove) -> MoveResult {
         let mut killed = vec![false; self.actors.len()];
-        let mut actors_map = self.actors_map();
+        let mut actor_pos_set = self.actor_pos_set();
         for actor_move in world_move.actor_moves {
             let actor_id = actor_move.actor_id;
-            actors_map.remove(self.actors[actor_id].pos);
+            actor_pos_set.remove(self.actors[actor_id].pos);
             if let Some(target_id) = actor_move.target_id {
                 // following test is only valid now
                 if self.actors[target_id].kind.is_immune_to_fire() {
@@ -164,7 +172,7 @@ impl Board {
                 }
                 Action::Moves(dir) => {
                     let new_pos = self.actors[actor_id].pos.in_dir(dir);
-                    if actors_map.has_key(new_pos) {
+                    if actor_pos_set.has_key(new_pos) {
                         debug!("move prevented because other actor present");
                     } else {
                         self.actors[actor_id].pos = new_pos;
@@ -178,7 +186,7 @@ impl Board {
                 }
                 _ => { }
             }
-            actors_map.insert(self.actors[actor_id].pos);
+            actor_pos_set.insert(self.actors[actor_id].pos);
         }
         self.current_player = Player::Lapin;
         if killed[0] {

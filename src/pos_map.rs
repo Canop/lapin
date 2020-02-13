@@ -93,6 +93,9 @@ impl<V> OptionPosMap<V>
     pub fn has_xy(&self, x: Int, y: Int) -> bool {
         self.get_xy(x, y).is_some()
     }
+    pub fn set_some(&mut self, pos: Pos, v: V) {
+        self.set(pos, Some(v));
+    }
 }
 
 // note that it's possible to insert an actor at
