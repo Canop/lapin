@@ -19,12 +19,6 @@ use {
 const MAX_OPEN_SIZE: usize = 200;
 const INFINITY: Int = 32_767;
 
-pub struct PathFinder<'b> {
-    actor: Actor,
-    board: &'b Board,
-    actors_map: &'b PosSet,
-}
-
 #[derive(Debug, Clone, Copy)]
 struct ValuedPos {
     pos: Pos,
@@ -59,17 +53,25 @@ impl PartialOrd for ValuedPos {
     }
 }
 
+pub struct PathFinder<'b> {
+    actor: Actor,
+    board: &'b Board,
+    actors_map: &'b PosSet,
+    seed: usize,
+}
 
 impl<'b> PathFinder<'b> {
     pub fn new(
         actor: Actor,
         board: &'b Board,
         actors_map: &'b PosSet,
+        seed: usize,
     ) -> Self {
         Self {
             actor,
             board,
             actors_map,
+            seed,
         }
     }
     fn area(&self) -> PosArea {
@@ -78,12 +80,9 @@ impl<'b> PathFinder<'b> {
     pub fn can_enter(&self, pos: Pos) -> bool {
         self.board.is_enterable(pos) && !self.actors_map.has_key(pos)
     }
-    pub fn dirs(&self) -> impl Iterator<Item = Dir> {
-        [Dir::Up, Dir::Right, Dir::Down, Dir::Left].iter().copied()
-    }
 
     pub fn find_to_vec(
-        &self,
+        &mut self,
         goals: &[Pos],
     ) -> Option<Vec<Pos>> {
         let mut shortest: Option<Vec<Pos>> = None;
@@ -113,10 +112,11 @@ impl<'b> PathFinder<'b> {
     /// The heuristic function h used here is the Manhattan distance
     /// to the goal.
     pub fn find(
-        &self,
+        &mut self,
         goal: Pos,
     ) -> Option<Vec<Pos>> {
         let start = self.actor.pos;
+        static DIRS: [Dir; 4] = [Dir::Up, Dir::Right, Dir::Down, Dir::Left];
 
         // nodes already evaluated, we know they're not interesting
         let mut closed_set = PosSet::from(self.area());
@@ -144,7 +144,8 @@ impl<'b> PathFinder<'b> {
                 return Some(path);
             }
             closed_set.insert(current);
-            for dir in self.dirs() {
+            for i in 0..4 {
+                let dir = DIRS[(i + self.seed)%4];
                 let neighbour = current.in_dir(dir);
                 if
                     neighbour != goal
@@ -165,6 +166,7 @@ impl<'b> PathFinder<'b> {
                 debug!("open set too big");
                 break;
             }
+            self.seed = (self.seed + 1) % 27;
         }
 
         // open_set is empty, there's no path

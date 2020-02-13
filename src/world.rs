@@ -39,15 +39,17 @@ pub struct WorldPlayer<'t> {
     board: &'t Board,
     actor_pos_set: PosSet,
     killed: Vec<bool>,
+    seed: usize,
 }
 impl<'t> WorldPlayer<'t> {
-    pub fn new(board: &'t Board) -> Self {
+    pub fn new(board: &'t Board, seed: usize) -> Self {
         let actor_pos_set = board.actor_pos_set();
         let killed = vec![false; board.actors.len()];
         Self {
             board,
             actor_pos_set,
             killed,
+            seed,
         }
     }
     fn actor_pos(&self, actor_id: usize) -> Pos {
@@ -78,7 +80,7 @@ impl<'t> WorldPlayer<'t> {
         actor: Actor,
         goals: Vec<Pos>,
     ) -> Option<ActorMove> {
-        let path_finder = PathFinder::new(actor, &self.board, &self.actor_pos_set);
+        let mut path_finder = PathFinder::new(actor, &self.board, &self.actor_pos_set, self.seed);
         path_finder.find_to_vec(&goals)
             .map(|path| path[0])
             .and_then(|pos| actor.pos.dir_to(pos))

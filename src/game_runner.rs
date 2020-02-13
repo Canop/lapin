@@ -84,6 +84,7 @@ impl GameRunner {
             background_color: None,
             attributes: Attribute::Bold.into(),
         };
+        let mut seed = 0;
         w.queue(cursor::MoveTo(10, screen.height-1))?;
         w.queue(PrintStyledContent(cs.apply("hit arrows to move, 'q' to quit".to_string())))?;
         loop {
@@ -97,7 +98,8 @@ impl GameRunner {
                     self.handle_event(event, pos_converter)?
                 }
                 Player::World => {
-                    let world_player = WorldPlayer::new(&self.board);
+                    let world_player = WorldPlayer::new(&self.board, seed);
+                    seed += 1;
                     let world_move = time!(Info, "world play", world_player.play());
                     bd.animate(&world_move, dam)?;
                     let move_result = self.board.apply_world_move(world_move);
