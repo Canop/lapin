@@ -4,7 +4,11 @@ extern crate anyhow;
 #[macro_use]
 extern crate crossbeam;
 #[macro_use]
+extern crate lazy_static;
+#[macro_use]
 extern crate log;
+#[macro_use]
+extern crate minimad;
 
 #[macro_use]
 mod time;
@@ -26,6 +30,7 @@ pub mod pos;
 pub mod pos_map;
 pub mod screen;
 pub mod skin;
+pub mod status;
 pub mod task_sync;
 pub mod test_level;
 pub mod world;

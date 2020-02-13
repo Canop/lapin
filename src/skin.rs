@@ -5,6 +5,7 @@ use {
     },
     crossterm::{
         style::{
+            Attribute,
             Attributes,
             ContentStyle,
             Color,
@@ -15,7 +16,9 @@ use {
     },
     termimad::{
         ansi,
+        CompoundStyle,
         gray,
+        MadSkin,
         rgb,
     },
 };
@@ -35,7 +38,6 @@ impl FgSkin {
     }
 }
 
-#[derive(Debug)]
 pub struct Skin {
     pub cell_bg: [Color; 4],
     pub lapin: FgSkin,
@@ -50,6 +52,8 @@ pub struct Skin {
     pub aiming_left: char,
     pub fire_horizontal: FgSkin,
     pub fire_vertical: FgSkin,
+    pub normal_status: MadSkin,
+    pub error_status: MadSkin,
 }
 
 impl Skin {
@@ -75,6 +79,8 @@ impl Skin {
             aiming_left: '◂',
             fire_horizontal: FgSkin::new('―', Color::White),
             fire_vertical: FgSkin::new('│', Color::White),
+            normal_status: make_normal_status_mad_skin(),
+            error_status: make_error_status_mad_skin(),
         }
     }
     pub fn bg_command(&self, cell: Cell) -> SetBackgroundColor {
@@ -93,4 +99,21 @@ impl Skin {
         PrintStyledContent(cs.apply(fg_skin.chr))
     }
 
+}
+
+/// build a MadSkin which will be used to display the status
+/// when there's no error
+fn make_normal_status_mad_skin() -> MadSkin {
+    let mut mad_skin = MadSkin::default();
+    mad_skin.italic = CompoundStyle::new(Some(ansi(178)), None, Attributes::default());
+    mad_skin.bold = CompoundStyle::new(Some(ansi(70)), None, Attribute::Bold.into());
+    mad_skin
+}
+
+/// build a MadSkin which will be used to display the status
+/// when there's a error
+fn make_error_status_mad_skin() -> MadSkin {
+    let mut mad_skin = MadSkin::default();
+    mad_skin.bold = CompoundStyle::new(Some(ansi(160)), None, Attribute::Bold.into());
+    mad_skin
 }

@@ -10,7 +10,7 @@ use {
 
 pub enum AppState {
     Level,  // there might be a level id or something later
-    Message(String),
+    Message(String, bool),
     Quit,
 }
 
@@ -25,8 +25,8 @@ pub fn run(
                 let mut game_runner = GameRunner::new();
                 game_runner.run(w, dam)
             }
-            Ok(AppState::Message(s)) => {
-                message_runner::run(w, s, dam)
+            Ok(AppState::Message(s, good)) => {
+                message_runner::run(w, s, good, dam)
             }
             Ok(AppState::Quit) => { return; }
             Err(e) => {

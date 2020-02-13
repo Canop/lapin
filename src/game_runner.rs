@@ -7,26 +7,20 @@ use {
         io::W,
         pos::*,
         screen::Screen,
+        status::Status,
         task_sync::*,
         test_level,
         world::*,
     },
     anyhow::Result,
     crossterm::{
-        cursor,
         event::{
+            KeyCode,
             KeyEvent,
         },
-        style::{
-            Attribute,
-            ContentStyle,
-            PrintStyledContent,
-        },
-        QueueableCommand,
     },
     termimad::{
         Event,
-        gray,
     },
 };
 
@@ -42,34 +36,31 @@ impl GameRunner {
         }
     }
 
-    fn handle_event(
+    fn handle_key_event(
         &mut self,
-        event: Event,
-        pos_converter: PosConverter,
-    ) -> Result<Option<AppState>> {
-        Ok(match event {
-            Event::Key(KeyEvent { code, .. }) => {
-                match Command::from(code) {
-                    None => None,
-                    Some(Command::Quit) => {
-                        Some(AppState::Quit)
-                    }
-                    Some(cmd) => {
-                        let move_result = self.board.apply_player_move(cmd);
-                        next_state(move_result)
-                    }
-                }
+        code: KeyCode,
+    ) -> Option<AppState> {
+        match Command::from(code) {
+            None => None,
+            Some(Command::Quit) => {
+                Some(AppState::Quit)
             }
-            Event::Click(x, y) => {
-                let sp = ScreenPos{ x, y };
-                debug!("click in {:?}", pos_converter.to_real(sp));
-                None
+            Some(cmd) => {
+                let move_result = self.board.apply_player_move(cmd);
+                next_state(move_result)
             }
-            _ => {
-                debug!("ignored event: {:?}", event);
-                None
-            }
-        })
+        }
+    }
+
+    fn write_status(
+        &mut self,
+        w: &mut W,
+        screen: &Screen,
+    ) -> Result<()> {
+        Status::from_message(mad_inline!(
+            "Hit arrows to move, *q* to quit"
+        ))
+        .display(w, screen)
     }
 
     /// return the next state
@@ -78,24 +69,35 @@ impl GameRunner {
         w: &mut W,
         dam: &mut Dam,
     ) -> Result<AppState> {
-        let screen = Screen::new()?;
-        let cs = ContentStyle {
-            foreground_color: Some(gray(15)),
-            background_color: None,
-            attributes: Attribute::Bold.into(),
-        };
+        let mut screen = Screen::new()?;
+        self.write_status(w, &screen)?;
         let mut seed = 0;
-        w.queue(cursor::MoveTo(10, screen.height-1))?;
-        w.queue(PrintStyledContent(cs.apply("hit arrows to move, 'q' to quit".to_string())))?;
         loop {
             let mut bd = BoardDrawer::new(&self.board, w, &screen);
-            let pos_converter = bd.pos_converter;
             bd.draw()?;
             let next_state = match self.board.current_player {
                 Player::Lapin => {
                     let event = dam.next_event().unwrap();
                     dam.unblock();
-                    self.handle_event(event, pos_converter)?
+                    match event {
+                        Event::Key(KeyEvent { code, .. }) => {
+                            self.handle_key_event(code)
+                        }
+                        Event::Resize(width, height) => {
+                            screen.set_terminal_size(width, height);
+                            self.write_status(w, &screen)?;
+                            None
+                        }
+                        Event::Click(x, y) => {
+                            let sp = ScreenPos{ x, y };
+                            debug!("click in {:?}", bd.pos_converter.to_real(sp));
+                            None
+                        }
+                        _ => {
+                            debug!("ignored event: {:?}", event);
+                            None
+                        }
+                    }
                 }
                 Player::World => {
                     let world_player = WorldPlayer::new(&self.board, seed);
@@ -118,10 +120,10 @@ impl GameRunner {
 fn next_state(move_result: MoveResult) -> Option<AppState> {
     match move_result {
         MoveResult::PlayerWin => {
-            Some(AppState::Message("You WIN!".to_string()))
+            Some(AppState::Message("You **WIN!**".to_string(), true))
         }
         MoveResult::PlayerLose => {
-            Some(AppState::Message("You LOSE!".to_string()))
+            Some(AppState::Message("You **LOSE!**".to_string(), false))
         }
         _ => None,
     }

@@ -4,26 +4,20 @@ use {
         command::Command,
         io::W,
         screen::Screen,
+        status::Status,
         task_sync::*,
     },
     anyhow::Result,
     crossterm::{
-        cursor,
         event::{
             KeyEvent,
         },
-        style::{
-            Attribute,
-            Color,
-            ContentStyle,
-            PrintStyledContent,
-        },
-        QueueableCommand,
     },
-    std::io::Write,
+    minimad::{
+        Composite,
+    },
     termimad::{
         Event,
-        gray,
     },
 };
 
@@ -48,17 +42,12 @@ fn handle_event(
 pub fn run(
     w: &mut W,
     message: String,
+    good: bool,
     dam: &mut Dam,
 ) -> Result<AppState> {
     let screen = Screen::new()?;
-    let cs = ContentStyle {
-        foreground_color: Some(Color::Yellow),
-        background_color: Some(gray(1)),
-        attributes: Attribute::Bold.into(),
-    };
-    w.queue(cursor::MoveTo(10, screen.height-2))?;
-    w.queue(PrintStyledContent(cs.apply(message)))?;
-    w.flush()?;
+    debug!("good={}", good);
+    Status::from(Composite::from_inline(&message), !good).display(w, &screen)?;
     loop {
         let event = dam.next_event().unwrap();
         dam.unblock();
