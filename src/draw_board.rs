@@ -81,7 +81,7 @@ impl<'d> BoardDrawer<'d> {
     ) -> Result<()> {
 
         // background and items
-        let mut last_cell = VOID;
+        let mut last_cell = FIELD;
         self.w.queue(self.screen.skin.bg_command(last_cell))?;
         for j in 0..self.screen.board_area.height {
             let sy = self.screen.board_area.top + j;

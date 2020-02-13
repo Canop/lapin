@@ -13,7 +13,7 @@ pub enum ActorState {
     Aiming(Dir),
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ActorKind {
     Lapin,
     Knight,
@@ -77,6 +77,13 @@ pub struct Actor {
     pub state: ActorState,
 }
 impl Actor {
+    pub fn new(kind: ActorKind, x: Int, y: Int) -> Self {
+        Self {
+            kind,
+            pos: Pos::new(x, y),
+            state: ActorState::Normal,
+        }
+    }
     pub fn hits(self, other: Actor) -> bool {
         self.kind.hits(other.kind)
     }
@@ -85,13 +92,6 @@ impl Actor {
     }
     pub fn runs_after(self, other: Actor) -> bool {
         self.kind.runs_after(other.kind)
-    }
-    pub fn new(kind: ActorKind, x: Int, y: Int) -> Self {
-        Self {
-            kind,
-            pos: Pos::new(x, y),
-            state: ActorState::Normal,
-        }
     }
     pub fn is_aiming(self) -> bool {
         match self.state {

@@ -66,7 +66,6 @@ impl<'d> BoardDrawer<'d> {
         start: Pos,
         dir: Dir,
         color: Color,
-        killed_id: Option<usize>,
         av: usize, // in [0, 8]
     ) -> Result<()> {
         let sp_start = self.pos_converter.to_screen(start);
@@ -157,7 +156,6 @@ impl<'d> BoardDrawer<'d> {
                             actor.pos,
                             dir,
                             actor.kind.skin(&self.screen.skin).color,
-                            actor_move.target_id,
                             av,
                         )?;
                     }
@@ -182,7 +180,6 @@ impl<'d> BoardDrawer<'d> {
                 }
             }
             if !dam.try_wait(Duration::from_millis(50)) {
-                debug!("break animation");
                 break;
             }
         }

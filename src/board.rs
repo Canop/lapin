@@ -5,13 +5,11 @@ use {
         consts::*,
         item::*,
         pos::*,
+        pos_map::*,
         world::*,
     },
     fnv::FnvHashMap,
     std::{
-        collections::{
-            HashMap,
-        },
         ops::{
             Range,
         },
@@ -20,10 +18,8 @@ use {
 
 /// the game state
 pub struct Board {
-    pub width: Int,
-    pub height: Int,
-    pub default_cell: Cell,
-    grid: Vec<Cell>,
+    pub area: PosArea,
+    pub cells: PosMap<Cell>,
     pub actors: Vec<Actor>, // lapin always at index 0
     pub items: FnvHashMap<Pos, Item>,
     pub current_player: Player, // whose turn it is
@@ -47,17 +43,14 @@ pub enum Player {
 
 impl Board {
 
-    pub fn new(width: usize, height: usize) -> Self {
-        let default_cell = VOID;
-        let grid = vec![VOID; width * height];
+    pub fn new(area: PosArea, default_cell: Cell) -> Self {
+        let cells = PosMap::new(area, default_cell);
         let mut actors = Vec::new();
         actors.push(Actor::new(ActorKind::Lapin, 0, 0));
         let items = FnvHashMap::default();
         Self {
-            width: width as Int,
-            height: height as Int,
-            default_cell,
-            grid,
+            area,
+            cells,
             actors,
             items,
             current_player: Player::Lapin,
@@ -78,28 +71,19 @@ impl Board {
     // FIXME remove
     pub fn is_enterable(&self, pos: Pos) -> bool {
         match self.get(pos) {
-            VOID => true,
+            FIELD => true,
             FOREST => true,
             _ => false,
         }
     }
 
-    pub fn grid_idx(&self, pos: Pos) -> Option<usize> {
-        if pos.in_grid(self.width, self.height) {
-            Some((self.width * pos.y + pos.x) as usize)
-        } else {
-            None
-        }
-    }
     pub fn set(&mut self, pos: Pos, cell: Cell) {
-        if let Some(grid_idx) = self.grid_idx(pos) {
-            self.grid[grid_idx] = cell;
-        }
+        self.cells.set(pos, cell);
     }
     pub fn set_range(&mut self, rx: Range<Int>, ry: Range<Int>, cell: Cell) {
         for x in rx {
             for y in ry.clone() {
-                self.set_at(x, y, cell);
+                self.cells.set_xy(x, y, cell);
             }
         }
     }
@@ -109,22 +93,15 @@ impl Board {
     pub fn set_v_line(&mut self, x: Int, ry: Range<Int>, cell: Cell) {
         self.set_range(x..x+1, ry, cell);
     }
-    pub fn set_at(&mut self, x: Int, y: Int, cell: Cell) {
-        if let Some(grid_idx) = self.grid_idx(Pos{x, y}) {
-            self.grid[grid_idx] = cell;
-        }
-    }
     pub fn get(&self, pos: Pos) -> Cell {
-        match self.grid_idx(pos) {
-            Some(grid_idx) => self.grid[grid_idx],
-            None => self.default_cell,
-        }
+        self.cells.get(pos)
     }
 
-    pub fn actors_map(&self) -> FnvHashMap<Pos, Actor> {
-        let mut actors_map = FnvHashMap::default();
+    /// return a pos_set with the positions of all actors preset
+    pub fn actors_map(&self) -> PosSet {
+        let mut actors_map = PosSet::from(self.area);
         for &actor in &self.actors {
-            actors_map.insert(actor.pos, actor);
+            actors_map.insert(actor.pos);
         }
         actors_map
     }
@@ -168,8 +145,10 @@ impl Board {
 
     pub fn apply_world_move(&mut self, world_move: WorldMove) -> MoveResult {
         let mut killed = vec![false; self.actors.len()];
+        let mut actors_map = self.actors_map();
         for actor_move in world_move.actor_moves {
             let actor_id = actor_move.actor_id;
+            actors_map.remove(self.actors[actor_id].pos);
             if let Some(target_id) = actor_move.target_id {
                 // following test is only valid now
                 if self.actors[target_id].kind.is_immune_to_fire() {
@@ -179,9 +158,17 @@ impl Board {
                 }
             }
             match actor_move.action {
-                Action::Eats(dir) | Action::Moves(dir) => {
+                Action::Eats(dir) => {
                     let new_pos = self.actors[actor_id].pos.in_dir(dir);
                     self.actors[actor_id].pos = new_pos;
+                }
+                Action::Moves(dir) => {
+                    let new_pos = self.actors[actor_id].pos.in_dir(dir);
+                    if actors_map.has_key(new_pos) {
+                        debug!("move prevented because other actor present");
+                    } else {
+                        self.actors[actor_id].pos = new_pos;
+                    }
                 }
                 Action::Aims(dir) => {
                     self.actors[actor_id].state = ActorState::Aiming(dir);
@@ -191,6 +178,7 @@ impl Board {
                 }
                 _ => { }
             }
+            actors_map.insert(self.actors[actor_id].pos);
         }
         self.current_player = Player::Lapin;
         if killed[0] {

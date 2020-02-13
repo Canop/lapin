@@ -16,7 +16,7 @@ use {
 pub type Int = i32;
 
 // a position in the real world (the one full of rabbits and wolves)
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub struct Pos {
     pub x: Int,
     pub y: Int,
@@ -100,9 +100,9 @@ impl Pos {
     pub fn is_in_dir(&self, dst: Pos, dir: Dir) -> bool {
         let (dx, dy) = (dst.x-self.x, dst.y-self.y);
         match dir {
-            Dir::Up => dx == 0 && dy > 0,
+            Dir::Up => dx == 0 && dy < 0,
             Dir::Right => dy == 0 && dx > 0,
-            Dir::Down => dx == 0 && dy < 0,
+            Dir::Down => dx == 0 && dy > 0,
             Dir::Left => dy == 0 && dx < 0,
             _ => {
                 warn!("not implemented");
@@ -131,6 +131,33 @@ impl ScreenPos {
     pub fn goto(self, w: &mut W) -> Result<()> {
         w.queue(cursor::MoveTo(self.x, self.y))?;
         Ok(())
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+pub struct PosArea {
+    pub min: Pos,
+    pub dim: Pos,
+}
+impl PosArea {
+    pub fn contains(self, pos: Pos) -> bool {
+        pos.x >= self.min.x
+            && pos.y >= self.min.y
+            && pos.x < self.min.x + self.dim.x
+            && pos.y < self.min.y + self.dim.y
+    }
+    pub fn nearest(self, mut pos: Pos) -> Pos {
+        if pos.x < self.min.x {
+            pos.x = self.min.x;
+        } else if pos.x >= self.min.x + self.dim.x {
+            pos.x = self.min.x + self.dim.x -1;
+        }
+        if pos.y < self.min.y {
+            pos.y = self.min.y;
+        } else if pos.y >= self.min.y + self.dim.y {
+            pos.y = self.min.y + self.dim.y -1;
+        }
+        pos
     }
 }
 

@@ -4,15 +4,14 @@ use {
         actor::*,
         board::Board,
         pos::*,
-    },
-    fnv::{
-        FnvHashMap,
-        FnvHashSet,
+        pos_map::*,
     },
     std::{
         collections::{
-            HashMap,
-            HashSet,
+            BinaryHeap,
+        },
+        cmp::{
+            Ordering,
         },
     },
 };
@@ -23,14 +22,49 @@ const INFINITY: Int = 32_767;
 pub struct PathFinder<'b> {
     actor: Actor,
     board: &'b Board,
-    actors_map: &'b FnvHashMap<Pos, Actor>,
+    actors_map: &'b PosSet,
 }
+
+#[derive(Debug, Clone, Copy)]
+struct ValuedPos {
+    pos: Pos,
+    score: Int,
+}
+impl ValuedPos {
+    pub fn from(pos: Pos, score: Int) -> Self {
+        ValuedPos { pos, score }
+    }
+}
+impl Eq for ValuedPos {}
+impl PartialEq for ValuedPos {
+    fn eq(&self, other: &ValuedPos) -> bool {
+        self.score == other.score
+    }
+}
+// we order in reverse from score
+impl Ord for ValuedPos {
+    fn cmp(&self, other: &ValuedPos) -> Ordering {
+        if self.score == other.score {
+            Ordering::Equal
+        } else if self.score < other.score {
+            Ordering::Greater
+        } else {
+            Ordering::Less
+        }
+    }
+}
+impl PartialOrd for ValuedPos {
+    fn partial_cmp(&self, other: &ValuedPos) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
 
 impl<'b> PathFinder<'b> {
     pub fn new(
         actor: Actor,
         board: &'b Board,
-        actors_map: &'b FnvHashMap<Pos, Actor>,
+        actors_map: &'b PosSet,
     ) -> Self {
         Self {
             actor,
@@ -38,8 +72,11 @@ impl<'b> PathFinder<'b> {
             actors_map,
         }
     }
+    fn area(&self) -> PosArea {
+        self.board.area
+    }
     pub fn can_enter(&self, pos: Pos) -> bool {
-        self.board.is_enterable(pos) && !self.actors_map.contains_key(&pos)
+        self.board.is_enterable(pos) && !self.actors_map.has_key(pos)
     }
     pub fn dirs(&self) -> impl Iterator<Item = Dir> {
         [Dir::Up, Dir::Right, Dir::Down, Dir::Left].iter().copied()
@@ -79,58 +116,49 @@ impl<'b> PathFinder<'b> {
         &self,
         goal: Pos,
     ) -> Option<Vec<Pos>> {
-
         let start = self.actor.pos;
 
         // nodes already evaluated, we know they're not interesting
-        let mut closed_set: FnvHashSet<Pos> = FnvHashSet::default();
+        let mut closed_set = PosSet::from(self.area());
 
         // node immediately preceding on the cheapest known path from start
-        let mut came_from: FnvHashMap<Pos, Pos> = FnvHashMap::default();
+        let mut came_from: PosMap<Pos> = PosMap::new(self.area(), start);
 
         // g_score is the cost of the cheapest path from start to a pos
-        let mut g_score: FnvHashMap<Pos, Int> = FnvHashMap::default(); // infinite when missing
-        g_score.insert(start, 0);
+        let mut g_score: PosMap<Int> = PosMap::new(self.area(), INFINITY);
+        g_score.set(start, 0);
 
-        // f_score = g_score + h_score
-        let mut f_score: FnvHashMap<Pos, Int> = FnvHashMap::default(); // infinite when missing
-        f_score.insert(start, Pos::manhattan_distance(start, goal));
+        // the nodes from which we may expand
+        let mut open_set: BinaryHeap<ValuedPos> = BinaryHeap::new();
+        open_set.push(ValuedPos::from(start, Pos::manhattan_distance(start, goal)));
 
-        // the nodes from which we may expand. All nodes in this
-        // set have a f_score and a g_score by construct
-        let mut open_set: FnvHashSet<Pos> = FnvHashSet::default();
-        open_set.insert(start);
-
-        while let Some(current) = open_set.iter().min_by_key(|p| f_score.get(p).unwrap()) {
-            let mut current = *current;
+        while let Some(mut current) = open_set.pop().map(|vp| vp.pos) {
             if current == goal {
                 // reconstruct the path from current to start
                 let mut path = Vec::new();
                 while current != start {
                     path.push(current);
-                    current = *came_from.get(&current).unwrap();
+                    current = came_from.get(current);
                 }
                 path.reverse();
                 return Some(path);
             }
-            open_set.remove(&current);
             closed_set.insert(current);
             for dir in self.dirs() {
                 let neighbour = current.in_dir(dir);
                 if
                     neighbour != goal
-                    && ( !self.can_enter(neighbour) || closed_set.contains(&neighbour) )
+                    && ( !self.can_enter(neighbour) || closed_set.has_key(neighbour) )
                 {
                     continue;
                 }
-                let tentative_g_score = g_score.get(&current).unwrap() + 1;
-                let previous_g_score = *g_score.get(&neighbour).unwrap_or(&INFINITY);
+                let tentative_g_score = g_score.get(current) + 1;
+                let previous_g_score = g_score.get(neighbour);
                 if tentative_g_score < previous_g_score {
-                    came_from.insert(neighbour, current);
-                    g_score.insert(neighbour, tentative_g_score);
+                    came_from.set(neighbour, current);
+                    g_score.set(neighbour, tentative_g_score);
                     let new_f_score = tentative_g_score + Pos::manhattan_distance(neighbour, goal);
-                    f_score.insert(neighbour, new_f_score);
-                    open_set.insert(neighbour);
+                    open_set.push(ValuedPos::from(neighbour, new_f_score));
                 }
             }
             if open_set.len() > MAX_OPEN_SIZE {

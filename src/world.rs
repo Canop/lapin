@@ -2,16 +2,10 @@ use {
     crate::{
         actor::*,
         board::Board,
+        consts::*,
         path::PathFinder,
         pos::*,
-    },
-    fnv::{
-        FnvHashMap,
-    },
-    std::{
-        collections::{
-            HashMap,
-        },
+        pos_map::*,
     },
 };
 
@@ -32,15 +26,6 @@ pub struct ActorMove {
     pub target_id: Option<usize>, // the actor killed by the move
     pub action: Action,
 }
-impl ActorMove {
-    //pub fn target_id(self) -> Option<usize> {
-    //    match self.action {
-    //        Action::Eats(_, k) => Some(k),
-    //        Action::Eats(_, k) => Some(k),
-    //        _ => None,
-    //    }
-    //}
-}
 
 /// what the world plays in a non-player turn.
 /// Arrays here must be consistent with the board.
@@ -49,9 +34,10 @@ pub struct WorldMove {
     pub actor_moves: Vec<ActorMove>,
 }
 
+
 pub struct WorldPlayer<'t> {
     board: &'t Board,
-    actors_map: FnvHashMap<Pos, Actor>,
+    actors_map: PosSet,
     killed: Vec<bool>,
 }
 impl<'t> WorldPlayer<'t> {
@@ -66,6 +52,43 @@ impl<'t> WorldPlayer<'t> {
     }
     fn actor_pos(&self, actor_id: usize) -> Pos {
         self.board.actors[actor_id].pos
+    }
+
+    pub fn is_firing_dir(
+        &self,
+        mut pos: Pos,
+        dir: Dir,
+        target: Pos,
+    ) -> bool {
+        for _ in 0..FIRING_RANGE {
+            pos = pos.in_dir(dir);
+            if pos == target {
+                return true;
+            }
+            if self.board.get(pos) == WALL {
+                return false;
+            }
+        }
+        false
+    }
+
+    fn move_to_vec(
+        &self,
+        actor_id: usize,
+        actor: Actor,
+        goals: Vec<Pos>,
+    ) -> Option<ActorMove> {
+        let path_finder = PathFinder::new(actor, &self.board, &self.actors_map);
+        path_finder.find_to_vec(&goals)
+            .map(|path| path[0])
+            .and_then(|pos| actor.pos.dir_to(pos))
+            .map(|dir|
+                ActorMove {
+                    actor_id,
+                    target_id: None,
+                    action: Action::Moves(dir),
+                }
+            )
     }
 
     fn find_eater_move(&self, actor_id: usize, actor: Actor) -> Option<ActorMove> {
@@ -84,17 +107,7 @@ impl<'t> WorldPlayer<'t> {
             }
             goals.push(other.pos);
         }
-        let path_finder = PathFinder::new(actor, &self.board, &self.actors_map);
-        path_finder.find_to_vec(&goals)
-            .map(|path| path[0])
-            .and_then(|pos| actor.pos.dir_to(pos))
-            .map(|dir|
-                ActorMove {
-                    actor_id,
-                    target_id: None,
-                    action: Action::Moves(dir),
-                }
-            )
+        self.move_to_vec(actor_id, actor, goals)
     }
 
     fn find_firer_move(&self, actor_id: usize, actor: Actor) -> Option<ActorMove> {
@@ -110,12 +123,11 @@ impl<'t> WorldPlayer<'t> {
             }
             let dist = Pos::manhattan_distance(actor.pos, other.pos);
             if dist <= FIRING_RANGE {
-                debug!("target in range");
                 let quadrant_dir = actor.pos.quadrant_to(other.pos);
                 return match actor.state {
                     ActorState::Aiming(dir) => {
                         // is the target in the firing line ?
-                        if actor.pos.is_in_dir(other.pos, dir) {
+                        if self.is_firing_dir(actor.pos, dir, other.pos) {
                             // fire!
                             Some(ActorMove {
                                 actor_id,
@@ -152,17 +164,7 @@ impl<'t> WorldPlayer<'t> {
                 action: Action::StopsAiming,
             })
         } else {
-            let path_finder = PathFinder::new(actor, &self.board, &self.actors_map);
-            path_finder.find_to_vec(&goals)
-                .map(|path| path[0])
-                .and_then(|pos| actor.pos.dir_to(pos))
-                .map(|dir|
-                    ActorMove {
-                        actor_id,
-                        target_id: None,
-                        action: Action::Moves(dir),
-                    }
-                )
+            self.move_to_vec(actor_id, actor, goals)
         }
     }
 
@@ -189,12 +191,12 @@ impl<'t> WorldPlayer<'t> {
             if let Some(actor_move) = self.find_actor_move(id) {
                 if let Some(other_id) = actor_move.target_id {
                     self.killed[other_id] = true;
-                    self.actors_map.remove(&self.actor_pos(other_id));
+                    self.actors_map.remove(self.actor_pos(other_id));
                 }
                 match actor_move.action {
                     Action::Eats(dir) | Action::Moves(dir) => {
-                        self.actors_map.remove(&actor.pos);
-                        self.actors_map.insert(actor.pos.in_dir(dir), actor);
+                        self.actors_map.remove(actor.pos);
+                        self.actors_map.insert(actor.pos.in_dir(dir));
                     }
                     _ => {}
                 }

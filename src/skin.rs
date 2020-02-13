@@ -55,8 +55,8 @@ pub struct Skin {
 impl Skin {
     pub fn new() -> Self {
         let cell_bg = [
-            //rgb(49, 41, 34),  // VOID
-            rgb(27, 23, 19),  // VOID
+            //rgb(49, 41, 34),  // FIELD
+            rgb(27, 23, 19),  // FIELD
             ansi(59), // WALL
             ansi(22), // FOREST
             ansi(25), // WATER
