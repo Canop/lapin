@@ -5,6 +5,10 @@ use {
         board::Board,
         pos::*,
     },
+    fnv::{
+        FnvHashMap,
+        FnvHashSet,
+    },
     std::{
         collections::{
             HashMap,
@@ -19,14 +23,14 @@ const INFINITY: Int = 32_767;
 pub struct PathFinder<'b> {
     actor: Actor,
     board: &'b Board,
-    actors_map: &'b HashMap<Pos, Actor>,
+    actors_map: &'b FnvHashMap<Pos, Actor>,
 }
 
 impl<'b> PathFinder<'b> {
     pub fn new(
         actor: Actor,
         board: &'b Board,
-        actors_map: &'b HashMap<Pos, Actor>,
+        actors_map: &'b FnvHashMap<Pos, Actor>,
     ) -> Self {
         Self {
             actor,
@@ -79,22 +83,22 @@ impl<'b> PathFinder<'b> {
         let start = self.actor.pos;
 
         // nodes already evaluated, we know they're not interesting
-        let mut closed_set: HashSet<Pos> = HashSet::new();
+        let mut closed_set: FnvHashSet<Pos> = FnvHashSet::default();
 
         // node immediately preceding on the cheapest known path from start
-        let mut came_from: HashMap<Pos, Pos> = HashMap::new();
+        let mut came_from: FnvHashMap<Pos, Pos> = FnvHashMap::default();
 
         // g_score is the cost of the cheapest path from start to a pos
-        let mut g_score: HashMap<Pos, Int> = HashMap::new(); // infinite when missing
+        let mut g_score: FnvHashMap<Pos, Int> = FnvHashMap::default(); // infinite when missing
         g_score.insert(start, 0);
 
         // f_score = g_score + h_score
-        let mut f_score: HashMap<Pos, Int> = HashMap::new(); // infinite when missing
+        let mut f_score: FnvHashMap<Pos, Int> = FnvHashMap::default(); // infinite when missing
         f_score.insert(start, Pos::manhattan_distance(start, goal));
 
         // the nodes from which we may expand. All nodes in this
         // set have a f_score and a g_score by construct
-        let mut open_set: HashSet<Pos> = HashSet::new();
+        let mut open_set: FnvHashSet<Pos> = FnvHashSet::default();
         open_set.insert(start);
 
         while let Some(current) = open_set.iter().min_by_key(|p| f_score.get(p).unwrap()) {

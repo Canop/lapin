@@ -5,6 +5,9 @@ use {
         path::PathFinder,
         pos::*,
     },
+    fnv::{
+        FnvHashMap,
+    },
     std::{
         collections::{
             HashMap,
@@ -12,7 +15,7 @@ use {
     },
 };
 
-pub const FIRING_RANGE: Int = 5;
+pub const FIRING_RANGE: Int = 6;
 
 #[derive(Debug, Clone, Copy)]
 pub enum Action {
@@ -48,7 +51,7 @@ pub struct WorldMove {
 
 pub struct WorldPlayer<'t> {
     board: &'t Board,
-    actors_map: HashMap<Pos, Actor>,
+    actors_map: FnvHashMap<Pos, Actor>,
     killed: Vec<bool>,
 }
 impl<'t> WorldPlayer<'t> {
@@ -143,7 +146,6 @@ impl<'t> WorldPlayer<'t> {
             }
         }
         if actor.is_aiming() {
-            // on se relève
             Some(ActorMove {
                 actor_id,
                 target_id: None,

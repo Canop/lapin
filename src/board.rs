@@ -7,6 +7,7 @@ use {
         pos::*,
         world::*,
     },
+    fnv::FnvHashMap,
     std::{
         collections::{
             HashMap,
@@ -24,7 +25,7 @@ pub struct Board {
     pub default_cell: Cell,
     grid: Vec<Cell>,
     pub actors: Vec<Actor>, // lapin always at index 0
-    pub items: HashMap<Pos, Item>,
+    pub items: FnvHashMap<Pos, Item>,
     pub current_player: Player, // whose turn it is
 }
 
@@ -51,7 +52,7 @@ impl Board {
         let grid = vec![VOID; width * height];
         let mut actors = Vec::new();
         actors.push(Actor::new(ActorKind::Lapin, 0, 0));
-        let items = HashMap::new();
+        let items = FnvHashMap::default();
         Self {
             width: width as Int,
             height: height as Int,
@@ -120,8 +121,8 @@ impl Board {
         }
     }
 
-    pub fn actors_map(&self) -> HashMap<Pos, Actor> {
-        let mut actors_map = HashMap::new();
+    pub fn actors_map(&self) -> FnvHashMap<Pos, Actor> {
+        let mut actors_map = FnvHashMap::default();
         for &actor in &self.actors {
             actors_map.insert(actor.pos, actor);
         }

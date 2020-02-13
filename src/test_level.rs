@@ -19,6 +19,8 @@ pub fn build() -> Board {
     board.set_h_line(8..37, 8, WALL);
     board.set_at(6, 5, WALL);
     board.set_range(5..12, 0..2, FOREST);
+    board.set_v_line(27, 0..4, WALL);
+    board.set_h_line(28..36, 0, WALL);
 
     board.set_v_line(46, 0..12, WATER);
     board.set_v_line(46, 13..26, WATER);

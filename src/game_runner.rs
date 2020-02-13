@@ -98,7 +98,7 @@ impl GameRunner {
                 }
                 Player::World => {
                     let world_player = WorldPlayer::new(&self.board);
-                    let world_move = world_player.play();
+                    let world_move = time!(Info, "world play", world_player.play());
                     bd.animate(&world_move, dam)?;
                     let move_result = self.board.apply_world_move(world_move);
                     next_state(move_result)

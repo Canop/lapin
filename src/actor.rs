@@ -23,23 +23,26 @@ pub enum ActorKind {
 }
 impl ActorKind {
     pub fn hits(self, other: Self) -> bool {
+        use ActorKind::*;
         match (self, other) {
-            (Self::Knight, Self::Fox) => true,
-            (Self::Knight, Self::Hunter) => true,
-            (Self::Wolf, Self::Hunter) => true,
-            (Self::Wolf, Self::Lapin) => true,
-            (Self::Fox, Self::Lapin) => true,
+            (Knight, Fox) => true,
+            (Knight, Hunter) => true,
+            (Knight, Wolf) => true,
+            (Wolf, Hunter) => true,
+            (Wolf, Lapin) => true,
+            (Fox, Lapin) => true,
             _ => false,
         }
     }
     pub fn runs_after(self, other: Self) -> bool {
+        use ActorKind::*;
         match (self, other) {
-            (Self::Knight, Self::Fox) => true,
-            //(Self::Knight, Self::Hunter) => true,
-            (Self::Wolf, Self::Hunter) => true,
-            (Self::Wolf, Self::Lapin) => true,
-            (Self::Fox, Self::Lapin) => true,
-            (Self::Hunter, Self::Lapin) => true,
+            (Knight, Fox) => true,
+            //(Knight, Hunter) => true,
+            (Wolf, Hunter) => true,
+            (Wolf, Lapin) => true,
+            (Fox, Lapin) => true,
+            (Hunter, Lapin) => true,
             _ => false,
         }
     }
@@ -56,12 +59,13 @@ impl ActorKind {
         }
     }
     pub fn skin(self, skin: &Skin) -> FgSkin {
+        use ActorKind::*;
         match self {
-            Self::Lapin => skin.lapin,
-            Self::Knight => skin.knight,
-            Self::Wolf => skin.wolf,
-            Self::Fox => skin.fox,
-            Self::Hunter => skin.hunter,
+            Lapin => skin.lapin,
+            Knight => skin.knight,
+            Wolf => skin.wolf,
+            Fox => skin.fox,
+            Hunter => skin.hunter,
         }
     }
 }

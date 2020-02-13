@@ -6,6 +6,9 @@ extern crate crossbeam;
 #[macro_use]
 extern crate log;
 
+#[macro_use]
+mod time;
+
 pub mod actor;
 pub mod animate;
 pub mod app;
