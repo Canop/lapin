@@ -117,9 +117,13 @@ impl Actor {
             ActorKind::*,
             PathFindingStrategy::*,
         };
-        match self.kind {
-            Lapin | Sheep => BestToNearest, // sheeps are kind of stupid
-            _ => Best,
+        if self.state.drunk {
+            Quadrant
+        } else {
+            match self.kind {
+                Lapin | Sheep => BestToNearest, // sheeps are kind of stupid
+                _ => Best,
+            }
         }
     }
     pub fn skin(self, skin: &Skin) -> FgSkin {

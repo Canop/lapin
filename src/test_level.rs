@@ -50,11 +50,8 @@ pub fn build() -> Board {
         }
     }
 
-    // test animate
-    //board.add_actor_in(ActorKind::Fox, 40, 17);
-    //board.add_actor_in(ActorKind::Fox, 41, 16);
-
     board.add_item_in(ItemKind::Wine, 11, 3);
+    board.add_item_in(ItemKind::Wine, 28, -3);
     board.add_item_in(ItemKind::Carrot, 31, 12);
     board.add_item_in(ItemKind::Carrot, 31, 13);
     board.add_item_in(ItemKind::Carrot, 33, 14);
