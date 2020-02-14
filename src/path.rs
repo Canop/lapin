@@ -53,11 +53,17 @@ impl PartialOrd for ValuedPos {
     }
 }
 
+pub enum PathFindingStrategy {
+    BestToNearest,
+    Best, // absolute best, slower
+}
+
 pub struct PathFinder<'b> {
     actor: Actor,
     board: &'b Board,
     actors_map: &'b PosSet,
     seed: usize,
+    strategy: PathFindingStrategy,
 }
 
 impl<'b> PathFinder<'b> {
@@ -66,16 +72,15 @@ impl<'b> PathFinder<'b> {
         board: &'b Board,
         actors_map: &'b PosSet,
         seed: usize,
+        strategy: PathFindingStrategy,
     ) -> Self {
         Self {
             actor,
             board,
             actors_map,
             seed,
+            strategy,
         }
-    }
-    fn area(&self) -> PosArea {
-        self.board.area
     }
     pub fn can_enter(&self, pos: Pos) -> bool {
         self.board.is_enterable(pos) && !self.actors_map.has_key(pos)
@@ -83,23 +88,38 @@ impl<'b> PathFinder<'b> {
 
     pub fn find_to_vec(
         &mut self,
-        goals: &[Pos],
+        goals: &mut[Pos],
     ) -> Option<Vec<Pos>> {
-        let mut shortest: Option<Vec<Pos>> = None;
-        for goal in goals {
-            if let Some(path) = self.find(*goal) {
-                shortest = Some(if let Some(sh) = shortest {
-                    if sh.len() < path.len() {
-                        sh
-                    } else {
-                        path
+        match self.strategy {
+            PathFindingStrategy::BestToNearest => {
+                goals.sort_by(|&a, &b|
+                    Pos::manhattan_distance(a, self.actor.pos).cmp(&Pos::manhattan_distance(b, self.actor.pos))
+                );
+                for goal in goals {
+                    if let Some(path) = self.find(*goal) {
+                        return Some(path);
                     }
-                } else {
-                    path
-                });
+                }
+                None
+            }
+            PathFindingStrategy::Best => {
+                let mut shortest: Option<Vec<Pos>> = None;
+                for goal in goals {
+                    if let Some(path) = self.find(*goal) {
+                        shortest = Some(if let Some(sh) = shortest {
+                            if sh.len() < path.len() {
+                                sh
+                            } else {
+                                path
+                            }
+                        } else {
+                            path
+                        });
+                    }
+                }
+                shortest
             }
         }
-        shortest
     }
 
     /// Find the shortest path between start and goal using A*.
@@ -119,13 +139,13 @@ impl<'b> PathFinder<'b> {
         static DIRS: [Dir; 4] = [Dir::Up, Dir::Right, Dir::Down, Dir::Left];
 
         // nodes already evaluated, we know they're not interesting
-        let mut closed_set = PosSet::from(self.area());
+        let mut closed_set = PosSet::from(self.board.area.clone());
 
         // node immediately preceding on the cheapest known path from start
-        let mut came_from: PosMap<Pos> = PosMap::new(self.area(), start);
+        let mut came_from: PosMap<Pos> = PosMap::new(self.board.area.clone(), start);
 
         // g_score is the cost of the cheapest path from start to a pos
-        let mut g_score: PosMap<Int> = PosMap::new(self.area(), INFINITY);
+        let mut g_score: PosMap<Int> = PosMap::new(self.board.area.clone(), INFINITY);
         g_score.set(start, 0);
 
         // the nodes from which we may expand

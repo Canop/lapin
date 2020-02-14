@@ -78,10 +78,16 @@ impl<'t> WorldPlayer<'t> {
         &self,
         actor_id: usize,
         actor: Actor,
-        goals: Vec<Pos>,
+        mut goals: Vec<Pos>,
     ) -> Option<ActorMove> {
-        let mut path_finder = PathFinder::new(actor, &self.board, &self.actor_pos_set, self.seed);
-        path_finder.find_to_vec(&goals)
+        let mut path_finder = PathFinder::new(
+            actor,
+            &self.board,
+            &self.actor_pos_set,
+            self.seed,
+            actor.path_finding_strategy(),
+        );
+        path_finder.find_to_vec(&mut goals)
             .map(|path| path[0])
             .and_then(|pos| actor.pos.dir_to(pos))
             .map(|dir|
@@ -91,6 +97,20 @@ impl<'t> WorldPlayer<'t> {
                     action: Action::Moves(dir),
                 }
             )
+    }
+
+    fn find_grazer_move(&self, actor_id: usize, actor: Actor) -> Option<ActorMove> {
+        if self.board.get(actor.pos) == GRASS {
+            None
+        } else {
+            let mut goals: Vec<Pos> = Vec::new();
+            for &p in &self.board.grass_cells {
+                if !self.actor_pos_set.has_key(p) {
+                    goals.push(p);
+                }
+            }
+            self.move_to_vec(actor_id, actor, goals)
+        }
     }
 
     fn find_eater_move(&self, actor_id: usize, actor: Actor) -> Option<ActorMove> {
@@ -126,37 +146,34 @@ impl<'t> WorldPlayer<'t> {
             let dist = Pos::manhattan_distance(actor.pos, other.pos);
             if dist <= FIRING_RANGE {
                 let quadrant_dir = actor.pos.quadrant_to(other.pos);
-                return match actor.state {
-                    ActorState::Aiming(dir) => {
-                        // is the target in the firing line ?
-                        if self.is_firing_dir(actor.pos, dir, other.pos) {
-                            // fire!
-                            Some(ActorMove {
-                                actor_id,
-                                target_id: Some(other_id),
-                                action: Action::Fires(quadrant_dir),
-                            })
-                        } else if dir != quadrant_dir {
-                            // target lost
-                            Some(ActorMove {
-                                actor_id,
-                                target_id: None,
-                                action: Action::StopsAiming,
-                            })
-                        } else {
-                            // go on aiming
-                            None
-                        }
-                    }
-                    _ => {
-                        // starts aiming
+                return if let Some(dir) = actor.state.aim {
+                    // is the target in the firing line ?
+                    if self.is_firing_dir(actor.pos, dir, other.pos) {
+                        // fire!
+                        Some(ActorMove {
+                            actor_id,
+                            target_id: Some(other_id),
+                            action: Action::Fires(quadrant_dir),
+                        })
+                    } else if dir != quadrant_dir {
+                        // target lost
                         Some(ActorMove {
                             actor_id,
                             target_id: None,
-                            action: Action::Aims(quadrant_dir),
+                            action: Action::StopsAiming,
                         })
+                    } else {
+                        // go on aiming
+                        None
                     }
-                };
+                } else {
+                    // starts aiming
+                    Some(ActorMove {
+                        actor_id,
+                        target_id: None,
+                        action: Action::Aims(quadrant_dir),
+                    })
+                }
             }
         }
         if actor.is_aiming() {
@@ -173,12 +190,12 @@ impl<'t> WorldPlayer<'t> {
     // right now, AI played actors are either eaters (contact) or firers (range)
     // so we optimize computations by doing one or the other depending on the type
     fn find_actor_move(&self, actor_id: usize) -> Option<ActorMove> {
+        use ActorKind::*;
         let actor = self.board.actors[actor_id];
         match actor.kind {
-            ActorKind::Fox | ActorKind::Knight | ActorKind::Wolf => {
-                self.find_eater_move(actor_id, actor)
-            }
-            ActorKind::Hunter => self.find_firer_move(actor_id, actor),
+            Knight | Fox | Wolf => self.find_eater_move(actor_id, actor),
+            Hunter => self.find_firer_move(actor_id, actor),
+            Sheep => self.find_grazer_move(actor_id, actor),
             _ => None, // No AI
         }
     }

@@ -20,7 +20,7 @@ impl<V> PosMap<V>
     where V: Copy
 {
     pub fn new(area: PosArea, default: V) -> Self {
-        let grid = vec![default; (area.dim.x*area.dim.y) as usize];
+        let grid = vec![default; (area.width()*area.height()) as usize];
         let outliers = FnvHashMap::default();
         Self {
             area,
@@ -31,7 +31,7 @@ impl<V> PosMap<V>
     }
     fn idx(&self, pos: Pos) -> Option<usize> {
         if self.area.contains(pos) {
-            Some((self.area.dim.x * (pos.y-self.area.min.y) + (pos.x-self.area.min.x)) as usize)
+            Some((self.area.width() * (pos.y-self.area.y.start) + (pos.x-self.area.x.start)) as usize)
         } else {
             None
         }
@@ -124,13 +124,13 @@ mod pos_map_tests {
             dim: Pos::new(100, 150),
         };
         let mut cm: PosMap<Cell> = PosMap::new(area, WALL);
-        cm.set_xy(2, 3, FOREST);
-        cm.set_xy(-5, 3, FOREST);
-        cm.set_xy(-15, 3, FOREST);
+        cm.set_xy(2, 3, GRASS);
+        cm.set_xy(-5, 3, GRASS);
+        cm.set_xy(-15, 3, GRASS);
         assert_eq!(cm.get_xy(0, 0), WALL);
         assert_eq!(cm.get_xy(-1000, 0), WALL);
-        assert_eq!(cm.get_xy(2, 3), FOREST);
-        assert_eq!(cm.get_xy(-5, 3), FOREST);
+        assert_eq!(cm.get_xy(2, 3), GRASS);
+        assert_eq!(cm.get_xy(-5, 3), GRASS);
         assert_eq!(cm.get_xy(-15, 3), WALL); // out of area
     }
 

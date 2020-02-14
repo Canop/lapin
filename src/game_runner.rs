@@ -19,6 +19,9 @@ use {
             KeyEvent,
         },
     },
+    std::{
+        time::SystemTime,
+    },
     termimad::{
         Event,
     },
@@ -71,7 +74,10 @@ impl GameRunner {
     ) -> Result<AppState> {
         let mut screen = Screen::new()?;
         self.write_status(w, &screen)?;
-        let mut seed = 0;
+        let mut seed = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .map_or(0, |d| (d.as_secs()%7) as usize);
+        debug!("seed: {}", seed);
         loop {
             let mut bd = BoardDrawer::new(&self.board, w, &screen);
             bd.draw()?;

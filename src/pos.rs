@@ -8,8 +8,10 @@ use {
         cursor,
         QueueableCommand,
     },
-    termimad::{
-        Area,
+    std::{
+        ops::{
+            Range,
+        },
     },
 };
 
@@ -43,12 +45,6 @@ pub struct ScreenPos {
 impl Pos {
     pub fn new(x: Int, y: Int) -> Self {
         Self { x, y }
-    }
-    pub fn center_of(area: &Area) -> Self {
-        Self {
-            x: (area.left+area.width/2) as Int,
-            y: (area.top+area.height/2) as Int,
-        }
     }
     pub fn in_grid(self, width: Int, height: Int) -> bool {
         self.x>=0 && self.y>=0 && self.x<width && self.y<height
@@ -134,32 +130,53 @@ impl ScreenPos {
     }
 }
 
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug)]
 pub struct PosArea {
-    pub min: Pos,
-    pub dim: Pos,
+    pub x: Range<Int>,
+    pub y: Range<Int>,
+}
+impl Clone for PosArea {
+    fn clone(&self) -> Self {
+        Self {
+            x: self.x.clone(),
+            y: self.y.clone(),
+        }
+    }
 }
 impl PosArea {
-    pub fn contains(self, pos: Pos) -> bool {
-        pos.x >= self.min.x
-            && pos.y >= self.min.y
-            && pos.x < self.min.x + self.dim.x
-            && pos.y < self.min.y + self.dim.y
+    pub const fn new(x: Range<Int>, y: Range<Int>) -> Self {
+        Self { x, y }
     }
-    pub fn nearest(self, mut pos: Pos) -> Pos {
-        if pos.x < self.min.x {
-            pos.x = self.min.x;
-        } else if pos.x >= self.min.x + self.dim.x {
-            pos.x = self.min.x + self.dim.x -1;
+    pub fn contains(&self, pos: Pos) -> bool {
+        self.x.contains(&pos.x) && self.y.contains(&pos.y)
+    }
+    pub fn width(&self) -> Int {
+        self.x.end - self.x.start
+    }
+    pub fn height(&self) -> Int {
+        self.y.end - self.y.start
+    }
+    pub fn center(&self) -> Pos {
+        Pos::new(
+            (self.x.start + self.x.end)/2,
+            (self.y.start + self.y.end)/2,
+        )
+    }
+    pub fn nearest(&self, mut pos: Pos) -> Pos {
+        if pos.x < self.x.start {
+            pos.x = self.x.start;
+        } else if pos.x >= self.x.end {
+            pos.x = self.x.end - 1;
         }
-        if pos.y < self.min.y {
-            pos.y = self.min.y;
-        } else if pos.y >= self.min.y + self.dim.y {
-            pos.y = self.min.y + self.dim.y -1;
+        if pos.y < self.y.start {
+            pos.y = self.y.start;
+        } else if pos.y >= self.y.end {
+            pos.y = self.y.end - 1;
         }
         pos
     }
 }
+
 
 #[derive(Debug, Clone, Copy)]
 pub struct PosConverter {

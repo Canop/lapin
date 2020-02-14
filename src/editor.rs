@@ -13,7 +13,6 @@ use {
 
 pub struct Editor {
     pub board: Board,
-    //area: &Area,
 }
 
 impl Editor {

@@ -15,13 +15,17 @@ use {
     },
 };
 
+static GAME_AREA: PosArea = PosArea::new(-1000..1000, -1000..1000);
+
 /// the game state
 pub struct Board {
     pub area: PosArea,
     pub cells: PosMap<Cell>,
-    pub actors: Vec<Actor>, // lapin always at index 0
+    pub actors: Vec<Actor>, // Lapin always at index 0
     pub items: OptionPosMap<Item>,
     pub current_player: Player, // whose turn it is
+    //pub grass_areas: Vec<PosArea>, // targets for the sheeps
+    pub grass_cells: Vec<Pos>, // targets for the sheeps
 }
 
 /// what we get on applying a world or player move.
@@ -43,16 +47,20 @@ pub enum Player {
 impl Board {
 
     pub fn new(area: PosArea, default_cell: Cell) -> Self {
-        let cells = PosMap::new(area, default_cell);
+        let cells = PosMap::new(area.clone(), default_cell);
         let mut actors = Vec::new();
         actors.push(Actor::new(ActorKind::Lapin, 0, 0));
-        let items = OptionPosMap::new(area, None);
+        let items = OptionPosMap::new(area.clone(), None);
+        //let grass_areas = Vec::new();
+        let grass_cells = Vec::new();
         Self {
             area,
             cells,
             actors,
             items,
             current_player: Player::Lapin,
+            //grass_areas,
+            grass_cells,
         }
     }
 
@@ -71,18 +79,26 @@ impl Board {
     pub fn is_enterable(&self, pos: Pos) -> bool {
         match self.get(pos) {
             FIELD => true,
-            FOREST => true,
+            GRASS => true,
             _ => false,
         }
     }
 
+    /// sets the area as range and mark it as a goal for sheeps
+    pub fn add_grass_area(&mut self, rx: Range<Int>, ry: Range<Int>) {
+        //self.grass_areas.push(PosArea::new(rx.clone(), ry.clone()));
+        self.set_range(rx, ry, GRASS);
+    }
     pub fn set(&mut self, pos: Pos, cell: Cell) {
         self.cells.set(pos, cell);
+        if cell==GRASS {
+            self.grass_cells.push(pos);
+        }
     }
     pub fn set_range(&mut self, rx: Range<Int>, ry: Range<Int>, cell: Cell) {
         for x in rx {
             for y in ry.clone() {
-                self.cells.set_xy(x, y, cell);
+                self.set(Pos::new(x, y), cell);
             }
         }
     }
@@ -98,7 +114,7 @@ impl Board {
 
     /// return a pos_set with the positions of all actors preset
     pub fn actor_pos_set(&self) -> PosSet {
-        let mut actor_pos_set = PosSet::from(self.area);
+        let mut actor_pos_set = PosSet::from(self.area.clone());
         for &actor in &self.actors {
             actor_pos_set.insert(actor.pos);
         }
@@ -107,7 +123,7 @@ impl Board {
 
     /// return a pos_map referencing all the actors
     pub fn actor_pos_map(&self) -> ActorPosMap {
-        let mut actor_pos_map = ActorPosMap::from(self.area);
+        let mut actor_pos_map = ActorPosMap::from(self.area.clone());
         for &actor in &self.actors {
             actor_pos_map.set(actor.pos, Some(actor));
         }
@@ -119,15 +135,24 @@ impl Board {
             Command::Move(dir) => {
                 let mut end_turn = true;
                 let pos = self.lapin_pos().in_dir(dir);
+                if !GAME_AREA.contains(pos) {
+                    warn!("Lapin is too far!");
+                    return MoveResult::Invalid;
+                }
+                for i in 1..self.actors.len() {
+                    if self.actors[i].pos == pos {
+                        debug!("the place is taken");
+                        return MoveResult::Invalid;
+                    }
+                }
                 if self.is_enterable(pos) {
                     self.actors[0].pos = pos;
-                    if self.get(pos) == FOREST {
+                    if self.get(pos) == GRASS {
                         return MoveResult::PlayerWin;
                     }
-                    if let Some(_item) = self.items.get(pos) {
-                        // right now there are only carrots
+                    if let Some(Item{kind:ItemKind::Carrot}) = self.items.get(pos) {
                         self.items.remove(pos);
-                        info!("Lapin eat a carrot");
+                        info!("Lapin eats a carrot and replays");
                         end_turn = false;
                     }
                     for i in 1..self.actors.len() {
@@ -176,13 +201,20 @@ impl Board {
                         debug!("move prevented because other actor present");
                     } else {
                         self.actors[actor_id].pos = new_pos;
+                        if self.actors[actor_id].kind.drinks_wine() {
+                            if let Some(Item{kind:ItemKind::Wine}) = self.items.get(new_pos) {
+                                self.items.remove(new_pos);
+                                info!("hunter drinks some wine");
+                                self.actors[actor_id].state.drunk = true;
+                            }
+                        }
                     }
                 }
                 Action::Aims(dir) => {
-                    self.actors[actor_id].state = ActorState::Aiming(dir);
+                    self.actors[actor_id].state.aim = Some(dir);
                 }
                 Action::StopsAiming => {
-                    self.actors[actor_id].state = ActorState::Normal;
+                    self.actors[actor_id].state.aim = None;
                 }
                 _ => { }
             }

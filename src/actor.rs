@@ -1,16 +1,15 @@
 use {
     crate::{
+        path::*,
         pos::*,
         skin::*,
     },
 };
 
-// will be backed by a bit seat as soon as there's
-// more content
-#[derive(Debug, Clone, Copy)]
-pub enum ActorState {
-    Normal,
-    Aiming(Dir),
+#[derive(Debug, Clone, Copy, Default)]
+pub struct ActorState {
+    pub aim: Option<Dir>,
+    pub drunk: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -20,35 +19,37 @@ pub enum ActorKind {
     Wolf,
     Fox,
     Hunter,
+    Sheep,
 }
 impl ActorKind {
+    pub fn drinks_wine(self) -> bool {
+        match self {
+            ActorKind::Hunter => true,
+            _ => false,
+        }
+    }
     pub fn hits(self, other: Self) -> bool {
         use ActorKind::*;
         match (self, other) {
+            (Fox, Lapin) => true,
             (Knight, Fox) => true,
             (Knight, Hunter) => true,
             (Knight, Wolf) => true,
             (Wolf, Hunter) => true,
+            (Wolf, Sheep) => true,
             (Wolf, Lapin) => true,
-            (Fox, Lapin) => true,
             _ => false,
         }
     }
     pub fn runs_after(self, other: Self) -> bool {
         use ActorKind::*;
         match (self, other) {
-            (Knight, Fox) => true,
-            //(Knight, Hunter) => true,
-            (Wolf, Hunter) => true,
-            (Wolf, Lapin) => true,
             (Fox, Lapin) => true,
             (Hunter, Lapin) => true,
-            _ => false,
-        }
-    }
-    pub fn fires_on(self, _other: Self) -> bool {
-        match self {
-            Self::Hunter => true,
+            (Knight, Fox) => true,
+            (Wolf, Hunter) => true,
+            (Wolf, Sheep) => true,
+            (Wolf, Lapin) => true,
             _ => false,
         }
     }
@@ -61,11 +62,12 @@ impl ActorKind {
     pub fn skin(self, skin: &Skin) -> FgSkin {
         use ActorKind::*;
         match self {
-            Lapin => skin.lapin,
-            Knight => skin.knight,
-            Wolf => skin.wolf,
             Fox => skin.fox,
             Hunter => skin.hunter,
+            Knight => skin.knight,
+            Lapin => skin.lapin,
+            Sheep => skin.sheep,
+            Wolf => skin.wolf,
         }
     }
 }
@@ -81,27 +83,48 @@ impl Actor {
         Self {
             kind,
             pos: Pos::new(x, y),
-            state: ActorState::Normal,
+            state: ActorState::default(),
         }
     }
     pub fn hits(self, other: Actor) -> bool {
         self.kind.hits(other.kind)
     }
     pub fn fires_on(self, other: Actor) -> bool {
-        self.kind.fires_on(other.kind)
+        use ActorKind::*;
+        match self.kind {
+            Hunter => if self.state.drunk {
+                true
+            } else {
+                match other.kind {
+                    Fox => true,
+                    Knight => true,
+                    Lapin => true,
+                    Wolf => true,
+                    _ => false,
+                }
+            }
+            _ => false,
+        }
     }
     pub fn runs_after(self, other: Actor) -> bool {
         self.kind.runs_after(other.kind)
     }
     pub fn is_aiming(self) -> bool {
-        match self.state {
-            ActorState::Aiming(_) => true,
-            _ => false,
+        self.state.aim.is_some()
+    }
+    pub fn path_finding_strategy(self) -> PathFindingStrategy {
+        use {
+            ActorKind::*,
+            PathFindingStrategy::*,
+        };
+        match self.kind {
+            Lapin | Sheep => BestToNearest, // sheeps are kind of stupid
+            _ => Best,
         }
     }
     pub fn skin(self, skin: &Skin) -> FgSkin {
         let mut s = self.kind.skin(skin);
-        if let ActorState::Aiming(dir) = self.state {
+        if let Some(dir) = self.state.aim {
             s.chr = match dir {
                 Dir::Up => skin.aiming_up,
                 Dir::Right => skin.aiming_right,
@@ -109,6 +132,9 @@ impl Actor {
                 Dir::Left => skin.aiming_left,
                 _ => '?',
             };
+        }
+        if self.state.drunk {
+            s.color = skin.hunter_drunk.color;
         }
         s
     }

@@ -104,7 +104,6 @@ impl<'d> BoardDrawer<'d> {
             }
         }
 
-
         // actors
         for actor in &self.board.actors {
             self.draw_fg(actor.pos, actor.skin(&self.screen.skin))?;

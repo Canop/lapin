@@ -156,7 +156,7 @@ impl<'d> BoardDrawer<'d> {
         for av in 0..=8 {
             for actor_move in &world_move.actor_moves {
                 let actor_id = actor_move.actor_id;
-                let actor = self.board.actors[actor_id];
+                let mut actor = self.board.actors[actor_id];
                 match actor_move.action {
                     Action::Moves(dir) => {
                         self.draw_move_step(
@@ -182,6 +182,13 @@ impl<'d> BoardDrawer<'d> {
                             dir,
                             actor_move.target_id,
                             av,
+                        )?;
+                    }
+                    Action::Aims(dir) => {
+                        actor.state.aim = Some(dir);
+                        self.draw_fg(
+                            actor.pos,
+                            actor.skin(&self.screen.skin),
                         )?;
                     }
                     _ => {}

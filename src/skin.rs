@@ -40,18 +40,26 @@ impl FgSkin {
 
 pub struct Skin {
     pub cell_bg: [Color; 4],
-    pub lapin: FgSkin,
+    // actors
     pub fox: FgSkin,
-    pub wolf: FgSkin,
-    pub knight: FgSkin,
-    pub carrot: FgSkin,
     pub hunter: FgSkin,
+    pub hunter_drunk: FgSkin,
+    pub knight: FgSkin,
+    pub lapin: FgSkin,
+    pub sheep: FgSkin,
+    pub wolf: FgSkin,
+    // items
+    pub carrot: FgSkin,
+    pub wine: FgSkin,
+    // special states
     pub aiming_up: char,
     pub aiming_right: char,
     pub aiming_down: char,
     pub aiming_left: char,
+    // animations
     pub fire_horizontal: FgSkin,
     pub fire_vertical: FgSkin,
+    // texts
     pub normal_status: MadSkin,
     pub error_status: MadSkin,
 }
@@ -59,26 +67,33 @@ pub struct Skin {
 impl Skin {
     pub fn new() -> Self {
         let cell_bg = [
-            //rgb(49, 41, 34),  // FIELD
             rgb(27, 23, 19),  // FIELD
             ansi(59), // WALL
-            ansi(22), // FOREST
+            ansi(22), // GRASS
             ansi(25), // WATER
         ];
         Self {
             cell_bg,
-            lapin: FgSkin::new('▮', gray(16)),
+            // actors
             fox: FgSkin::new('█', ansi(166)),
-            knight: FgSkin::new('█', ansi(206)),
-            wolf: FgSkin::new('█', gray(0)),
-            carrot: FgSkin::new('⬩', ansi(172)),
             hunter: FgSkin::new('█', ansi(58)),
+            hunter_drunk: FgSkin::new('█', ansi(160)),
+            knight: FgSkin::new('█', ansi(206)),
+            lapin: FgSkin::new('▮', gray(16)),
+            sheep: FgSkin::new('█', ansi(230)),
+            wolf: FgSkin::new('█', gray(0)),
+            // special states
             aiming_up: '▴',
             aiming_right: '▸',
             aiming_down: '▾',
             aiming_left: '◂',
+            // items
+            carrot: FgSkin::new('⬩', ansi(172)),
+            wine: FgSkin::new('⬩', ansi(160)),
+            // animations
             fire_horizontal: FgSkin::new('―', Color::White),
             fire_vertical: FgSkin::new('│', Color::White),
+            // texts
             normal_status: make_normal_status_mad_skin(),
             error_status: make_error_status_mad_skin(),
         }
