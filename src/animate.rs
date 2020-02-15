@@ -1,9 +1,9 @@
 use {
     anyhow::Result,
     crate::{
+        actor::*,
         draw_board::*,
         pos::*,
-        pos_map::*,
         task_sync::*,
         world::*,
     },

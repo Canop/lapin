@@ -5,7 +5,6 @@ use {
         consts::*,
         item::*,
         pos::*,
-        pos_map::*,
         world::*,
     },
     std::{
@@ -51,7 +50,6 @@ impl Board {
         let mut actors = Vec::new();
         actors.push(Actor::new(ActorKind::Lapin, 0, 0));
         let items = OptionPosMap::new(area.clone(), None);
-        //let grass_areas = Vec::new();
         let grass_cells = Vec::new();
         Self {
             area,
@@ -59,7 +57,6 @@ impl Board {
             actors,
             items,
             current_player: Player::Lapin,
-            //grass_areas,
             grass_cells,
         }
     }
@@ -68,11 +65,8 @@ impl Board {
         self.actors[0].pos
     }
 
-    pub fn add_actor_in(&mut self, kind: ActorKind, x: Int, y: Int) {
-        self.actors.push(Actor::new(kind, x, y));
-    }
-    pub fn add_item_in(&mut self, kind: ItemKind, x: Int, y: Int) {
-        self.items.set_some(Pos::new(x, y), Item { kind });
+    pub fn add_actor(&mut self, actor: Actor) {
+        self.actors.push(actor);
     }
 
     // FIXME remove
@@ -86,10 +80,10 @@ impl Board {
 
     /// sets the area as range and mark it as a goal for sheeps
     pub fn add_grass_area(&mut self, rx: Range<Int>, ry: Range<Int>) {
-        //self.grass_areas.push(PosArea::new(rx.clone(), ry.clone()));
         self.set_range(rx, ry, GRASS);
     }
     pub fn set(&mut self, pos: Pos, cell: Cell) {
+        // TODO check we're not removing a grass cell
         self.cells.set(pos, cell);
         if cell==GRASS {
             self.grass_cells.push(pos);

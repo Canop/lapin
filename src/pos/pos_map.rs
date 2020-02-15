@@ -1,20 +1,19 @@
 use {
-    crate::{
-        actor::*,
-        pos::*,
-    },
     fnv::{
         FnvHashMap,
     },
+    serde::{Serialize, Deserialize},
+    super::*,
 };
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PosMap<V>
     where V: Copy
 {
     area: PosArea,
     default: V,
-    grid: Vec<V>, // for items in the area
-    outliers: FnvHashMap<Pos, V>,
+    grid: Vec<V>,                   // items in the area
+    outliers: FnvHashMap<Pos, V>,   // items out of area
 }
 impl<V> PosMap<V>
     where V: Copy
@@ -95,19 +94,6 @@ impl<V> OptionPosMap<V>
     }
     pub fn set_some(&mut self, pos: Pos, v: V) {
         self.set(pos, Some(v));
-    }
-}
-
-// note that it's possible to insert an actor at
-// a position other than its one (it can be for example
-// his target)
-pub type ActorPosMap = OptionPosMap<Actor>;
-impl ActorPosMap {
-    pub fn from(area: PosArea) -> Self {
-        PosMap::<Option<Actor>>::new(area, None)
-    }
-    pub fn insert(&mut self, actor: Actor) {
-        self.set(actor.pos, Some(actor));
     }
 }
 

@@ -3,9 +3,10 @@ use {
     crate::{
         skin::*,
     },
+    serde::{Serialize, Deserialize},
 };
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum ItemKind {
     Carrot,
     Wine,
@@ -19,7 +20,7 @@ impl ItemKind {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Item {
     pub kind: ItemKind,
 }

@@ -4,15 +4,16 @@ use {
         pos::*,
         skin::*,
     },
+    serde::{Serialize, Deserialize},
 };
 
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
 pub struct ActorState {
     pub aim: Option<Dir>,
     pub drunk: bool,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ActorKind {
     Lapin,
     Knight,
@@ -72,7 +73,7 @@ impl ActorKind {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Actor {
     pub kind: ActorKind,
     pub pos: Pos,
@@ -144,3 +145,16 @@ impl Actor {
     }
 }
 
+
+// note that it's possible to insert an actor at
+// a position other than its one (it can be for example
+// his target) using `set`
+pub type ActorPosMap = OptionPosMap<Actor>;
+impl ActorPosMap {
+    pub fn from(area: PosArea) -> Self {
+        PosMap::<Option<Actor>>::new(area, None)
+    }
+    pub fn insert(&mut self, actor: Actor) {
+        self.set(actor.pos, Some(actor));
+    }
+}

@@ -33,7 +33,7 @@ pub struct GameRunner {
 
 impl GameRunner {
     pub fn new() -> Self {
-        let board = test_level::build();
+        let board = test_level::build().to_board();
         Self {
             board,
         }
@@ -61,7 +61,7 @@ impl GameRunner {
         screen: &Screen,
     ) -> Result<()> {
         Status::from_message(mad_inline!(
-            "Hit arrows to move, *q* to quit"
+            "Hit *arrows* to move, *q* to quit"
         ))
         .display(w, screen)
     }

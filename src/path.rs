@@ -4,7 +4,6 @@ use {
         actor::*,
         board::Board,
         pos::*,
-        pos_map::*,
     },
     std::{
         collections::{

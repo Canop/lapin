@@ -5,7 +5,6 @@ use {
         consts::*,
         path::PathFinder,
         pos::*,
-        pos_map::*,
     },
 };
 

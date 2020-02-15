@@ -80,7 +80,8 @@ impl Skin {
             hunter_drunk: FgSkin::new('█', ansi(160)),
             knight: FgSkin::new('█', ansi(206)),
             lapin: FgSkin::new('▮', gray(16)),
-            sheep: FgSkin::new('█', ansi(230)),
+            //sheep: FgSkin::new('█', ansi(230)),
+            sheep: FgSkin::new('█', gray(19)),
             wolf: FgSkin::new('█', gray(0)),
             // special states
             aiming_up: '▴',
