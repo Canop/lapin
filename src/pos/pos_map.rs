@@ -5,13 +5,47 @@ use {
     serde::{Serialize, Deserialize},
     super::*,
 };
+//
+// struct PosMapIterator<'m, V>
+//     where V: Copy
+// {
+//     pos_map: &'m PosMap<V>,
+//     grid_idx: Option<usize>,
+//     outliers: std::collections::hash_map::Iter<'m, Pos, V>,
+// }
+// impl<'m, V: Copy> PosMapIterator<'m, V> {
+//     pub fn from(pos_map: &'m PosMap<V>) -> Self {
+//         let grid_idx = if pos_map.area.is_empty() {
+//             None
+//         } else {
+//             Some(0)
+//         };
+//         let outliers = pos_map.outliers.iter();
+//         Self {
+//             pos_map,
+//             grid_idx,
+//             outliers,
+//         }
+//     }
+// }
+// impl<'m> Iterator<'m, Pos, V> for PosMapIterator<'m, V> {
+//     type Item = Located<V>;
+//     fn next(&mut self) -> Option<Item> {
+//         if let Some(idx) = self.grid_idx {
+//             if idx < self.board.grid.len() - 1 {
+//
+//         } else {
+//             self.outliers.map(|&p, &v| Located::new(p, v))
+//         }
+//     }
+// }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PosMap<V>
     where V: Copy
 {
     area: PosArea,
-    default: V,
+    pub default: V,
     grid: Vec<V>,                   // items in the area
     outliers: FnvHashMap<Pos, V>,   // items out of area
 }
@@ -28,12 +62,27 @@ impl<V> PosMap<V>
             outliers,
         }
     }
+    /// iterate over both the in-grid elements and the outliers
+    pub fn iter(&self) -> impl Iterator<Item = Located<V>> + '_ {
+        self.grid.iter()
+            .enumerate()
+            .map(move |(i, &v)| Located::new(self.pos_unchecked(i), v))
+            .chain(
+                self.outliers.iter()
+                .map(move |(&pos, &v)| Located::new(pos, v))
+            )
+    }
     fn idx(&self, pos: Pos) -> Option<usize> {
         if self.area.contains(pos) {
             Some((self.area.width() * (pos.y-self.area.y.start) + (pos.x-self.area.x.start)) as usize)
         } else {
             None
         }
+    }
+    fn pos_unchecked(&self, idx: usize) -> Pos {
+        let dy = idx as Int / self.area.width();
+        let dx = idx as Int % self.area.width();
+        Pos::new(dx + self.area.x.start, dy + self.area.y.start)
     }
     pub fn get(&self, pos: Pos) -> V {
         if let Some(idx) = self.idx(pos) {
@@ -57,6 +106,9 @@ impl<V> PosMap<V>
         } else {
             self.outliers.insert(pos, v);
         }
+    }
+    pub fn set_lc(&mut self, lc: Located<V>) {
+        self.set(lc.pos, lc.v);
     }
     pub fn set_xy(&mut self, x: Int, y: Int, v: V) {
         self.set(Pos::new(x, y), v);
@@ -95,37 +147,53 @@ impl<V> OptionPosMap<V>
     pub fn set_some(&mut self, pos: Pos, v: V) {
         self.set(pos, Some(v));
     }
+    /// iterate over real values
+    pub fn iter_some(&self) -> impl Iterator<Item = Located<V>> + '_ {
+        self.iter()
+            .filter(|lc| lc.v.is_some())
+            .map(|lc| Located::new(lc.pos, lc.v.unwrap()))
+    }
 }
 
 #[cfg(test)]
 mod pos_map_tests {
 
     use super::*;
-    use crate::actor::*;
+    use crate::{
+        actor::*,
+        consts::*,
+    };
+
+    #[test]
+    fn test_idx() {
+        let area = PosArea::new(-10..11, -100..151);
+        let mut m: PosMap<usize> = PosMap::new(area, 0);
+        let pos = Pos::new(-7, 54);
+        assert_eq!(pos, m.pos_unchecked(m.idx(pos).unwrap()));
+    }
 
     #[test]
     fn test_cell_map() {
-        let area = PosArea {
-            min: Pos::new(-10, -10),
-            dim: Pos::new(100, 150),
-        };
-        let mut cm: PosMap<Cell> = PosMap::new(area, WALL);
+        let area = PosArea::new(-10..11, -100..151);
+        let mut cm: PosMap<Cell> = PosMap::new(area.clone(), WALL);
         cm.set_xy(2, 3, GRASS);
-        cm.set_xy(-5, 3, GRASS);
+        cm.set_xy(-5, 3, WATER);
         cm.set_xy(-15, 3, GRASS);
         assert_eq!(cm.get_xy(0, 0), WALL);
         assert_eq!(cm.get_xy(-1000, 0), WALL);
         assert_eq!(cm.get_xy(2, 3), GRASS);
-        assert_eq!(cm.get_xy(-5, 3), GRASS);
-        assert_eq!(cm.get_xy(-15, 3), WALL); // out of area
+        assert_eq!(cm.get_xy(-5, 3), WATER);
+        assert_eq!(cm.get_xy(-15, 3), GRASS); // out of area
+        let mut iter = cm.iter();
+        assert_eq!(
+            iter.count() as i32,
+            area.width()*area.height() + 1, // +1 for the outlier
+        );
     }
 
     #[test]
     fn test_actor_map() {
-        let area = PosArea {
-            min: Pos::new(-10, -10),
-            dim: Pos::new(100, 150),
-        };
+        let area = PosArea::new(-10..11, -100..151);
         let mut am = ActorPosMap::from(area);
         let p = Pos::new(-5, 25);
         let fox = Actor::new(ActorKind::Fox, p.x, p.y);

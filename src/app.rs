@@ -3,12 +3,14 @@ use {
     crate::{
         editor::LevelEditor,
         game_runner::GameRunner,
-        message_runner,
         io::W,
+        fromage::*,
+        message_runner,
         task_sync::*,
     },
 };
 
+#[derive(Debug)]
 pub enum AppState {
     PlayLevel,  // there might be a level id or something later
     EditLevel,  // there might be a level id or something later
@@ -19,9 +21,14 @@ pub enum AppState {
 pub fn run(
     w: &mut W,
     dam: &mut Dam,
+    fromage: Fromage,
 ) {
     use AppState::*;
-    let mut state = Ok(PlayLevel);
+    let mut state = Ok(match fromage.sub {
+        Some(SubCommand::Edit { .. }) => EditLevel,
+        _ => PlayLevel,
+    });
+    debug!("initial state: {:?}", &state);
     loop {
         state = match state {
             Ok(EditLevel) => {

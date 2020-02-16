@@ -5,6 +5,7 @@ use {
         command::Command,
         draw_board::BoardDrawer,
         io::W,
+        move_result::*,
         pos::*,
         screen::Screen,
         status::Status,
@@ -33,7 +34,7 @@ pub struct GameRunner {
 
 impl GameRunner {
     pub fn new() -> Self {
-        let board = test_level::build().to_board();
+        let board = Board::from(&test_level::build());
         Self {
             board,
         }

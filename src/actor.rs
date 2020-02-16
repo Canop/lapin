@@ -76,7 +76,7 @@ impl ActorKind {
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Actor {
     pub kind: ActorKind,
-    pub pos: Pos,
+    pub pos: Pos, // TODO remove and use Located<Actor> where the pos is needed?
     pub state: ActorState,
 }
 impl Actor {

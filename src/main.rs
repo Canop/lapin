@@ -3,6 +3,7 @@ extern crate log;
 
 use {
     anyhow::Result,
+    argh,
     crossterm::{
         cursor,
         event::{DisableMouseCapture, EnableMouseCapture},
@@ -15,7 +16,9 @@ use {
     },
     lapin::{
         app,
+        fromage::*,
         task_sync::*,
+        test_level,
     },
     log::LevelFilter,
     simplelog,
@@ -55,13 +58,24 @@ fn configure_log() {
 
 fn main() -> Result<()> {
     configure_log();
+
+    let fromage: Fromage = argh::from_env();
+
+    if fromage.is_test() {
+        // testing serialization of level
+        let level = test_level::build();
+        let serialized = serde_json::to_string(&level).unwrap();
+        println!("{}", serialized);
+        return Ok(());
+    }
+
     let mut w = std::io::stderr();
     w.queue(EnterAlternateScreen)?;
     w.queue(cursor::Hide)?; // hiding the cursor
     terminal::enable_raw_mode()?;
     w.queue(EnableMouseCapture)?;
     let mut dam = Dam::new()?;
-    app::run(&mut w, &mut dam);
+    app::run(&mut w, &mut dam, fromage);
     dam.kill();
     w.queue(DisableMouseCapture)?;
     terminal::disable_raw_mode()?;

@@ -19,17 +19,17 @@ impl Default for PosDistribution {
 }
 
 impl PosDistribution {
-    pub fn from<'a, I>(pos_iterable: I) -> Option<Self>
+    pub fn from<I>(pos_iterable: I) -> Option<Self>
     where
-        I: IntoIterator<Item = &'a Pos>,
+        I: IntoIterator<Item = Pos>,
     {
         let mut pos_iter = pos_iterable.into_iter();
-        pos_iter.next().map(|&first_pos| {
+        pos_iter.next().map(|first_pos| {
             // we'll assume the Int type is big enough to not overflow here
             let mut sum = first_pos;
             let mut count = 1;
             let mut area = PosArea::from_pos(first_pos);
-            for &pos in pos_iter {
+            for pos in pos_iter {
                 sum.x += pos.x;
                 sum.y += pos.y;
                 count += 1;

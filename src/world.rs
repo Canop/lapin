@@ -3,6 +3,7 @@ use {
         actor::*,
         board::Board,
         consts::*,
+        move_result::*,
         path::PathFinder,
         pos::*,
     },

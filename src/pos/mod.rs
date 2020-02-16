@@ -1,5 +1,6 @@
 
 mod dir;
+mod located;
 mod pos;
 mod pos_area;
 mod pos_converter;
@@ -9,6 +10,7 @@ mod screen_pos;
 
 pub use {
     dir::Dir,
+    located::*,
     pos::Pos,
     pos_area::PosArea,
     pos_converter::PosConverter,

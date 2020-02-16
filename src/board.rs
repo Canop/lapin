@@ -4,6 +4,8 @@ use {
         command::*,
         consts::*,
         item::*,
+        level::Level,
+        move_result::*,
         pos::*,
         world::*,
     },
@@ -23,24 +25,34 @@ pub struct Board {
     pub actors: Vec<Actor>, // Lapin always at index 0
     pub items: OptionPosMap<Item>,
     pub current_player: Player, // whose turn it is
-    //pub grass_areas: Vec<PosArea>, // targets for the sheeps
     pub grass_cells: Vec<Pos>, // targets for the sheeps
 }
 
-/// what we get on applying a world or player move.
-/// This will probably contain more in the future
-#[derive(Debug)]
-pub enum MoveResult {
-    Ok, // RAS
-    Invalid, // move does nothing,
-    PlayerWin,
-    PlayerLose,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum Player {
-    Lapin, // played by a presumed human
-    World, // the rest
+impl From<&Level> for Board {
+    fn from(level: &Level) -> Self {
+        let pos_distribution = PosDistribution::from(
+            level.cells.iter()
+                .filter(|lc| lc.v != level.default_cell)
+                .map(|&lc| lc.pos)
+        )
+        .unwrap_or_default();
+        // FIXME check area not to wide
+        let mut board = Board::new(pos_distribution.area, level.default_cell);
+        for &lc in level.cells.iter() {
+            board.cells.set_lc(lc);
+            if lc.v==GRASS {
+                board.grass_cells.push(lc.pos);
+            }
+        }
+        board.actors.remove(0);
+        for &actor in &level.actors {
+            board.actors.push(actor);
+        }
+        for lc in &level.items {
+            board.items.set_some(lc.pos, lc.v);
+        }
+        board
+    }
 }
 
 impl Board {
@@ -61,6 +73,8 @@ impl Board {
         }
     }
 
+    // TODO explicit function to compute grass_cells
+
     pub fn lapin_pos(&self) -> Pos {
         self.actors[0].pos
     }
@@ -78,16 +92,14 @@ impl Board {
         }
     }
 
-    /// sets the area as range and mark it as a goal for sheeps
-    pub fn add_grass_area(&mut self, rx: Range<Int>, ry: Range<Int>) {
-        self.set_range(rx, ry, GRASS);
+    pub fn add_actor_in(&mut self, kind: ActorKind, x: Int, y: Int) {
+        self.actors.push(Actor::new(kind, x, y));
+    }
+    pub fn add_item_in(&mut self, kind: ItemKind, x: Int, y: Int) {
+        self.items.set_some(Pos::new(x, y), Item { kind });
     }
     pub fn set(&mut self, pos: Pos, cell: Cell) {
-        // TODO check we're not removing a grass cell
         self.cells.set(pos, cell);
-        if cell==GRASS {
-            self.grass_cells.push(pos);
-        }
     }
     pub fn set_range(&mut self, rx: Range<Int>, ry: Range<Int>, cell: Cell) {
         for x in rx {

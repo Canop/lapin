@@ -36,6 +36,10 @@ impl PosArea {
             y: 0..0,
         }
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.x.len()==0 || self.y.len()==0
+    }
     pub const fn from_pos(pos: Pos) -> Self {
         Self {
             x: pos.x..pos.x+1,
