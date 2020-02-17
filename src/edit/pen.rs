@@ -22,7 +22,7 @@ impl Default for Pen {
 }
 
 impl Pen {
-    pub fn click(&self, pos: Pos, board: &mut Board) {
+    pub fn click(&mut self, pos: Pos, board: &mut Board) {
         board.set(pos, self.cell);
     }
 }

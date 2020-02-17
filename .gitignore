@@ -2,6 +2,8 @@
 build
 release.zip
 
+# levels & campaign files are, today, personal
+levels
 
 # personal scripts and resources
 deploy.sh

@@ -1,22 +1,33 @@
 use {
+    anyhow::Result,
     crate::{
         app::AppState,
         board::*,
-        command::Command,
         consts::*,
         draw_board::BoardDrawer,
+        fromage::EditSubCommand,
         io::W,
+        level::Level,
         pos::*,
         screen::Screen,
         status::Status,
         task_sync::*,
     },
-    anyhow::Result,
     crossterm::{
         event::{
             KeyCode,
             KeyEvent,
         },
+    },
+    std::{
+        fs::{
+            self,
+            File,
+        },
+        io::{
+            BufReader,
+        },
+        path::PathBuf,
     },
     super::{
         pen::Pen,
@@ -30,19 +41,38 @@ use {
 pub struct LevelEditor {
     board: Board,
     pen: Pen,
+    path: PathBuf,
+    status: Status,
 }
 
 impl LevelEditor {
-    pub fn new() -> Self {
-        let board = Board::new(
-            PosArea::new(-100..100, -100..100),
-            FIELD,
+
+    pub fn new(esc: EditSubCommand) -> Result<Self> {
+        let path = esc.path;
+        debug!("opening level editor on {:?}", &path);
+        let board = if path.exists() {
+            debug!("trying to deserialize the file");
+            let file = File::open(&path)?;
+            let level: Level = serde_json::from_reader(file)?;
+            // FIXME call validity checks here
+            Board::from(&level)
+        } else {
+            debug!("non existing file : starting with a clean board");
+            Board::new(
+                PosArea::new(-100..100, -100..100),
+                FIELD,
+            )
+        };
+        let status = Status::from_message(
+            "click at random to do random things, *q* to quit, *s* to save".to_string()
         );
         let pen = Pen::default();
-        Self {
+        Ok(Self {
             board,
             pen,
-        }
+            path,
+            status,
+        })
     }
 
     fn write_status(
@@ -50,19 +80,43 @@ impl LevelEditor {
         w: &mut W,
         screen: &Screen,
     ) -> Result<()> {
-        Status::from_message(mad_inline!(
-            "click at random to do random things, *q* to quit"
-        ))
-        .display(w, screen)
+        self.status.display(w, screen)
+    }
+
+    fn save_to_file(
+        &mut self,
+    ) -> Result<()> {
+        let level = Level::from(&self.board);
+        let serialized = serde_json::to_string(&level)?;
+        fs::write(&self.path, serialized)?;
+        Ok(())
     }
 
     fn handle_key_event(
         &mut self,
         code: KeyCode,
     ) -> Option<AppState> {
-        match Command::from(code) {
-            Some(Command::Quit) => {
+        debug!("code: {:?}", code);
+        match code {
+            KeyCode::Char('q') => {
                 Some(AppState::Quit)
+            }
+            KeyCode::Char('s') => {
+                match self.save_to_file() {
+                    Err(e) => {
+                        self.status = Status::from_error(format!(
+                                "level saving failed: `{:?}`",
+                                e,
+                        ));
+                    }
+                    _ => {
+                        self.status = Status::from_message(format!(
+                                "level saved in file `{:?}`",
+                                &self.path,
+                        ));
+                    }
+                }
+                None
             }
             _ => None,
         }

@@ -9,9 +9,10 @@ pub enum MoveResult {
     PlayerLose,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Player {
     Lapin, // played by a presumed human
     World, // the rest
+    None, // game is probably finished
 }
 

@@ -1,5 +1,9 @@
-
-use argh::FromArgs;
+use {
+    argh::FromArgs,
+    std::{
+        path::PathBuf,
+    },
+};
 
 #[derive(FromArgs, PartialEq, Debug)]
 /// A game I make under supervision of my kids
@@ -29,12 +33,18 @@ impl Fromage {
 /// play a game
 #[argh(subcommand, name = "play")]
 pub struct PlaySubCommand {
+    #[argh(positional)]
+    /// optional path to a level file
+    pub path: Option<PathBuf>,
 }
 
 #[derive(FromArgs, PartialEq, Debug)]
 /// edit a level
 #[argh(subcommand, name = "edit")]
 pub struct EditSubCommand {
+    #[argh(positional)]
+    /// path to the level to create or modify
+    pub path: PathBuf,
 }
 
 #[derive(FromArgs, PartialEq, Debug)]

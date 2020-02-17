@@ -1,13 +1,11 @@
 use {
     crate::{
         actor::*,
-        command::*,
         consts::*,
         item::*,
         level::Level,
-        move_result::*,
+        play::*,
         pos::*,
-        world::*,
     },
     std::{
         ops::{
@@ -137,6 +135,9 @@ impl Board {
     }
 
     pub fn apply_player_move(&mut self, cmd: Command) -> MoveResult {
+        if self.current_player != Player::Lapin {
+            return MoveResult::Invalid;
+        }
         match cmd {
             Command::Move(dir) => {
                 let mut end_turn = true;
@@ -154,6 +155,7 @@ impl Board {
                 if self.is_enterable(pos) {
                     self.actors[0].pos = pos;
                     if self.get(pos) == GRASS {
+                        self.current_player = Player::None;
                         return MoveResult::PlayerWin;
                     }
                     if let Some(Item{kind:ItemKind::Carrot}) = self.items.get(pos) {
@@ -163,6 +165,7 @@ impl Board {
                     }
                     for i in 1..self.actors.len() {
                         if self.actors[i].pos == pos {
+                        self.current_player = Player::None;
                             return MoveResult::PlayerLose;
                         }
                     }
@@ -228,6 +231,7 @@ impl Board {
         }
         self.current_player = Player::Lapin;
         if killed[0] {
+            self.current_player = Player::None;
             MoveResult::PlayerLose
         } else {
             let mut i = self.actors.len() - 1;

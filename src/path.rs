@@ -179,6 +179,8 @@ impl<'b> PathFinder<'b> {
             }
             closed_set.insert(current);
             for i in 0..4 {
+                // not always trying the same path when several are identical
+                // in lenght avoids some locking situation and some abuses
                 let dir = DIRS[(i + self.seed)%4];
                 let neighbour = current.in_dir(dir);
                 if

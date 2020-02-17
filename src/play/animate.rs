@@ -5,7 +5,6 @@ use {
         draw_board::*,
         pos::*,
         task_sync::*,
-        world::*,
     },
     crossterm::{
         cursor,
@@ -20,6 +19,7 @@ use {
     std::{
         time::Duration,
     },
+    super::*,
 };
 
 static HORIZONTAL_BC: [char; 9] = [' ', '▏', '▎', '▍', '▌', '▋', '▊', '▉', '█'];

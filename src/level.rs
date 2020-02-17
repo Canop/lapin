@@ -6,15 +6,7 @@ use {
         item::*,
         pos::*,
     },
-    fnv::{
-        FnvHashMap,
-    },
     serde::{Serialize, Deserialize},
-    std::{
-        ops::{
-            Range,
-        },
-    },
 };
 
 /// the description of a level for (de)serialization

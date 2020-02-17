@@ -5,40 +5,6 @@ use {
     serde::{Serialize, Deserialize},
     super::*,
 };
-//
-// struct PosMapIterator<'m, V>
-//     where V: Copy
-// {
-//     pos_map: &'m PosMap<V>,
-//     grid_idx: Option<usize>,
-//     outliers: std::collections::hash_map::Iter<'m, Pos, V>,
-// }
-// impl<'m, V: Copy> PosMapIterator<'m, V> {
-//     pub fn from(pos_map: &'m PosMap<V>) -> Self {
-//         let grid_idx = if pos_map.area.is_empty() {
-//             None
-//         } else {
-//             Some(0)
-//         };
-//         let outliers = pos_map.outliers.iter();
-//         Self {
-//             pos_map,
-//             grid_idx,
-//             outliers,
-//         }
-//     }
-// }
-// impl<'m> Iterator<'m, Pos, V> for PosMapIterator<'m, V> {
-//     type Item = Located<V>;
-//     fn next(&mut self) -> Option<Item> {
-//         if let Some(idx) = self.grid_idx {
-//             if idx < self.board.grid.len() - 1 {
-//
-//         } else {
-//             self.outliers.map(|&p, &v| Located::new(p, v))
-//         }
-//     }
-// }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PosMap<V>

@@ -3,7 +3,6 @@ use {
         actor::*,
         board::Board,
         consts::*,
-        move_result::*,
         path::PathFinder,
         pos::*,
     },
@@ -34,13 +33,13 @@ pub struct WorldMove {
     pub actor_moves: Vec<ActorMove>,
 }
 
-
 pub struct WorldPlayer<'t> {
     board: &'t Board,
     actor_pos_set: PosSet,
     killed: Vec<bool>,
     seed: usize,
 }
+
 impl<'t> WorldPlayer<'t> {
     pub fn new(board: &'t Board, seed: usize) -> Self {
         let actor_pos_set = board.actor_pos_set();

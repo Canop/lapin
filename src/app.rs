@@ -1,20 +1,19 @@
 
 use {
     crate::{
-        editor::LevelEditor,
-        game_runner::GameRunner,
+        edit,
+        fromage::*,
         io::W,
         fromage::*,
-        message_runner,
+        play,
         task_sync::*,
     },
 };
 
 #[derive(Debug)]
 pub enum AppState {
-    PlayLevel,  // there might be a level id or something later
-    EditLevel,  // there might be a level id or something later
-    Message(String, bool),
+    PlayLevel(PlaySubCommand),
+    EditLevel(EditSubCommand),
     Quit,
 }
 
@@ -25,22 +24,18 @@ pub fn run(
 ) {
     use AppState::*;
     let mut state = Ok(match fromage.sub {
-        Some(SubCommand::Edit { .. }) => EditLevel,
-        _ => PlayLevel,
+        Some(SubCommand::Edit ( esc )) => EditLevel(esc),
+        Some(SubCommand::Play ( psc )) => PlayLevel(psc),
+        _ => Quit,
     });
-    debug!("initial state: {:?}", &state);
     loop {
+        debug!("app state: {:?}", &state);
         state = match state {
-            Ok(EditLevel) => {
-                let mut level_editor = LevelEditor::new();
-                level_editor.run(w, dam)
+            Ok(EditLevel(esc)) => {
+                edit::run(w, dam, esc)
             }
-            Ok(PlayLevel) => {
-                let mut game_runner = GameRunner::new();
-                game_runner.run(w, dam)
-            }
-            Ok(Message(s, good)) => {
-                message_runner::run(w, s, good, dam)
+            Ok(PlayLevel(psc)) => {
+                play::run(w, dam, psc)
             }
             Ok(Quit) => { return; }
             Err(e) => {

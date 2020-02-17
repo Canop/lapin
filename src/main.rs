@@ -60,6 +60,7 @@ fn main() -> Result<()> {
     configure_log();
 
     let fromage: Fromage = argh::from_env();
+    debug!("fromage: {:?}", &fromage);
 
     if fromage.is_test() {
         // testing serialization of level
@@ -76,7 +77,7 @@ fn main() -> Result<()> {
     w.queue(EnableMouseCapture)?;
     let mut dam = Dam::new()?;
     app::run(&mut w, &mut dam, fromage);
-    dam.kill();
+    //dam.kill();
     w.queue(DisableMouseCapture)?;
     terminal::disable_raw_mode()?;
     w.queue(cursor::Show)?;
