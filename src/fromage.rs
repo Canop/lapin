@@ -29,7 +29,7 @@ impl Fromage {
     }
 }
 
-#[derive(FromArgs, PartialEq, Debug)]
+#[derive(FromArgs, PartialEq, Debug, Default)]
 /// play a game
 #[argh(subcommand, name = "play")]
 pub struct PlaySubCommand {

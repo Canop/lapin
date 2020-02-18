@@ -22,6 +22,7 @@ pub mod edit;
 pub mod fromage;
 pub mod io;
 pub mod item;
+pub mod layout;
 pub mod level;
 pub mod path;
 pub mod play;

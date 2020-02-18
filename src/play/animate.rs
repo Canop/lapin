@@ -1,7 +1,6 @@
 use {
     anyhow::Result,
     crate::{
-        actor::*,
         draw_board::*,
         pos::*,
         task_sync::*,
@@ -68,13 +67,12 @@ impl<'d> BoardDrawer<'d> {
         dir: Dir,
         color: Color,
         av: usize, // in [0, 8]
-        actor_map_before: &ActorPosMap,
     ) -> Result<()> {
         let sp_start = self.pos_converter.to_screen(start);
         let dst = start.in_dir(dir);
         let sp_dst = self.pos_converter.to_screen(dst);
         let start_bg = self.screen.skin.bg(self.board.get(start));
-        let dst_bg = if let Some(dst_actor) = actor_map_before.get(dst) {
+        let dst_bg = if let Some(dst_actor) = self.actor_map.get(dst) {
             dst_actor.kind.skin(&self.screen.skin).color
         } else {
             self.screen.skin.bg(self.board.get(dst))
@@ -152,7 +150,6 @@ impl<'d> BoardDrawer<'d> {
         world_move: &WorldMove,
         dam: &mut Dam,
     ) -> Result<()> {
-        let actor_map_before = self.board.actor_pos_map();
         for av in 0..=8 {
             for actor_move in &world_move.actor_moves {
                 let actor_id = actor_move.actor_id;
@@ -164,7 +161,6 @@ impl<'d> BoardDrawer<'d> {
                             dir,
                             actor.kind.skin(&self.screen.skin).color,
                             av,
-                            &actor_map_before,
                         )?;
                     }
                     Action::Eats(dir) => {

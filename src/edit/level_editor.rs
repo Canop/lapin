@@ -24,12 +24,10 @@ use {
             self,
             File,
         },
-        io::{
-            BufReader,
-        },
         path::PathBuf,
     },
     super::{
+        LAYOUT,
         pen::Pen,
     },
     termimad::{
@@ -128,7 +126,7 @@ impl LevelEditor {
         w: &mut W,
         dam: &mut Dam,
     ) -> Result<AppState> {
-        let mut screen = Screen::new()?;
+        let mut screen = Screen::new(LAYOUT);
         self.write_status(w, &screen)?;
         loop {
             let mut bd = BoardDrawer::new(&self.board, w, &screen);

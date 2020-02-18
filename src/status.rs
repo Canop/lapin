@@ -4,6 +4,10 @@ use {
         io::W,
         screen::Screen,
     },
+    crossterm::{
+        style::ResetColor,
+        QueueableCommand,
+    },
     minimad::{
         Alignment,
         Composite,
@@ -41,17 +45,17 @@ impl Status {
     }
 
     pub fn display(&self, w: &mut W, screen: &Screen) -> Result<()> {
-        let y = screen.height - 1;
-        screen.goto_clear(w, 0, y)?;
-        let x = 0;
-        screen.goto(w, x as u16, y)?;
+        let area = &screen.areas.status;
+        screen.goto_clear(w, 0, area.top)?;
+        screen.goto(w, area.left, area.top)?;
         let skin = if self.error {
             &screen.skin.error_status
         } else {
             &screen.skin.normal_status
         };
+        w.queue(ResetColor)?;
         skin.write_inline_on(w, " ")?;
-        let remaining_width = screen.width as usize - x - 1;
+        let remaining_width = (area.width - area.left - 1) as usize;
         let composite = Composite::from_inline(&self.message);
         skin.write_composite_fill(w, composite, remaining_width, Alignment::Left)?;
         screen.clear_line(w)

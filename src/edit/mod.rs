@@ -4,12 +4,18 @@ use {
         app::AppState,
         fromage::EditSubCommand,
         io::W,
+        layout::Layout,
         task_sync::*,
     },
 };
 
 mod level_editor;
 mod pen;
+
+pub const LAYOUT: Layout = Layout {
+    selector_height: 6,
+    status_height: 1,
+};
 
 pub fn run(
     w: &mut W,

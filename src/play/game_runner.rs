@@ -21,13 +21,8 @@ use {
     },
     std::{
         fs::{
-            self,
             File,
         },
-        io::{
-            BufReader,
-        },
-        path::PathBuf,
         time::SystemTime,
     },
     super::*,
@@ -107,7 +102,7 @@ impl GameRunner {
         w: &mut W,
         dam: &mut Dam,
     ) -> Result<AppState> {
-        let mut screen = Screen::new()?;
+        let mut screen = Screen::new(LAYOUT);
         let mut seed = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .map_or(0, |d| (d.as_secs()%7) as usize);
@@ -141,7 +136,8 @@ impl GameRunner {
                     }
                     Event::Click(x, y) => {
                         let sp = ScreenPos{ x, y };
-                        let mut bd = BoardDrawer::new(&self.board, w, &screen);
+                        let pos_converter = PosConverter::from(self.board.lapin_pos(), &screen);
+                        debug!("click in {:?}", pos_converter.to_real(sp));
                     }
                     _ => {
                         debug!("ignored event: {:?}", event);

@@ -105,7 +105,7 @@ impl Skin {
     pub fn bg(&self, cell: Cell) -> Color {
         self.cell_bg[cell as usize]
     }
-    pub fn styled_char(&self, item: Item, cell: Cell) -> PrintStyledContent<char> {
+    pub fn styled_item_char(&self, item: Item, cell: Cell) -> PrintStyledContent<char> {
         let fg_skin = item.kind.skin(self);
         let cs = ContentStyle {
             foreground_color: Some(fg_skin.color),

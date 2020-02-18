@@ -1,5 +1,6 @@
 use {
     crate::{
+        actor::*,
         board::Board,
         consts::*,
         io::W,
@@ -26,17 +27,19 @@ pub struct BoardDrawer<'d> {
     pub w: &'d mut W,
     pub screen: &'d Screen,
     pub pos_converter: PosConverter,
+    pub actor_map: ActorPosMap,
 }
 impl<'d> BoardDrawer<'d> {
     /// a new board_drawer must be created if the screen is resized
-    /// or when the Lapin moves
+    /// or when a move is played
     pub fn new(
         board: &'d Board,
         w: &'d mut W,
         screen: &'d Screen,
     ) -> Self {
         let pos_converter = PosConverter::from(board.lapin_pos(), screen);
-        Self { board, w, screen, pos_converter }
+        let actor_map = board.actor_pos_map();
+        Self { board, w, screen, pos_converter, actor_map }
     }
 
     pub fn draw_chr_bg(
@@ -83,30 +86,29 @@ impl<'d> BoardDrawer<'d> {
         // background and items
         let mut last_cell = FIELD;
         self.w.queue(self.screen.skin.bg_command(last_cell))?;
-        for j in 0..self.screen.board_area.height {
-            let sy = self.screen.board_area.top + j;
-            let mut sx = self.screen.board_area.left;
+        for j in 0..self.screen.areas.board.height {
+            let sy = self.screen.areas.board.top + j;
+            let mut sx = self.screen.areas.board.left;
             self.w.queue(cursor::MoveTo(sx, sy))?;
-            for _ in 0..self.screen.board_area.width {
+            for _ in 0..self.screen.areas.board.width {
                 let pos = self.pos_converter.to_real(ScreenPos::new(sx, sy));
                 let cell = self.board.get(pos);
                 if cell != last_cell {
                     self.w.queue(self.screen.skin.bg_command(cell))?;
                     last_cell = cell;
                 }
-                if let Some(item) = self.board.items.get(pos) {
-                    self.w.queue(self.screen.skin.styled_char(item, cell))?;
+                if let Some(actor) = self.actor_map.get(pos) {
+                    let fg_skin = actor.skin(&self.screen.skin);
+                    self.w.queue(fg_skin.fg_command())?;
+                    self.w.queue(Print(fg_skin.chr))?;
+                } else if let Some(item) = self.board.items.get(pos) {
+                    self.w.queue(self.screen.skin.styled_item_char(item, cell))?;
                     self.w.queue(self.screen.skin.bg_command(cell))?;
                 } else {
                     self.w.queue(Print(' '))?;
                 }
                 sx += 1;
             }
-        }
-
-        // actors
-        for actor in &self.board.actors {
-            self.draw_fg(actor.pos, actor.skin(&self.screen.skin))?;
         }
 
         Ok(())

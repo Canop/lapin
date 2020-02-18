@@ -1,50 +1,43 @@
 use {
-    crate::skin::Skin,
     anyhow::Result,
+    crate::{
+        layout::{
+            Areas,
+            Layout,
+        },
+        skin::Skin,
+    },
     crossterm::{
         cursor,
         terminal::{Clear, ClearType},
         QueueableCommand,
     },
     std::io::Write,
-    termimad::{Area},
+    termimad::Area,
 };
 
 pub struct Screen {
-    pub width: u16,
-    pub height: u16,
-    pub board_area: Area,
+    area: Area, // the complete screen
+    pub areas: Areas, // the areas of the different sub parts
+    layout: Layout,
     pub skin: Skin,
 }
 
 impl Screen {
-    pub fn new() -> Result<Screen> {
+    pub fn new(layout: Layout) -> Screen {
         let skin = Skin::new();
-        let board_area = Area::new(0, 0, 10, 10);
-        let mut screen = Screen {
-            width: 0,
-            height: 0,
-            board_area,
+        let area = Area::full_screen();
+        let areas = layout.compute(&area);
+        Self {
+            area,
+            areas,
+            layout,
             skin,
-        };
-        screen.read_size()?;
-        Ok(screen)
+        }
     }
     pub fn set_terminal_size(&mut self, w: u16, h: u16) {
-        if w < 8 || h < 10 {
-            return; // I'm just giving up
-        }
-        self.width = w;
-        self.height = h;
-        self.board_area.left = 0;
-        self.board_area.top = 0;
-        self.board_area.width = w;
-        self.board_area.height = h - 1; // should crash on small screens
-    }
-    pub fn read_size(&mut self) -> Result<()> {
-        let (w, h) = termimad::terminal_size();
-        self.set_terminal_size(w, h);
-        Ok(())
+        self.area = Area::new(0, 0, w, h);
+        self.areas = self.layout.compute(&self.area);
     }
     /// move the cursor to x,y and clears the line.
     pub fn goto_clear(&self, w: &mut impl Write, x: u16, y: u16) -> Result<()> {

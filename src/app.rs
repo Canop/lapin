@@ -4,7 +4,6 @@ use {
         edit,
         fromage::*,
         io::W,
-        fromage::*,
         play,
         task_sync::*,
     },
@@ -26,7 +25,7 @@ pub fn run(
     let mut state = Ok(match fromage.sub {
         Some(SubCommand::Edit ( esc )) => EditLevel(esc),
         Some(SubCommand::Play ( psc )) => PlayLevel(psc),
-        _ => Quit,
+        _ => PlayLevel(PlaySubCommand::default()),
     });
     loop {
         debug!("app state: {:?}", &state);

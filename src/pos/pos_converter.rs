@@ -14,8 +14,8 @@ pub struct PosConverter {
 impl PosConverter {
     pub fn from(center: Pos, screen: &Screen) -> Self {
         let dim = Pos {
-            x: screen.board_area.width as Int,
-            y: screen.board_area.height as Int,
+            x: screen.areas.board.width as Int,
+            y: screen.areas.board.height as Int,
         };
         let dec = Pos {
             x: dim.x / 2 - center.x,
