@@ -33,8 +33,16 @@ impl FgSkin {
     pub fn new(chr: char, color: Color) -> Self {
         Self { chr, color }
     }
-    pub fn fg_command(&self) -> SetForegroundColor {
+    pub fn fg_command(self) -> SetForegroundColor {
         SetForegroundColor(self.color)
+    }
+    pub fn styled_char_over(self, bg: Option<Color>) -> PrintStyledContent<char> {
+        let cs = ContentStyle {
+            foreground_color: Some(self.color),
+            background_color: bg,
+            attributes: Attributes::default(),
+        };
+        PrintStyledContent(cs.apply(self.chr))
     }
 }
 
@@ -62,6 +70,8 @@ pub struct Skin {
     // texts
     pub normal_status: MadSkin,
     pub error_status: MadSkin,
+    pub editor: MadSkin,
+    pub editor_circle: Color,
 }
 
 impl Skin {
@@ -97,6 +107,8 @@ impl Skin {
             // texts
             normal_status: make_normal_status_mad_skin(),
             error_status: make_error_status_mad_skin(),
+            editor: make_editor_mad_skin(),
+            editor_circle: Color::White,
         }
     }
     pub fn bg_command(&self, cell: Cell) -> SetBackgroundColor {
@@ -131,5 +143,14 @@ fn make_normal_status_mad_skin() -> MadSkin {
 fn make_error_status_mad_skin() -> MadSkin {
     let mut mad_skin = MadSkin::default();
     mad_skin.bold = CompoundStyle::new(Some(ansi(160)), None, Attribute::Bold.into());
+    mad_skin
+}
+
+/// build a MadSkin which will be used in editor panels
+fn make_editor_mad_skin() -> MadSkin {
+    let mut mad_skin = MadSkin::default();
+    mad_skin.paragraph.set_fg(gray(1));
+    mad_skin.paragraph.set_bg(ansi(137));
+    mad_skin.bold = CompoundStyle::new(Some(ansi(208)), None, Attribute::Bold.into());
     mad_skin
 }

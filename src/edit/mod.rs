@@ -11,9 +11,10 @@ use {
 
 mod level_editor;
 mod pen;
+mod selector;
 
 pub const LAYOUT: Layout = Layout {
-    selector_height: 6,
+    selector_height: 3,
     status_height: 1,
 };
 

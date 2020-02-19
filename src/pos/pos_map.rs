@@ -73,6 +73,15 @@ impl<V> PosMap<V>
             self.outliers.insert(pos, v);
         }
     }
+    pub fn unset(&mut self, pos: Pos) {
+        if let Some(idx) = self.idx(pos) {
+            unsafe {
+                *self.grid.get_unchecked_mut(idx) = self.default;
+            }
+        } else {
+            self.outliers.remove(&pos);
+        }
+    }
     pub fn set_lc(&mut self, lc: Located<V>) {
         self.set(lc.pos, lc.v);
     }

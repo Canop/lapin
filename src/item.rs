@@ -6,7 +6,7 @@ use {
     serde::{Serialize, Deserialize},
 };
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ItemKind {
     Carrot,
     Wine,
@@ -19,6 +19,8 @@ impl ItemKind {
         }
     }
 }
+
+pub static ITEMS: &'static[ItemKind] = &[ItemKind::Carrot, ItemKind::Wine];
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Item {

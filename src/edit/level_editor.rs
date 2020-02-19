@@ -29,6 +29,7 @@ use {
     super::{
         LAYOUT,
         pen::Pen,
+        selector::SelectorPanel,
     },
     termimad::{
         Event,
@@ -38,7 +39,7 @@ use {
 
 pub struct LevelEditor {
     board: Board,
-    pen: Pen,
+    pub pen: Pen,
     path: PathBuf,
     status: Status,
 }
@@ -131,6 +132,8 @@ impl LevelEditor {
         loop {
             let mut bd = BoardDrawer::new(&self.board, w, &screen);
             bd.draw()?;
+            let mut selector = SelectorPanel::new(w, &mut self.pen, &screen);
+            selector.draw()?;
             let event = dam.next_event().unwrap();
             dam.unblock();
             let next_state = match event {
@@ -144,9 +147,15 @@ impl LevelEditor {
                 }
                 Event::Click(x, y) => {
                     let sp = ScreenPos{ x, y };
-                    let pos = bd.pos_converter.to_real(sp);
-                    debug!("click in {:?}", pos);
-                    self.pen.click(pos, &mut self.board);
+                    debug!("click in {:?}", sp);
+                    if sp.is_in(&screen.areas.board) {
+                        let pos_converter = PosConverter::from(self.board.lapin_pos(), &screen);
+                        let pos = pos_converter.to_real(sp);
+                        debug!("click in board {:?}", pos);
+                        self.pen.click(pos, &mut self.board);
+                    } else if sp.is_in(&screen.areas.selector) {
+                        selector.click(sp);
+                    }
                     None
                 }
                 _ => {

@@ -22,6 +22,14 @@ pub enum ActorKind {
     Hunter,
     Sheep,
 }
+pub static ACTORS: &'static[ActorKind] = &[
+    ActorKind::Lapin,
+    ActorKind::Knight,
+    ActorKind::Wolf,
+    ActorKind::Fox,
+    ActorKind::Hunter,
+    ActorKind::Sheep,
+];
 impl ActorKind {
     pub fn drinks_wine(self) -> bool {
         match self {
