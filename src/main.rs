@@ -15,7 +15,7 @@ use {
         QueueableCommand,
     },
     lapin::{
-        app,
+        app::App,
         fromage::*,
         task_sync::*,
         test_level,
@@ -76,7 +76,8 @@ fn main() -> Result<()> {
     terminal::enable_raw_mode()?;
     w.queue(EnableMouseCapture)?;
     let mut dam = Dam::new()?;
-    app::run(&mut w, &mut dam, fromage);
+    let mut app = App::new();
+    app.run(&mut w, &mut dam, fromage);
     //dam.kill();
     w.queue(DisableMouseCapture)?;
     terminal::disable_raw_mode()?;

@@ -15,6 +15,7 @@ mod time;
 
 pub mod actor;
 pub mod app;
+pub mod app_state;
 pub mod board;
 pub mod consts;
 pub mod board_drawer;

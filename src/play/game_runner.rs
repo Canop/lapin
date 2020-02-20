@@ -1,16 +1,15 @@
 use {
     crate::{
-        app::AppState,
+        app_state::StateTransition,
         board::*,
         board_drawer::BoardDrawer,
-        fromage::PlaySubCommand,
+        edit::EditLevelState,
         io::W,
         level::Level,
         pos::*,
         screen::Screen,
         status::Status,
         task_sync::*,
-        test_level,
     },
     anyhow::Result,
     crossterm::{
@@ -20,9 +19,6 @@ use {
         },
     },
     std::{
-        fs::{
-            File,
-        },
         time::SystemTime,
     },
     super::*,
@@ -31,38 +27,43 @@ use {
     },
 };
 
-pub struct GameRunner {
+pub struct GameRunner<'s> {
     board: Board,
     status: Status,
+    state: &'s PlayLevelState, // start state
 }
 
-impl GameRunner {
-    pub fn new(psc: PlaySubCommand) -> Result<Self> {
-        let board = if let Some(path) = psc.path {
-            let file = File::open(&path)?;
-            let level: Level = serde_json::from_reader(file)?;
-            // FIXME call validity checks here
-            Board::from(&level)
-        } else {
-            Board::from(&test_level::build())
-        };
+impl<'s> GameRunner<'s> {
+    pub fn new(state: &'s PlayLevelState) -> Result<Self> {
+        let board = Board::from(&*state.level);
         let status = Status::from_message(
             "Hit *arrows* to move, *q* to quit".to_string()
         );
         Ok(Self {
             board,
             status,
+            state,
         })
     }
 
     fn handle_key_event(
         &mut self,
         code: KeyCode,
-    ) -> Option<AppState> {
+    ) -> Option<StateTransition> {
         match Command::from(code) {
             None => None,
+            Some(Command::Back) if self.state.comes_from_edit => {
+                if let Some(path) = &self.state.path {
+                    Some(StateTransition::EditLevel(EditLevelState{
+                        path: path.clone(),
+                        level: self.state.level.clone(),
+                    }))
+                } else {
+                    None
+                }
+            }
             Some(Command::Quit) => {
-                Some(AppState::Quit)
+                Some(StateTransition::Quit)
             }
             Some(cmd) => {
                 let move_result = self.board.apply_player_move(cmd);
@@ -101,7 +102,7 @@ impl GameRunner {
         &mut self,
         w: &mut W,
         dam: &mut Dam,
-    ) -> Result<AppState> {
+    ) -> Result<StateTransition> {
         let mut screen = Screen::new(LAYOUT);
         let mut seed = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)

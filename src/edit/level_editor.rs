@@ -1,13 +1,12 @@
 use {
     anyhow::Result,
     crate::{
-        app::AppState,
+        app_state::StateTransition,
         board::*,
-        consts::*,
         board_drawer::BoardDrawer,
-        fromage::EditSubCommand,
         io::W,
         level::Level,
+        play::PlayLevelState,
         pos::*,
         screen::Screen,
         status::Status,
@@ -20,22 +19,20 @@ use {
         },
     },
     std::{
-        fs::{
-            self,
-            File,
-        },
+        boxed::Box,
+        fs,
         path::PathBuf,
     },
     super::{
         LAYOUT,
         pen::Pen,
         selector::SelectorPanel,
+        EditLevelState,
     },
     termimad::{
         Event,
     },
 };
-
 
 pub struct LevelEditor {
     board: Board,
@@ -47,34 +44,23 @@ pub struct LevelEditor {
 
 impl LevelEditor {
 
-    pub fn new(esc: EditSubCommand) -> Result<Self> {
-        let path = esc.path;
-        debug!("opening level editor on {:?}", &path);
-        let board = if path.exists() {
-            debug!("trying to deserialize the file");
-            let file = File::open(&path)?;
-            let level: Level = serde_json::from_reader(file)?;
-            // FIXME call validity checks here
-            Board::from(&level)
-        } else {
-            debug!("non existing file : starting with a clean board");
-            Board::new(
-                PosArea::new(-100..100, -100..100),
-                FIELD,
-            )
-        };
+    pub fn new(
+        state: &EditLevelState,
+    ) -> Self {
+        let path = state.path.to_path_buf();
+        let board = Board::from(&*state.level);
         let status = Status::from_message(
-            "click at random to do random things, *q* to quit, *s* to save".to_string()
+            "click at random to do random things, *q* to quit, *s* to save, *t* to test".to_string()
         );
         let pen = Pen::default();
         let center = board.lapin_pos();
-        Ok(Self {
+        Self {
             board,
             pen,
             path,
             status,
             center,
-        })
+        }
     }
 
     fn write_status(
@@ -97,11 +83,11 @@ impl LevelEditor {
     fn handle_key_event(
         &mut self,
         code: KeyCode,
-    ) -> Option<AppState> {
+    ) -> Option<StateTransition> {
         debug!("code: {:?}", code);
         match code {
             KeyCode::Char('q') => {
-                Some(AppState::Quit)
+                Some(StateTransition::Quit)
             }
             KeyCode::Up => {
                 self.center.y -= 1;
@@ -136,6 +122,13 @@ impl LevelEditor {
                 }
                 None
             }
+            KeyCode::Char('t') => {
+                Some(StateTransition::PlayLevel(PlayLevelState {
+                    comes_from_edit: true,
+                    path: Some(self.path.clone()),
+                    level: Box::new(Level::from(&self.board)),
+                }))
+            }
             _ => None,
         }
     }
@@ -145,7 +138,7 @@ impl LevelEditor {
         &mut self,
         w: &mut W,
         dam: &mut Dam,
-    ) -> Result<AppState> {
+    ) -> Result<StateTransition> {
         let mut screen = Screen::new(LAYOUT);
         self.write_status(w, &screen)?;
         loop {
@@ -168,7 +161,7 @@ impl LevelEditor {
                     let sp = ScreenPos{ x, y };
                     debug!("click in {:?}", sp);
                     if sp.is_in(&screen.areas.board) {
-                        let pos_converter = PosConverter::from(self.board.lapin_pos(), &screen);
+                        let pos_converter = PosConverter::from(self.center, &screen);
                         let pos = pos_converter.to_real(sp);
                         debug!("click in board {:?}", pos);
                         self.pen.click(pos, &mut self.board);

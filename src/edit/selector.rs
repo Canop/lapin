@@ -27,18 +27,6 @@ use {
     },
 };
 
-/* MISSING:
-
-- app state Play to test the level ('t')
-- dot/line/rect shape
-- default cell selection
-- undo/restore ('u'/'r')
-- help : list of shorcuts
-- a textual indication of the ink ("fox", "remove item"...)
-- level description
-
-*/
-
 /// a place on the screen on which you click to
 /// select an ink
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

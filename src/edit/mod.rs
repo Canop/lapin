@@ -1,17 +1,23 @@
 use {
     anyhow::Result,
     crate::{
-        app::AppState,
-        fromage::EditSubCommand,
+        app_state::StateTransition,
         io::W,
+        level::Level,
         layout::Layout,
         task_sync::*,
+    },
+    std::{
+        path::Path,
     },
 };
 
 mod level_editor;
 mod pen;
 mod selector;
+mod state;
+
+pub use state::EditLevelState;
 
 pub const LAYOUT: Layout = Layout {
     selector_height: 3,
@@ -21,9 +27,9 @@ pub const LAYOUT: Layout = Layout {
 pub fn run(
     w: &mut W,
     dam: &mut Dam,
-    esc: EditSubCommand,
-) -> Result<AppState> {
-    let mut level_editor = level_editor::LevelEditor::new(esc)?;
+    state: &EditLevelState,
+) -> Result<StateTransition> {
+    let mut level_editor = level_editor::LevelEditor::new(state);
     level_editor.run(w, dam)
 }
 
