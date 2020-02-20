@@ -42,7 +42,6 @@ pub struct SelectorPanel<'s> {
     inkwells: Vec<InkWell>,
 }
 
-const INK_MARGIN: u16 = 1; // 0 or 1
 
 impl<'s> SelectorPanel<'s> {
     pub fn new(
@@ -107,6 +106,11 @@ impl<'s> SelectorPanel<'s> {
 
     pub fn draw(&mut self) -> Result<()> {
         let area = &self.screen.areas.selector;
+        let ink_margin = if area.width > 85 {
+            1
+        } else {
+            0
+        };
         let skin = &self.screen.skin;
         self.inkwells.clear();
 
@@ -132,7 +136,7 @@ impl<'s> SelectorPanel<'s> {
         self.draw_inkwell(sp, PenInk::EraseTerrain)?;
         sp.x += 1;
         for i in 0..NB_TERRAINS {
-            if INK_MARGIN == 1 {
+            if ink_margin == 1 {
                 skin.editor.paragraph.compound_style.queue(self.w, ' ')?;
                 sp.x += 1;
             }
@@ -152,7 +156,7 @@ impl<'s> SelectorPanel<'s> {
         self.draw_inkwell(sp, PenInk::EraseItem)?;
         sp.x += 1;
         for &item in ITEMS {
-            if INK_MARGIN == 1 {
+            if ink_margin == 1 {
                 skin.editor.paragraph.compound_style.queue(self.w, ' ')?;
                 sp.x += 1;
             }
@@ -172,7 +176,7 @@ impl<'s> SelectorPanel<'s> {
         self.draw_inkwell(sp, PenInk::EraseActor)?;
         sp.x += 1;
         for &actor in ACTORS {
-            if INK_MARGIN == 1 {
+            if ink_margin == 1 {
                 skin.editor.paragraph.compound_style.queue(self.w, ' ')?;
                 sp.x += 1;
             }
