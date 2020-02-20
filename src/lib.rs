@@ -17,7 +17,7 @@ pub mod actor;
 pub mod app;
 pub mod board;
 pub mod consts;
-pub mod draw_board;
+pub mod board_drawer;
 pub mod edit;
 pub mod fromage;
 pub mod io;

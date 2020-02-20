@@ -1,7 +1,7 @@
 use {
     anyhow::Result,
     crate::{
-        draw_board::*,
+        board_drawer::*,
         pos::*,
         task_sync::*,
     },

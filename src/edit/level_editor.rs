@@ -4,7 +4,7 @@ use {
         app::AppState,
         board::*,
         consts::*,
-        draw_board::BoardDrawer,
+        board_drawer::BoardDrawer,
         fromage::EditSubCommand,
         io::W,
         level::Level,
@@ -42,6 +42,7 @@ pub struct LevelEditor {
     pub pen: Pen,
     path: PathBuf,
     status: Status,
+    center: Pos,    // the pos shown at center of the screen
 }
 
 impl LevelEditor {
@@ -66,11 +67,13 @@ impl LevelEditor {
             "click at random to do random things, *q* to quit, *s* to save".to_string()
         );
         let pen = Pen::default();
+        let center = board.lapin_pos();
         Ok(Self {
             board,
             pen,
             path,
             status,
+            center,
         })
     }
 
@@ -100,18 +103,34 @@ impl LevelEditor {
             KeyCode::Char('q') => {
                 Some(AppState::Quit)
             }
+            KeyCode::Up => {
+                self.center.y -= 1;
+                None
+            }
+            KeyCode::Right => {
+                self.center.x += 1;
+                None
+            }
+            KeyCode::Down => {
+                self.center.y += 1;
+                None
+            }
+            KeyCode::Left => {
+                self.center.x -= 1;
+                None
+            }
             KeyCode::Char('s') => {
                 match self.save_to_file() {
                     Err(e) => {
                         self.status = Status::from_error(format!(
-                                "level saving failed: `{:?}`",
-                                e,
+                            "level saving failed: `{:?}`",
+                            e,
                         ));
                     }
                     _ => {
                         self.status = Status::from_message(format!(
-                                "level saved in file `{:?}`",
-                                &self.path,
+                            "level saved in file `{:?}`",
+                            &self.path,
                         ));
                     }
                 }
@@ -130,7 +149,7 @@ impl LevelEditor {
         let mut screen = Screen::new(LAYOUT);
         self.write_status(w, &screen)?;
         loop {
-            let mut bd = BoardDrawer::new(&self.board, w, &screen);
+            let mut bd = BoardDrawer::new_around(&self.board, w, &screen, self.center);
             bd.draw()?;
             let mut selector = SelectorPanel::new(w, &mut self.pen, &screen);
             selector.draw()?;
@@ -164,8 +183,6 @@ impl LevelEditor {
                 }
             };
             if let Some(next_state) = next_state {
-                let mut bd = BoardDrawer::new(&self.board, w, &screen);
-                bd.draw()?;
                 return Ok(next_state);
             }
         }

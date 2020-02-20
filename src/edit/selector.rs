@@ -29,8 +29,6 @@ use {
 
 /* MISSING:
 
-- actor ink
-- move center with arrow keys
 - app state Play to test the level ('t')
 - dot/line/rect shape
 - default cell selection

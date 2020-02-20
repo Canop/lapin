@@ -22,6 +22,10 @@ use {
     },
 };
 
+/// a struct able to do drawing and animations, centered
+/// around an arbitrary point (the lapin position if
+/// created with `new`). A new board_drawer must be rebuilt
+/// in case of board change or screen resize
 pub struct BoardDrawer<'d> {
     pub board: &'d Board,
     pub w: &'d mut W,
@@ -30,14 +34,21 @@ pub struct BoardDrawer<'d> {
     pub actor_map: ActorPosMap,
 }
 impl<'d> BoardDrawer<'d> {
-    /// a new board_drawer must be created if the screen is resized
-    /// or when a move is played
     pub fn new(
         board: &'d Board,
         w: &'d mut W,
         screen: &'d Screen,
     ) -> Self {
-        let pos_converter = PosConverter::from(board.lapin_pos(), screen);
+        Self::new_around(board, w, screen, board.lapin_pos())
+    }
+
+    pub fn new_around(
+        board: &'d Board,
+        w: &'d mut W,
+        screen: &'d Screen,
+        center: Pos,
+    ) -> Self {
+        let pos_converter = PosConverter::from(center, screen);
         let actor_map = board.actor_pos_map();
         Self { board, w, screen, pos_converter, actor_map }
     }

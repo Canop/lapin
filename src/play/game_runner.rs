@@ -2,7 +2,7 @@ use {
     crate::{
         app::AppState,
         board::*,
-        draw_board::BoardDrawer,
+        board_drawer::BoardDrawer,
         fromage::PlaySubCommand,
         io::W,
         level::Level,
