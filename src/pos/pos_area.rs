@@ -4,6 +4,9 @@ use {
     super::*,
 };
 
+// note: the Range type is broken, not Copy and hard
+// to pass around and use. It's better to avoid it
+// as much as possible.
 pub type IntRange = Range<Int>;
 pub fn grow_range_to(range: &mut IntRange, i: Int) {
     if i < range.start {

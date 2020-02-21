@@ -8,6 +8,8 @@ use {
     },
 };
 
+mod drawing_action;
+mod drawing_history;
 mod level_editor;
 mod pen;
 mod selector;

@@ -26,7 +26,7 @@ impl Pos {
     /// return the first direction to follow on a path
     /// (or none if we're yet on destination or if the
     /// path doesn't starts from there)
-    pub fn first_dir(&self, path: &Vec<Pos>) -> Option<Dir> {
+    pub fn first_dir(self, path: &[Pos]) -> Option<Dir> {
         path.get(0).and_then(|dst| self.dir_to(*dst))
     }
     /// return the direction to follow to directly reach

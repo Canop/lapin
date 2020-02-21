@@ -20,7 +20,7 @@ impl ItemKind {
     }
 }
 
-pub static ITEMS: &'static[ItemKind] = &[ItemKind::Carrot, ItemKind::Wine];
+pub static ITEMS: &[ItemKind] = &[ItemKind::Carrot, ItemKind::Wine];
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Item {

@@ -37,13 +37,7 @@ impl PartialEq for ValuedPos {
 // we order in reverse from score
 impl Ord for ValuedPos {
     fn cmp(&self, other: &ValuedPos) -> Ordering {
-        if self.score == other.score {
-            Ordering::Equal
-        } else if self.score < other.score {
-            Ordering::Greater
-        } else {
-            Ordering::Less
-        }
+        other.score.cmp(&self.score)
     }
 }
 impl PartialOrd for ValuedPos {

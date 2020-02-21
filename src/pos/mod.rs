@@ -12,7 +12,7 @@ pub use {
     dir::Dir,
     located::*,
     pos::Pos,
-    pos_area::PosArea,
+    pos_area::*,
     pos_converter::PosConverter,
     pos_distribution::PosDistribution,
     pos_map::*,

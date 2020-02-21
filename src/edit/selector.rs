@@ -135,7 +135,7 @@ impl<'s> SelectorPanel<'s> {
             } else {
                 cs.queue_str(self.w, "  ")?;
             }
-            cs.queue(self.w, format!("{:?}", shape));
+            cs.queue(self.w, format!("{:?}", shape))?;
             self.shapewells.push(ShapeWell {
                 shape,
                 area: Area::new(x, y, w, 1),

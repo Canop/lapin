@@ -1,10 +1,13 @@
 use {
     crate::{
         actor::*,
-        board::*,
         consts::*,
         item::*,
+        level::Level,
         pos::*,
+    },
+    super::{
+        drawing_action::*,
     },
 };
 
@@ -14,7 +17,7 @@ pub enum PenShape {
     Line,
     Rect,
 }
-pub static PEN_SHAPES: &'static[PenShape] = &[PenShape::Dot, PenShape::Line, PenShape::Rect];
+pub static PEN_SHAPES: &[PenShape] = &[PenShape::Dot, PenShape::Line, PenShape::Rect];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PenInk {
@@ -26,7 +29,6 @@ pub enum PenInk {
     Actor(ActorKind),
 }
 
-
 /// defines what will happen on click on the board
 #[derive(Debug, Clone, Copy)]
 pub struct Pen {
@@ -35,97 +37,41 @@ pub struct Pen {
     shape_start: Option<Pos>,
 }
 
-impl Default for Pen {
-    fn default() -> Self {
+impl Pen {
+
+    pub fn new_for(level: &Level) -> Self {
         Self {
             shape: PenShape::Dot,
-            ink: PenInk::Terrain(FIELD),
+            ink: PenInk::Terrain(if level.default_cell==FIELD { WALL } else { FIELD }),
             shape_start: None,
         }
     }
-}
 
-impl Pen {
-    fn ink_pos(&self, pos: Pos, board: &mut Board) {
-        match self.ink {
-            PenInk::EraseTerrain => {
-                board.cells.unset(pos);
-            }
-            PenInk::Terrain(cell) => {
-                board.cells.set(pos, cell);
-            }
-            PenInk::EraseItem => {
-                board.items.remove(pos);
-            }
-            PenInk::Item(item_kind) => {
-                board.add_item_in(item_kind, pos.x, pos.y);
-            }
-            PenInk::EraseActor => {
-                board.actors.retain(|&actor| actor.pos != pos);
-            }
-            PenInk::Actor(actor_kind) => {
-                if actor_kind == ActorKind::Lapin {
-                    // we're just moving THE lapin
-                    board.actors[0].pos = pos;
-                    return;
-                }
-                // we check we're not removing the lapin
-                if pos == board.lapin_pos() {
-                    return; // we make it a no-op
-                }
-                // we must now ensure any previous actor in pos is removed
-                board.actors.retain(|&actor| actor.pos != pos);
-                // and now we add the new actor
-                board.add_actor_in(actor_kind, pos.x, pos.y);
-            }
-        }
-    }
-
-    pub fn click(&mut self, click_pos: Pos, board: &mut Board) {
+    /// Maybe change the state of the pen and return the drawing
+    /// action which should be applied to board, if any.
+    pub fn click(&mut self, click_pos: Pos) -> Option<DrawingAction> {
         match self.shape {
             PenShape::Dot => {
-                self.ink_pos(click_pos, board);
+                Some(DrawingAction::DotInk(self.ink, click_pos))
             }
             PenShape::Line => {
-                if let Some(Pos { mut x, mut y }) = self.shape_start {
-                    // based on Bresenham's algorithm.
-                    // Prevents crossing in quadrant dirs (diagonal possible)
-                    let Pos {x: xf, y: yf} = click_pos;
-                    let dx = (xf - x).abs();
-                    let sx = if x<xf { 1 } else { -1 };
-                    let dy = -(yf - y).abs();
-                    let sy = if y<yf { 1 } else { -1 };
-                    let mut e = dx + dy;
-                    loop {
-                        self.ink_pos(Pos::new(x, y), board);
-                        if x==xf && y==yf {
-                            break;
-                        }
-                        let e2 = 2*e;
-                        if e2 >= dy {
-                            e += dy;
-                            x += sx;
-                        }
-                        if e2 <= dx {
-                            e += dx;
-                            y += sy;
-                        }
-                    }
+                if let Some(start) = self.shape_start {
+                    let action = DrawingAction::LineInk(self.ink, start, click_pos);
                     self.shape_start = None;
+                    Some(action)
                 } else {
                     self.shape_start = Some(click_pos);
+                    None
                 }
             }
             PenShape::Rect => {
                 if let Some(start) = self.shape_start {
-                    for x in start.x.min(click_pos.x)..=start.x.max(click_pos.x) {
-                        for y in start.y.min(click_pos.y)..=start.y.max(click_pos.y) {
-                            self.ink_pos(Pos::new(x, y), board);
-                        }
-                    }
+                    let action = DrawingAction::RectInk(self.ink, start, click_pos);
                     self.shape_start = None;
+                    Some(action)
                 } else {
                     self.shape_start = Some(click_pos);
+                    None
                 }
             }
         }
@@ -141,6 +87,7 @@ impl Pen {
     pub fn shape_started(&self) -> bool {
         self.shape_start.is_some()
     }
+
 }
 
 

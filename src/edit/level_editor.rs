@@ -25,6 +25,7 @@ use {
     },
     super::{
         LAYOUT,
+        drawing_history::DrawingHistory,
         pen::Pen,
         selector::SelectorPanel,
         EditLevelState,
@@ -34,32 +35,36 @@ use {
     },
 };
 
-pub struct LevelEditor {
+pub struct LevelEditor<'l> {
     board: Board,
     pub pen: Pen,
     path: PathBuf,
     status: Status,
     center: Pos,    // the pos shown at center of the screen
+    history: DrawingHistory<'l>,
 }
 
-impl LevelEditor {
+impl<'l> LevelEditor<'l> {
 
     pub fn new(
-        state: &EditLevelState,
+        state: &'l EditLevelState,
     ) -> Self {
+        let level = &*state.level;
         let path = state.path.to_path_buf();
-        let board = Board::from(&*state.level);
+        let board = Board::from(level);
         let status = Status::from_message(
             "click at random to do random things, *q* to quit, *s* to save, *t* to test".to_string()
         );
-        let pen = Pen::default();
+        let pen = Pen::new_for(level);
         let center = board.lapin_pos();
+        let history = DrawingHistory::new(level);
         Self {
             board,
             pen,
             path,
             status,
             center,
+            history,
         }
     }
 
@@ -105,6 +110,10 @@ impl LevelEditor {
                 self.center.x -= 1;
                 None
             }
+            KeyCode::Char('r') => {
+                self.history.redo(&mut self.board);
+                None
+            }
             KeyCode::Char('s') => {
                 match self.save_to_file() {
                     Err(e) => {
@@ -128,6 +137,10 @@ impl LevelEditor {
                     path: Some(self.path.clone()),
                     level: Box::new(Level::from(&self.board)),
                 }))
+            }
+            KeyCode::Char('u') => {
+                self.history.undo(&mut self.board);
+                None
             }
             _ => None,
         }
@@ -164,7 +177,9 @@ impl LevelEditor {
                         let pos_converter = PosConverter::from(self.center, &screen);
                         let pos = pos_converter.to_real(sp);
                         debug!("click in board {:?}", pos);
-                        self.pen.click(pos, &mut self.board);
+                        if let Some(action) = self.pen.click(pos) {
+                            self.history.apply(action, &mut self.board);
+                        }
                     } else if sp.is_in(&screen.areas.selector) {
                         selector.click(sp);
                     }

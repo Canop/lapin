@@ -28,27 +28,8 @@ pub struct Board {
 
 impl From<&Level> for Board {
     fn from(level: &Level) -> Self {
-        let pos_distribution = PosDistribution::from(
-            level.cells.iter()
-                .filter(|lc| lc.v != level.default_cell)
-                .map(|&lc| lc.pos)
-        )
-        .unwrap_or_default();
-        // FIXME check area not to wide
-        let mut board = Board::new(pos_distribution.area, level.default_cell);
-        for &lc in level.cells.iter() {
-            board.cells.set_lc(lc);
-            if lc.v==GRASS {
-                board.grass_cells.push(lc.pos);
-            }
-        }
-        board.actors.remove(0);
-        for &actor in &level.actors {
-            board.actors.push(actor);
-        }
-        for lc in &level.items {
-            board.items.set_some(lc.pos, lc.v);
-        }
+        let mut board = Board::new(PosArea::empty(), level.default_cell);
+        board.reset_to(level);
         board
     }
 }
@@ -68,6 +49,29 @@ impl Board {
             items,
             current_player: Player::Lapin,
             grass_cells,
+        }
+    }
+
+    pub fn reset_to(&mut self, level: &Level) {
+        let pos_distribution = PosDistribution::from(
+            level.cells.iter()
+                .filter(|lc| lc.v != level.default_cell)
+                .map(|&lc| lc.pos)
+        )
+        .unwrap_or_default();
+        // FIXME check area not to wide
+        self.items = OptionPosMap::new(pos_distribution.area.clone(), None);
+        self.cells = PosMap::new(pos_distribution.area, level.default_cell);
+        self.actors = level.actors.clone();
+        self.grass_cells.clear();
+        for &lc in level.cells.iter() {
+            self.cells.set_lc(lc);
+            if lc.v==GRASS {
+                self.grass_cells.push(lc.pos);
+            }
+        }
+        for lc in &level.items {
+            self.items.set_some(lc.pos, lc.v);
         }
     }
 

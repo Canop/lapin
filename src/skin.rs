@@ -74,8 +74,8 @@ pub struct Skin {
     pub editor_circle: Color,
 }
 
-impl Skin {
-    pub fn new() -> Self {
+impl Default for Skin {
+    fn default() -> Self {
         let cell_bg = [
             rgb(27, 23, 19),  // FIELD
             ansi(59), // WALL
@@ -110,6 +110,12 @@ impl Skin {
             editor: make_editor_mad_skin(),
             editor_circle: Color::White,
         }
+    }
+}
+
+impl Skin {
+    pub fn new() -> Self {
+        Self::default()
     }
     pub fn bg_command(&self, cell: Cell) -> SetBackgroundColor {
         SetBackgroundColor(self.cell_bg[cell as usize])

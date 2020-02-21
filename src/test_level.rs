@@ -68,7 +68,6 @@ pub fn build() -> Level {
             board.add_item_in(ItemKind::Carrot, x, y);
         }
     }
-    let level = Level::from(&board);
-    level
+    Level::from(&board)
 }
 

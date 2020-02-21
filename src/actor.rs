@@ -22,7 +22,7 @@ pub enum ActorKind {
     Hunter,
     Sheep,
 }
-pub static ACTORS: &'static[ActorKind] = &[
+pub static ACTORS: &[ActorKind] = &[
     ActorKind::Lapin,
     ActorKind::Knight,
     ActorKind::Wolf,
@@ -126,13 +126,10 @@ impl Actor {
             ActorKind::*,
             PathFindingStrategy::*,
         };
-        if self.state.drunk {
-            Quadrant
-        } else {
-            match self.kind {
-                Lapin | Sheep => BestToNearest, // sheeps are kind of stupid
-                _ => Best,
-            }
+        match self.kind {
+            Hunter if self.state.drunk => Quadrant,
+            Sheep => BestToNearest, // sheeps are kind of stupid
+            _ => Best,
         }
     }
     pub fn skin(self, skin: &Skin) -> FgSkin {
