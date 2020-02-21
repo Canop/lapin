@@ -31,8 +31,8 @@ impl ScreenPos {
     }
     pub fn is_in(self, area: &Area) -> bool {
         self.x >= area.left
-            && self.x <= area.left + area.width
+            && self.x < area.left + area.width
             && self.y >= area.top
-            && self.y <= area.top + area.height
+            && self.y < area.top + area.height
     }
 }

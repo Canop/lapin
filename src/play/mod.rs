@@ -2,10 +2,8 @@ use {
     anyhow::Result,
     crate::{
         app_state::StateTransition,
-        fromage::PlaySubCommand,
         io::W,
         layout::Layout,
-        level::Level,
         task_sync::*,
     },
 };

@@ -2,7 +2,6 @@
 use {
     anyhow,
     crate::{
-        app_state::StateTransition,
         fromage::*,
         level::Level,
         test_level,
@@ -11,7 +10,6 @@ use {
         boxed::Box,
         convert::{
             TryFrom,
-            TryInto,
         },
         fs::{
             File,
@@ -40,7 +38,6 @@ impl Default for PlayLevelState {
 impl TryFrom<PlaySubCommand> for PlayLevelState {
     type Error = anyhow::Error;
     fn try_from(psc: PlaySubCommand) -> Result<Self, Self::Error> {
-        use StateTransition::*;
         let level = if let Some(path) = &psc.path {
             let file = File::open(path)?;
             serde_json::from_reader(file)?

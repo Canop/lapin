@@ -25,14 +25,25 @@ use {
     super::{
         pen::*,
     },
+    termimad::{
+        Area,
+    },
 };
 
 /// a place on the screen on which you click to
 /// select an ink
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy)]
 struct InkWell {
     sp: ScreenPos,
     ink: PenInk,
+}
+
+/// a place on the screen on which you click to
+/// select a shape
+#[derive(Debug)]
+struct ShapeWell {
+    area: Area,
+    shape: PenShape,
 }
 
 pub struct SelectorPanel<'s> {
@@ -40,6 +51,7 @@ pub struct SelectorPanel<'s> {
     pen: &'s mut Pen,
     screen: &'s Screen,
     inkwells: Vec<InkWell>,
+    shapewells: Vec<ShapeWell>,
 }
 
 
@@ -50,11 +62,13 @@ impl<'s> SelectorPanel<'s> {
         screen: &'s Screen,
     ) -> Self {
         let inkwells = Vec::new(); // this will be filled when drawing
+        let shapewells = Vec::new(); // this will be filled when drawing
         Self {
             w,
             pen,
             screen,
             inkwells,
+            shapewells,
         }
     }
 
@@ -104,6 +118,33 @@ impl<'s> SelectorPanel<'s> {
         Ok(())
     }
 
+    fn draw_shape_selector(&mut self) -> Result<()> {
+        let cs = &self.screen.skin.editor.paragraph.compound_style;
+        let area = &self.screen.areas.selector;
+        let w = 8;
+        let x = area.left + area.width - w;
+        let mut y = area.top;
+        for &shape in PEN_SHAPES {
+            self.screen.goto(self.w, x, y)?;
+            if self.pen.shape == shape {
+                if self.pen.shape_started() {
+                    cs.queue_str(self.w, "▸▸")?;
+                } else {
+                    cs.queue_str(self.w, "▸ ")?;
+                }
+            } else {
+                cs.queue_str(self.w, "  ")?;
+            }
+            cs.queue(self.w, format!("{:?}", shape));
+            self.shapewells.push(ShapeWell {
+                shape,
+                area: Area::new(x, y, w, 1),
+            });
+            y += 1;
+        }
+        Ok(())
+    }
+
     pub fn draw(&mut self) -> Result<()> {
         let area = &self.screen.areas.selector;
         let ink_margin = if area.width > 85 {
@@ -113,6 +154,7 @@ impl<'s> SelectorPanel<'s> {
         };
         let skin = &self.screen.skin;
         self.inkwells.clear();
+        self.shapewells.clear();
 
         // clear first line
         self.screen.goto(self.w, 0, area.top)?;
@@ -186,6 +228,8 @@ impl<'s> SelectorPanel<'s> {
 
         self.clear_line()?;
 
+        self.draw_shape_selector()?;
+
         Ok(())
     }
 
@@ -225,6 +269,12 @@ impl<'s> SelectorPanel<'s> {
 
     pub fn click(&mut self, sp: ScreenPos) {
         debug!("selector click {:?}", sp);
+        for shapewell in &self.shapewells {
+            if sp.is_in(&shapewell.area) {
+                self.pen.set_shape(shapewell.shape);
+                return;
+            }
+        }
         for inkwell in &self.inkwells {
             if inkwell.sp == sp {
                 self.pen.set_ink(inkwell.ink);

@@ -3,12 +3,8 @@ use {
     crate::{
         app_state::StateTransition,
         io::W,
-        level::Level,
         layout::Layout,
         task_sync::*,
-    },
-    std::{
-        path::Path,
     },
 };
 

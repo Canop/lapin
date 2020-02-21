@@ -5,7 +5,6 @@ use {
         board_drawer::BoardDrawer,
         edit::EditLevelState,
         io::W,
-        level::Level,
         pos::*,
         screen::Screen,
         status::Status,
