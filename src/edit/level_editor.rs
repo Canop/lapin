@@ -27,7 +27,8 @@ use {
         LAYOUT,
         drawing_history::DrawingHistory,
         pen::Pen,
-        selector::SelectorPanel,
+        pen_panel::PenPanel,
+        head_panel::EditorHeadPanel,
         EditLevelState,
     },
     termimad::{
@@ -157,8 +158,10 @@ impl<'l> LevelEditor<'l> {
         loop {
             let mut bd = BoardDrawer::new_around(&self.board, w, &screen, self.center);
             bd.draw()?;
-            let mut selector = SelectorPanel::new(w, &mut self.pen, &screen);
-            selector.draw()?;
+            let mut pen_panel = PenPanel::new(&mut self.pen, &screen);
+            pen_panel.draw(w)?;
+            let mut head_panel = EditorHeadPanel::new(&self.board, &screen);
+            head_panel.draw(w)?;
             let event = dam.next_event().unwrap();
             dam.unblock();
             let next_state = match event {
@@ -173,15 +176,17 @@ impl<'l> LevelEditor<'l> {
                 Event::Click(x, y) => {
                     let sp = ScreenPos{ x, y };
                     debug!("click in {:?}", sp);
-                    if sp.is_in(&screen.areas.board) {
+                    let action = if sp.is_in(&screen.areas.board) {
                         let pos_converter = PosConverter::from(self.center, &screen);
-                        let pos = pos_converter.to_real(sp);
-                        debug!("click in board {:?}", pos);
-                        if let Some(action) = self.pen.click(pos) {
-                            self.history.apply(action, &mut self.board);
-                        }
-                    } else if sp.is_in(&screen.areas.selector) {
-                        selector.click(sp);
+                        self.pen.click(pos_converter.to_real(sp))
+                    } else if sp.is_in(&screen.areas.pen_panel) {
+                        pen_panel.click(sp);
+                        None
+                    } else { // normally in head_panel
+                        head_panel.click(sp)
+                    };
+                    if let Some(action) = action {
+                        self.history.apply(action, &mut self.board);
                     }
                     None
                 }

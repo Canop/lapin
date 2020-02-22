@@ -52,6 +52,10 @@ impl Board {
         }
     }
 
+    pub fn default_cell(&self) -> Cell {
+        self.cells.default
+    }
+
     pub fn reset_to(&mut self, level: &Level) {
         let pos_distribution = PosDistribution::from(
             level.cells.iter()

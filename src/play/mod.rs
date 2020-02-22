@@ -22,7 +22,8 @@ pub use world::*;
 
 
 pub const LAYOUT: Layout = Layout {
-    selector_height: 0,
+    header_height: 0,
+    pen_panel_height: 0,
     status_height: 1,
 };
 

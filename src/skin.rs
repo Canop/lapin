@@ -77,7 +77,7 @@ pub struct Skin {
 impl Default for Skin {
     fn default() -> Self {
         let cell_bg = [
-            rgb(27, 23, 19),  // FIELD
+            rgb(36, 20, 1),  // FIELD
             ansi(59), // WALL
             ansi(22), // GRASS
             ansi(25), // WATER

@@ -10,15 +10,19 @@ use {
 
 mod drawing_action;
 mod drawing_history;
+mod head_panel;
+mod ink;
+mod inkwell;
 mod level_editor;
 mod pen;
-mod selector;
+mod pen_panel;
 mod state;
 
 pub use state::EditLevelState;
 
 pub const LAYOUT: Layout = Layout {
-    selector_height: 3,
+    header_height: 3,
+    pen_panel_height: 3,
     status_height: 1,
 };
 

@@ -201,6 +201,10 @@ impl<'t> WorldPlayer<'t> {
 
     pub fn play(mut self) -> WorldMove {
         let mut actor_moves = Vec::new();
+        // actor moves are computed sequentially so that the freed space
+        // and the newly occupied place can be better taken into account.
+        // Parallelizing would prevent optimal paths especially in case
+        // of herds
         for id in 1..self.board.actors.len() {
             let actor = self.board.actors[id];
             if self.killed[id] {

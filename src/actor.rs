@@ -128,7 +128,7 @@ impl Actor {
         };
         match self.kind {
             Hunter if self.state.drunk => Quadrant,
-            Sheep => BestToNearest, // sheeps are kind of stupid
+            Sheep | Hunter => BestToNearest,
             _ => Best,
         }
     }
