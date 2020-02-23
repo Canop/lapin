@@ -98,17 +98,36 @@ impl<'t> WorldPlayer<'t> {
             )
     }
 
+    fn move_to_terrain(
+        &self,
+        actor_id: usize,
+        actor: Actor,
+        terrain: Cell,
+    ) -> Option<ActorMove> {
+        let mut path_finder = PathFinder::new(
+            actor,
+            &self.board,
+            &self.actor_pos_set,
+            self.seed,
+            actor.path_finding_strategy(), // ignored for find_to_terrain
+        );
+        path_finder.find_to_terrain(terrain)
+            .map(|path| path[0])
+            .and_then(|pos| actor.pos.dir_to(pos))
+            .map(|dir|
+                ActorMove {
+                    actor_id,
+                    target_id: None,
+                    action: Action::Moves(dir),
+                }
+            )
+    }
+
     fn find_grazer_move(&self, actor_id: usize, actor: Actor) -> Option<ActorMove> {
         if self.board.get(actor.pos) == GRASS {
             None
         } else {
-            let mut goals: Vec<Pos> = Vec::new();
-            for &p in &self.board.grass_cells {
-                if !self.actor_pos_set.has_key(p) {
-                    goals.push(p);
-                }
-            }
-            self.move_to_vec(actor_id, actor, goals)
+            self.move_to_terrain(actor_id, actor, GRASS)
         }
     }
 
@@ -210,7 +229,14 @@ impl<'t> WorldPlayer<'t> {
             if self.killed[id] {
                 continue;
             }
-            if let Some(actor_move) = self.find_actor_move(id) {
+            //let actor_move = time!(
+            //    Debug,
+            //    "move",
+            //    format!("{:?}[{}]", actor.kind, id),
+            //    self.find_actor_move(id),
+            //);
+            let actor_move = self.find_actor_move(id);
+            if let Some(actor_move) = actor_move {
                 if let Some(other_id) = actor_move.target_id {
                     self.killed[other_id] = true;
                     self.actor_pos_set.remove(self.actor_pos(other_id));
