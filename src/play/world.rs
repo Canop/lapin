@@ -229,13 +229,13 @@ impl<'t> WorldPlayer<'t> {
             if self.killed[id] {
                 continue;
             }
-            //let actor_move = time!(
-            //    Debug,
-            //    "move",
-            //    format!("{:?}[{}]", actor.kind, id),
-            //    self.find_actor_move(id),
-            //);
-            let actor_move = self.find_actor_move(id);
+            let actor_move = time!(
+                Debug,
+                "move",
+                format!("{:?}[{}]", actor.kind, id),
+                self.find_actor_move(id),
+            );
+            //let actor_move = self.find_actor_move(id);
             if let Some(actor_move) = actor_move {
                 if let Some(other_id) = actor_move.target_id {
                     self.killed[other_id] = true;

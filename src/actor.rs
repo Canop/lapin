@@ -127,8 +127,8 @@ impl Actor {
             PathFindingStrategy::*,
         };
         match self.kind {
-            Hunter if self.state.drunk => Quadrant,
-            Sheep | Hunter => BestToNearest,
+            Hunter if self.state.drunk => Quadrants,
+            Sheep | Hunter => BestToNearest, // not used for grazers
             _ => Best,
         }
     }

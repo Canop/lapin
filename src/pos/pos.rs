@@ -61,6 +61,24 @@ impl Pos {
             }
         }
     }
+    /// return major then minor among NESW
+    pub fn quadrants_to(&self, dst:Pos) -> (Dir, Dir) {
+        use Dir::*;
+        let (dx, dy) = (dst.x-self.x, dst.y-self.y);
+        if dx.abs() < dy.abs() {
+            if dy < 0 {
+                (Up, if dx < 0 { Left } else { Right })
+            } else {
+                (Down, if dx < 0 { Left } else { Right })
+            }
+        } else {
+            if dx > 0 {
+                (Right, if dy < 0 { Up } else { Down })
+            } else {
+                (Left, if dy < 0 { Up } else { Down })
+            }
+        }
+    }
     pub fn is_in_dir(&self, dst: Pos, dir: Dir) -> bool {
         let (dx, dy) = (dst.x-self.x, dst.y-self.y);
         match dir {

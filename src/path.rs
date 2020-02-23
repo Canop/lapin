@@ -52,6 +52,7 @@ impl PartialOrd for ValuedPos {
 
 pub enum PathFindingStrategy {
     Quadrant, // just try to go in the general direction of the nearest
+    Quadrants, // just try to go in the general directions of the nearest
     BestToNearest,
     Best, // absolute best, slower
 }
@@ -104,6 +105,23 @@ impl<'b> PathFinder<'b> {
                     } else {
                         None
                     }
+                })
+            }
+            PathFindingStrategy::Quadrants => {
+                goals.sort_by(|&a, &b|
+                    Pos::manhattan_distance(a, actor_pos).cmp(&Pos::manhattan_distance(b, actor_pos))
+                );
+                goals.get(0).and_then(|&goal| {
+                    let dirs = actor_pos.quadrants_to(goal);
+                    let pos = actor_pos.in_dir(dirs.0);
+                    if self.can_enter(pos) {
+                        return Some(vec![pos; 1])
+                    }
+                    let pos = actor_pos.in_dir(dirs.1);
+                    if self.can_enter(pos) {
+                        return Some(vec![pos; 1])
+                    }
+                    None
                 })
             }
             PathFindingStrategy::BestToNearest => {
