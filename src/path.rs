@@ -85,11 +85,11 @@ impl<'b> PathFinder<'b> {
     ///
     // note: this function will usually return false for the goal. It's
     // thus necessary to check the goal before calling this one.
-    pub fn can_enter(&self, pos: Pos) -> bool {
+    fn can_enter(&self, pos: Pos) -> bool {
         self.board.is_enterable(pos) && !self.actors_map.has_key(pos)
     }
 
-    pub fn reached(&self, pos: Pos, goal: Goal) -> bool {
+    fn reached(&self, pos: Pos, goal: Goal) -> bool {
         match goal {
             Goal::Pos(goal_pos) => goal_pos == pos,
             Goal::Terrain(cell) => self.board.get(pos) == cell,
@@ -101,23 +101,24 @@ impl<'b> PathFinder<'b> {
     pub fn find(
         &mut self,
         goal: Goal,
+        hint: Option<Pos>,
     ) -> Option<Vec<Pos>> {
-        match goal {
-            // when we target a precise cell, there's nothing better than A*
-            Goal::Pos(pos) => self.find_to_pos(pos),
+        match hint {
+            // when we target a precise cell or have a global direction,
+            // there's nothing better than A*. This is especially true
+            // in open spaces when there's no limits to moves
+            Some(pos) => self.find_astar(goal, pos),
 
             // general dijkstra
-            _ => self.find_to_any(goal),
+            None => self.find_dijkstra(goal),
         }
     }
 
     /// find the shortest path to any cell verifying the goal.
     /// Doesn't use any heuristic so is slower than A* but works
     /// for many goals.
-    /// Used by sheeps to find grass or by hunters or wolves to
-    /// find any applicable target.
     /// This function is based on Dijkstra's algorithm.
-    fn find_to_any(
+    fn find_dijkstra(
         &mut self,
         goal: Goal,
     ) -> Option<Vec<Pos>> {
@@ -138,28 +139,23 @@ impl<'b> PathFinder<'b> {
         open_set.push_back(start);
 
         while let Some(mut current) = open_set.pop_front() {
-            if self.reached(current, goal) {
-                // reconstruct the path from current to start
-                let mut path = Vec::new();
-                while current != start {
-                    path.push(current);
-                    current = came_from.get(current);
-                }
-                path.reverse();
-                return Some(path);
-            }
             closed_set.insert(current);
             for i in 0..4 {
-                // TODO faire le test reached uniquement sur les neighbours
-
                 // not always trying the same path when several are identical
                 // in lenght avoids some locking situation and some abuses
                 let dir = DIRS[(i + self.seed)%4];
                 let neighbour = current.in_dir(dir);
-                if
-                    ( !self.can_enter(neighbour) || closed_set.has_key(neighbour) )
-                    && ! self.reached(neighbour, goal)  // TODO check if faster if short return here
-                {
+                if self.reached(neighbour, goal) {
+                    // reconstruct the path from current to start
+                    let mut path = vec![neighbour];
+                    while current != start {
+                        path.push(current);
+                        current = came_from.get(current);
+                    }
+                    path.reverse();
+                    return Some(path);
+                }
+                if !self.can_enter(neighbour) || closed_set.has_key(neighbour) {
                     continue;
                 }
                 let tentative_g_score = g_score.get(current) + 1;
@@ -186,10 +182,11 @@ impl<'b> PathFinder<'b> {
     /// The returned path contains the goal but not the start.
     ///
     /// The heuristic function h used here is the Manhattan distance
-    /// to the goal.
-    fn find_to_pos(
+    /// to the hint (which may be the goal).
+    fn find_astar(
         &mut self,
-        goal: Pos,
+        goal: Goal,
+        hint: Pos,
     ) -> Option<Vec<Pos>> {
         let start = self.actor.pos;
 
@@ -205,29 +202,26 @@ impl<'b> PathFinder<'b> {
 
         // the nodes from which we may expand
         let mut open_set: BinaryHeap<ValuedPos> = BinaryHeap::new();
-        open_set.push(ValuedPos::from(start, Pos::manhattan_distance(start, goal)));
+        open_set.push(ValuedPos::from(start, Pos::sq_euclidian_distance(start, hint)));
 
         while let Some(mut current) = open_set.pop().map(|vp| vp.pos) {
-            if current == goal {
-                // reconstruct the path from current to start
-                let mut path = Vec::new();
-                while current != start {
-                    path.push(current);
-                    current = came_from.get(current);
-                }
-                path.reverse();
-                return Some(path);
-            }
             closed_set.insert(current);
             for i in 0..4 {
                 // not always trying the same path when several are identical
                 // in lenght avoids some locking situation and some abuses
                 let dir = DIRS[(i + self.seed)%4];
                 let neighbour = current.in_dir(dir);
-                if
-                    neighbour != goal
-                    && ( !self.can_enter(neighbour) || closed_set.has_key(neighbour) )
-                {
+                if self.reached(neighbour, goal) {
+                    // reconstruct the path from current to start
+                    let mut path = vec![neighbour];
+                    while current != start {
+                        path.push(current);
+                        current = came_from.get(current);
+                    }
+                    path.reverse();
+                    return Some(path);
+                }
+                if !self.can_enter(neighbour) || closed_set.has_key(neighbour) {
                     continue;
                 }
                 let tentative_g_score = g_score.get(current) + 1;
@@ -235,7 +229,7 @@ impl<'b> PathFinder<'b> {
                 if tentative_g_score < previous_g_score {
                     came_from.set(neighbour, current);
                     g_score.set(neighbour, tentative_g_score);
-                    let new_f_score = tentative_g_score + Pos::manhattan_distance(neighbour, goal);
+                    let new_f_score = tentative_g_score + Pos::sq_euclidian_distance(neighbour, hint);
                     open_set.push(ValuedPos::from(neighbour, new_f_score));
                 }
             }

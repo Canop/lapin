@@ -20,6 +20,9 @@ impl Pos {
     pub fn mh_distance(a: Pos, b: Pos) -> Int {
         (a.x-b.x).abs().max((a.y-b.y).abs())
     }
+    pub fn sq_euclidian_distance(a: Pos, b: Pos) -> Int {
+        (a.x-b.x)*(a.x-b.x) + (a.y-b.y)*(a.y-b.y)
+    }
     pub fn manhattan_distance(a: Pos, b: Pos) -> Int {
         (a.x-b.x).abs() + (a.y-b.y).abs()
     }

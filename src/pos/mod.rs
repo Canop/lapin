@@ -9,7 +9,7 @@ mod pos_map;
 mod screen_pos;
 
 pub use {
-    dir::Dir,
+    dir::*,
     located::*,
     pos::Pos,
     pos_area::*,

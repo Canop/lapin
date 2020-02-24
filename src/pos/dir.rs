@@ -14,3 +14,14 @@ pub enum Dir {
     DownLeft,
     LeftUp
 }
+
+pub static ALL_DIRS: &[Dir] = &[
+    Dir::Up,
+    Dir::Right,
+    Dir::Down,
+    Dir::Left,
+    Dir::UpRight,
+    Dir::RightDown,
+    Dir::DownLeft,
+    Dir::LeftUp
+];

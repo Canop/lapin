@@ -90,7 +90,13 @@ impl<'t> WorldPlayer<'t> {
             &self.actor_pos_map,
             self.seed,
         );
-        path_finder.find(goal)
+        let hint = if actor.kind.runs_after(ActorKind::Lapin) {
+            // waiting for bool.then_some to be not nightly (or better bool.map)
+            Some(self.board.lapin_pos())
+        } else {
+            None
+        };
+        path_finder.find(goal, hint)
             .map(|path| path[0])
             .and_then(|pos| actor.pos.dir_to(pos))
             .map(|dir|
@@ -111,12 +117,19 @@ impl<'t> WorldPlayer<'t> {
     }
 
     fn find_lapin_eater_move(&self, actor_id: usize, actor: Actor) -> Option<ActorMove> {
+        if let Some(dir) = actor.pos.dir_to(self.board.lapin_pos()) {
+            // we can make a direct kill (may be a diagonal move)
+            return Some(ActorMove {
+                actor_id,
+                target_id: Some(0),
+                action: Action::Eats(dir),
+            });
+        }
         self.move_to_goal(actor_id, actor, Goal::Pos(self.board.lapin_pos()))
     }
 
     // for actors who hunt several types of actors (not the fox)
     fn find_eater_move(&self, actor_id: usize, actor: Actor) -> Option<ActorMove> {
-        let mut goals: Vec<Pos> = Vec::new();
         for (other_id, other) in self.board.actors.iter().enumerate() {
             if other_id == actor_id || self.killed[other_id] || !actor.hits(*other) {
                 continue;
@@ -129,9 +142,12 @@ impl<'t> WorldPlayer<'t> {
                     action: Action::Eats(dir),
                 });
             }
-            goals.push(other.pos);
         }
-        self.move_to_goal(actor_id, actor, Goal::ActorKinds(actor.preys().unwrap()))
+        self.move_to_goal(
+            actor_id,
+            actor,
+            Goal::ActorKinds(actor.preys().unwrap()),
+        )
     }
 
     fn find_firer_move(&self, actor_id: usize, actor: Actor) -> Option<ActorMove> {
@@ -236,13 +252,13 @@ impl<'t> WorldPlayer<'t> {
             if self.killed[id] {
                 continue;
             }
-            let actor_move = time!(
-                Debug,
-                "move",
-                format!("{:?}[{}]", actor.kind, id),
-                self.find_actor_move(id),
-            );
-            //let actor_move = self.find_actor_move(id);
+            // let actor_move = time!(
+            //     Debug,
+            //     "move",
+            //     format!("{:?}[{}]", actor.kind, id),
+            //     self.find_actor_move(id),
+            // );
+            let actor_move = self.find_actor_move(id);
             if let Some(actor_move) = actor_move {
                 if let Some(other_id) = actor_move.target_id {
                     self.killed[other_id] = true;
