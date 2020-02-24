@@ -212,7 +212,7 @@ impl<'t> WorldPlayer<'t> {
                     actor.pos
                         .quadrants_to(goal)
                         .iter()
-                        .find(|&dir| self.is_free(actor.pos.in_dir(*dir)))
+                        .find(|&dir| self.can_enter(actor, actor.pos.in_dir(*dir)))
                         .map(|&dir| ActorMove {
                             actor_id,
                             target_id: None,
@@ -224,8 +224,8 @@ impl<'t> WorldPlayer<'t> {
         }
     }
 
-    fn is_free(&self, pos: Pos) -> bool {
-        self.board.is_enterable(pos)
+    fn can_enter(&self, actor: Actor, pos: Pos) -> bool {
+        actor.can_enter(self.board.get(pos))
             && !self.actor_pos_map.has_key(pos)
     }
 

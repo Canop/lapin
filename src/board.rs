@@ -23,7 +23,6 @@ pub struct Board {
     pub actors: Vec<Actor>, // Lapin always at index 0
     pub items: OptionPosMap<Item>,
     pub current_player: Player, // whose turn it is
-    pub grass_cells: Vec<Pos>, // targets for the sheeps
 }
 
 impl From<&Level> for Board {
@@ -41,14 +40,12 @@ impl Board {
         let mut actors = Vec::new();
         actors.push(Actor::new(ActorKind::Lapin, 0, 0));
         let items = OptionPosMap::new(area.clone(), None);
-        let grass_cells = Vec::new();
         Self {
             area,
             cells,
             actors,
             items,
             current_player: Player::Lapin,
-            grass_cells,
         }
     }
 
@@ -67,19 +64,13 @@ impl Board {
         self.items = OptionPosMap::new(pos_distribution.area.clone(), None);
         self.cells = PosMap::new(pos_distribution.area, level.default_cell);
         self.actors = level.actors.clone();
-        self.grass_cells.clear();
         for &lc in level.cells.iter() {
             self.cells.set_lc(lc);
-            if lc.v==GRASS {
-                self.grass_cells.push(lc.pos);
-            }
         }
         for lc in &level.items {
             self.items.set_some(lc.pos, lc.v);
         }
     }
-
-    // TODO explicit function to compute grass_cells
 
     pub fn lapin_pos(&self) -> Pos {
         self.actors[0].pos
@@ -87,15 +78,6 @@ impl Board {
 
     pub fn add_actor(&mut self, actor: Actor) {
         self.actors.push(actor);
-    }
-
-    // FIXME remove
-    pub fn is_enterable(&self, pos: Pos) -> bool {
-        match self.get(pos) {
-            FIELD => true,
-            GRASS => true,
-            _ => false,
-        }
     }
 
     pub fn add_actor_in(&mut self, kind: ActorKind, x: Int, y: Int) {
@@ -160,7 +142,7 @@ impl Board {
                         return MoveResult::Invalid;
                     }
                 }
-                if self.is_enterable(pos) {
+                if self.actors[0].can_enter(self.get(pos)) {
                     self.actors[0].pos = pos;
                     if self.get(pos) == GRASS {
                         self.current_player = Player::None;

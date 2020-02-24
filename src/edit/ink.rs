@@ -19,6 +19,7 @@ pub enum Ink {
 pub static TERRAIN_INKS: &[Ink] = &[
     Ink::EraseTerrain,
     Ink::Terrain(FIELD),
+    Ink::Terrain(SAND),
     Ink::Terrain(WALL),
     Ink::Terrain(GRASS),
     Ink::Terrain(WATER),

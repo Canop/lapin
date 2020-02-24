@@ -86,7 +86,7 @@ impl<'b> PathFinder<'b> {
     // note: this function will usually return false for the goal. It's
     // thus necessary to check the goal before calling this one.
     fn can_enter(&self, pos: Pos) -> bool {
-        self.board.is_enterable(pos) && !self.actors_map.has_key(pos)
+        self.actor.can_enter(self.board.get(pos)) && !self.actors_map.has_key(pos)
     }
 
     fn reached(&self, pos: Pos, goal: Goal) -> bool {

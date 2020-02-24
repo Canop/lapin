@@ -47,7 +47,7 @@ impl FgSkin {
 }
 
 pub struct Skin {
-    pub cell_bg: [Color; 4],
+    pub cell_bg: [Color; NB_TERRAINS as usize],
     // actors
     pub fox: FgSkin,
     pub hunter: FgSkin,
@@ -77,11 +77,13 @@ pub struct Skin {
 impl Default for Skin {
     fn default() -> Self {
         let cell_bg = [
-            //rgb(36, 20, 1),  // FIELD
-            rgb(42, 32, 27),  // FIELD
+            rgb(51, 41, 29),  // FIELD
+            //rgb(42, 32, 27),  // FIELD
             ansi(59), // WALL
             ansi(22), // GRASS
             ansi(25), // WATER
+            rgb(83, 72, 59),  // SAND
+            //ansi(137), // SAND
         ];
         Self {
             cell_bg,
@@ -158,6 +160,7 @@ fn make_editor_mad_skin() -> MadSkin {
     let mut mad_skin = MadSkin::default();
     mad_skin.paragraph.set_fg(gray(1));
     mad_skin.paragraph.set_bg(ansi(137));
+    //mad_skin.paragraph.set_bg(rgb(83, 72, 59));
     mad_skin.bold = CompoundStyle::new(Some(ansi(208)), None, Attribute::Bold.into());
     mad_skin
 }

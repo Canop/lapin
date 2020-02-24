@@ -1,5 +1,6 @@
 use {
     crate::{
+        consts::*,
         pos::*,
         skin::*,
     },
@@ -109,6 +110,16 @@ impl Actor {
             kind,
             pos: Pos::new(x, y),
             state: ActorState::default(),
+        }
+    }
+    pub fn can_enter(self, terrain: Cell) -> bool {
+        use ActorKind::*;
+        match (self.kind, terrain) {
+            (_, FIELD) => true,
+            (_, GRASS) => true,
+            (Knight, SAND) => false,
+            (_, SAND) => true,
+            _ => false, // WATER and WALL
         }
     }
     pub fn preys(self) -> Option<&'static[ActorKind]> {
