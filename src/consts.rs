@@ -6,3 +6,4 @@ pub const GRASS: Cell = 2;
 pub const WATER: Cell = 3;
 
 pub const NB_TERRAINS: u8 = 4;
+

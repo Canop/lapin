@@ -1,6 +1,5 @@
 use {
     crate::{
-        path::*,
         pos::*,
         skin::*,
     },
@@ -29,6 +28,23 @@ pub static ACTORS: &[ActorKind] = &[
     ActorKind::Fox,
     ActorKind::Hunter,
     ActorKind::Sheep,
+];
+pub static FOX_PREYS: &[ActorKind] = &[
+    ActorKind::Lapin,
+];
+pub static KNIGHT_PREYS: &[ActorKind] = &[
+    ActorKind::Wolf,
+    ActorKind::Fox,
+    ActorKind::Hunter,
+];
+pub static HUNTER_PREYS: &[ActorKind] = &[ // when not drunk
+    ActorKind::Lapin,
+    ActorKind::Wolf,
+    ActorKind::Fox,
+];
+pub static WOLF_PREYS: &[ActorKind] = &[
+    ActorKind::Lapin,
+    ActorKind::Hunter,
 ];
 impl ActorKind {
     pub fn drinks_wine(self) -> bool {
@@ -95,6 +111,16 @@ impl Actor {
             state: ActorState::default(),
         }
     }
+    pub fn preys(self) -> Option<&'static[ActorKind]> {
+        use ActorKind::*;
+        match self.kind {
+            Fox => Some(FOX_PREYS),
+            Knight => Some(KNIGHT_PREYS),
+            Hunter => Some(HUNTER_PREYS),
+            Wolf => Some(WOLF_PREYS),
+            _ => None,
+        }
+    }
     pub fn hits(self, other: Actor) -> bool {
         self.kind.hits(other.kind)
     }
@@ -120,17 +146,6 @@ impl Actor {
     }
     pub fn is_aiming(self) -> bool {
         self.state.aim.is_some()
-    }
-    pub fn path_finding_strategy(self) -> PathFindingStrategy {
-        use {
-            ActorKind::*,
-            PathFindingStrategy::*,
-        };
-        match self.kind {
-            Hunter if self.state.drunk => Quadrants,
-            Sheep | Hunter => BestToNearest, // not used for grazers
-            _ => Best,
-        }
     }
     pub fn skin(self, skin: &Skin) -> FgSkin {
         let mut s = self.kind.skin(skin);

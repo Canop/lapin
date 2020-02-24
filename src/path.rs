@@ -50,117 +50,76 @@ impl PartialOrd for ValuedPos {
     }
 }
 
-pub enum PathFindingStrategy {
-    Quadrant, // just try to go in the general direction of the nearest
-    Quadrants, // just try to go in the general directions of the nearest
-    BestToNearest,
-    Best, // absolute best, slower
+#[derive(Debug, Clone, Copy)]
+pub enum Goal {
+    Pos(Pos),
+    Terrain(Cell),
+    ActorKinds(&'static[ActorKind]),
+    //Anyone, // any other actor is a target!
+}
+impl Goal {
 }
 
 pub struct PathFinder<'b> {
     actor: Actor,
     board: &'b Board,
-    actors_map: &'b PosSet,
+    actors_map: &'b ActorPosMap,
     seed: usize,
-    strategy: PathFindingStrategy,
 }
 
 impl<'b> PathFinder<'b> {
     pub fn new(
         actor: Actor,
         board: &'b Board,
-        actors_map: &'b PosSet,
+        actors_map: &'b ActorPosMap,
         seed: usize,
-        strategy: PathFindingStrategy,
     ) -> Self {
         Self {
             actor,
             board,
             actors_map,
             seed,
-            strategy,
         }
     }
+
+    ///
+    // note: this function will usually return false for the goal. It's
+    // thus necessary to check the goal before calling this one.
     pub fn can_enter(&self, pos: Pos) -> bool {
         self.board.is_enterable(pos) && !self.actors_map.has_key(pos)
     }
 
-    // When there are many goals, this implementation could be replaced
-    // by a unique search with the heuristic based on the distance to
-    // the nearest goal (which could be precomputed)
-    pub fn find_to_vec(
-        &mut self,
-        goals: &mut[Pos],
-    ) -> Option<Vec<Pos>> {
-        let actor_pos = self.actor.pos;
-        match self.strategy {
-            PathFindingStrategy::Quadrant => {
-                goals.sort_by(|&a, &b|
-                    Pos::manhattan_distance(a, actor_pos).cmp(&Pos::manhattan_distance(b, actor_pos))
-                );
-                goals.get(0).and_then(|&goal| {
-                    let pos = actor_pos.in_dir(actor_pos.quadrant_to(goal));
-                    if self.can_enter(pos) {
-                        Some(vec![pos; 1])
-                    } else {
-                        None
-                    }
-                })
-            }
-            PathFindingStrategy::Quadrants => {
-                goals.sort_by(|&a, &b|
-                    Pos::manhattan_distance(a, actor_pos).cmp(&Pos::manhattan_distance(b, actor_pos))
-                );
-                goals.get(0).and_then(|&goal| {
-                    let dirs = actor_pos.quadrants_to(goal);
-                    let pos = actor_pos.in_dir(dirs.0);
-                    if self.can_enter(pos) {
-                        return Some(vec![pos; 1])
-                    }
-                    let pos = actor_pos.in_dir(dirs.1);
-                    if self.can_enter(pos) {
-                        return Some(vec![pos; 1])
-                    }
-                    None
-                })
-            }
-            PathFindingStrategy::BestToNearest => {
-                goals.sort_by(|&a, &b|
-                    Pos::manhattan_distance(a, self.actor.pos).cmp(&Pos::manhattan_distance(b, self.actor.pos))
-                );
-                for goal in goals {
-                    if let Some(path) = self.find_to_pos(*goal) {
-                        return Some(path);
-                    }
-                }
-                None
-            }
-            PathFindingStrategy::Best => {
-                let mut shortest: Option<Vec<Pos>> = None;
-                for goal in goals {
-                    if let Some(path) = self.find_to_pos(*goal) {
-                        shortest = Some(if let Some(sh) = shortest {
-                            if sh.len() < path.len() {
-                                sh
-                            } else {
-                                path
-                            }
-                        } else {
-                            path
-                        });
-                    }
-                }
-                shortest
-            }
+    pub fn reached(&self, pos: Pos, goal: Goal) -> bool {
+        match goal {
+            Goal::Pos(goal_pos) => goal_pos == pos,
+            Goal::Terrain(cell) => self.board.get(pos) == cell,
+            Goal::ActorKinds(kinds) => self.actors_map.get(pos)
+                .map_or(false, |actor| kinds.contains(&actor.kind)),
         }
     }
 
-    /// find the shortest path to a cell of a given nature
-    /// (used by sheeps to find grass).
-    /// It's based on Dijkstra's algorithm.
-    pub fn find_to_terrain(
+    pub fn find(
         &mut self,
-        goal: Cell,
+        goal: Goal,
+    ) -> Option<Vec<Pos>> {
+        match goal {
+            // when we target a precise cell, there's nothing better than A*
+            Goal::Pos(pos) => self.find_to_pos(pos),
+
+            // general dijkstra
+            _ => self.find_to_any(goal),
+        }
+    }
+
+    /// find the shortest path to any cell verifying the goal.
+    /// Doesn't use any heuristic so is slower than A* but works
+    /// for many goals.
+    /// Used by sheeps to find grass or by hunters or wolves to
+    /// find any applicable target.
+    /// This function is based on Dijkstra's algorithm.
+    fn find_to_any(
+        &mut self,
+        goal: Goal,
     ) -> Option<Vec<Pos>> {
         let start = self.actor.pos;
 
@@ -179,7 +138,7 @@ impl<'b> PathFinder<'b> {
         open_set.push_back(start);
 
         while let Some(mut current) = open_set.pop_front() {
-            if self.board.get(current) == goal {
+            if self.reached(current, goal) {
                 // reconstruct the path from current to start
                 let mut path = Vec::new();
                 while current != start {
@@ -191,13 +150,15 @@ impl<'b> PathFinder<'b> {
             }
             closed_set.insert(current);
             for i in 0..4 {
+                // TODO faire le test reached uniquement sur les neighbours
+
                 // not always trying the same path when several are identical
                 // in lenght avoids some locking situation and some abuses
                 let dir = DIRS[(i + self.seed)%4];
                 let neighbour = current.in_dir(dir);
                 if
-                    self.board.get(neighbour) != goal // TODO check if faster if short return here
-                    && ( !self.can_enter(neighbour) || closed_set.has_key(neighbour) )
+                    ( !self.can_enter(neighbour) || closed_set.has_key(neighbour) )
+                    && ! self.reached(neighbour, goal)  // TODO check if faster if short return here
                 {
                     continue;
                 }
@@ -226,7 +187,7 @@ impl<'b> PathFinder<'b> {
     ///
     /// The heuristic function h used here is the Manhattan distance
     /// to the goal.
-    pub fn find_to_pos(
+    fn find_to_pos(
         &mut self,
         goal: Pos,
     ) -> Option<Vec<Pos>> {

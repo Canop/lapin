@@ -62,20 +62,20 @@ impl Pos {
         }
     }
     /// return major then minor among NESW
-    pub fn quadrants_to(&self, dst:Pos) -> (Dir, Dir) {
+    pub fn quadrants_to(&self, dst:Pos) -> [Dir; 2] {
         use Dir::*;
         let (dx, dy) = (dst.x-self.x, dst.y-self.y);
         if dx.abs() < dy.abs() {
             if dy < 0 {
-                (Up, if dx < 0 { Left } else { Right })
+                [Up, if dx < 0 { Left } else { Right }]
             } else {
-                (Down, if dx < 0 { Left } else { Right })
+                [Down, if dx < 0 { Left } else { Right }]
             }
         } else {
             if dx > 0 {
-                (Right, if dy < 0 { Up } else { Down })
+                [Right, if dy < 0 { Up } else { Down }]
             } else {
-                (Left, if dy < 0 { Up } else { Down })
+                [Left, if dy < 0 { Up } else { Down }]
             }
         }
     }
