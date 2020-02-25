@@ -27,5 +27,5 @@ termimad = "0.8.15"
 
 [patch.crates-io]
 # minimad = { path = "../minimad" }
-# termimad = { path = "../termimad" }
+termimad = { path = "../termimad" }
 # crossterm = { path = "../crossterm-rs/crossterm" }

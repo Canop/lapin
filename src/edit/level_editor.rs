@@ -16,6 +16,7 @@ use {
         event::{
             KeyCode,
             KeyEvent,
+            KeyModifiers,
         },
     },
     std::{
@@ -173,12 +174,16 @@ impl<'l> LevelEditor<'l> {
                     self.write_status(w, &screen)?;
                     None
                 }
-                Event::Click(x, y) => {
+                Event::Click(x, y, modifiers) => {
                     let sp = ScreenPos{ x, y };
                     debug!("click in {:?}", sp);
                     let action = if sp.is_in(&screen.areas.board) {
                         let pos_converter = PosConverter::from(self.center, &screen);
-                        self.pen.click(pos_converter.to_real(sp))
+                        self.pen.click(
+                            pos_converter.to_real(sp),
+                            modifiers.contains(KeyModifiers::CONTROL),
+
+                        )
                     } else if sp.is_in(&screen.areas.pen_panel) {
                         pen_panel.click(sp);
                         None

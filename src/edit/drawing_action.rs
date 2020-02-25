@@ -17,6 +17,7 @@ use {
 pub enum DrawingAction {
     DotInk (Ink, Pos),
     LineInk (Ink, Pos, Pos),
+    CompassLineInk (Ink, Pos, Pos), // a line in one of the 8 compass directions
     RectInk (Ink, Pos, Pos),
     DefaultCell(Cell),
 }
@@ -87,6 +88,39 @@ fn ink_line(ink: Ink, a: Pos, b: Pos, board: &mut Board) {
     }
 }
 
+/// draw a line between two pos, forcing to one of the 8 main directions.
+fn ink_compass_line(ink: Ink, a: Pos, b: Pos, board: &mut Board) {
+    use Dir::*;
+    let compass_dir = a.compass_to(b);
+    debug!("compass_dir = {:?}", compass_dir);
+    match compass_dir {
+        Up => for y in b.y..=a.y {
+            ink_pos(ink, Pos::new(a.x, y), board);
+        }
+        UpRight => for (i, x) in (a.x..=b.x).enumerate() {
+            ink_pos(ink, Pos::new(x, a.y-i as i32), board);
+        }
+        Right => for x in a.x..=b.x {
+            ink_pos(ink, Pos::new(x, a.y), board);
+        }
+        RightDown => for (i, x) in (a.x..=b.x).enumerate() {
+            ink_pos(ink, Pos::new(x, a.y+i as i32), board);
+        }
+        Down => for y in a.y..=b.y {
+            ink_pos(ink, Pos::new(a.x, y), board);
+        }
+        DownLeft => for (i, x) in (b.x..=a.x).rev().enumerate() {
+            ink_pos(ink, Pos::new(x, a.y+i as i32), board);
+        }
+        Left => for x in b.x..=a.x {
+            ink_pos(ink, Pos::new(x, a.y), board);
+        }
+        LeftUp => for (i, x) in (b.x..=a.x).rev().enumerate() {
+            ink_pos(ink, Pos::new(x, a.y-i as i32), board);
+        }
+    }
+}
+
 /// fill a rect given two corners
 fn ink_rect(ink: Ink, a: Pos, b: Pos, board: &mut Board) {
     for x in a.x.min(b.x)..=a.x.max(b.x) {
@@ -104,6 +138,9 @@ impl DrawingAction {
             }
             DrawingAction::LineInk(ink, a, b) => {
                 ink_line(*ink, *a, *b, board);
+            }
+            DrawingAction::CompassLineInk(ink, a, b) => {
+                ink_compass_line(*ink, *a, *b, board);
             }
             DrawingAction::RectInk(ink, a, b) => {
                 ink_rect(*ink, *a, *b, board);

@@ -134,7 +134,7 @@ impl<'s> GameRunner<'s> {
                     Event::Resize(width, height) => {
                         screen.set_terminal_size(width, height);
                     }
-                    Event::Click(x, y) => {
+                    Event::Click(x, y, ..) => {
                         let sp = ScreenPos{ x, y };
                         let pos_converter = PosConverter::from(self.board.lapin_pos(), &screen);
                         debug!("click in {:?}", pos_converter.to_real(sp));

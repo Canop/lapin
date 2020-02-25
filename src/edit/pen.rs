@@ -39,14 +39,22 @@ impl Pen {
 
     /// Maybe change the state of the pen and return the drawing
     /// action which should be applied to board, if any.
-    pub fn click(&mut self, click_pos: Pos) -> Option<DrawingAction> {
+    pub fn click(
+        &mut self,
+        click_pos: Pos,
+        is_control_click: bool,
+    ) -> Option<DrawingAction> {
         match self.shape {
             PenShape::Dot => {
                 Some(DrawingAction::DotInk(self.ink, click_pos))
             }
             PenShape::Line => {
                 if let Some(start) = self.shape_start {
-                    let action = DrawingAction::LineInk(self.ink, start, click_pos);
+                    let action = if is_control_click {
+                        DrawingAction::CompassLineInk(self.ink, start, click_pos)
+                    } else {
+                        DrawingAction::LineInk(self.ink, start, click_pos)
+                    };
                     self.shape_start = None;
                     Some(action)
                 } else {

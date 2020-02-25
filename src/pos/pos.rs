@@ -1,5 +1,8 @@
 use {
     serde::{Serialize, Deserialize},
+    std::{
+        f32::consts::PI,
+    },
     super::*,
 };
 
@@ -81,6 +84,14 @@ impl Pos {
                 [Left, if dy < 0 { Up } else { Down }]
             }
         }
+    }
+    /// return the most precise direction among the 8 ones
+    pub fn compass_to(&self, dst: Pos) -> Dir {
+        use Dir::*;
+        let (dx, dy) = ((dst.x-self.x) as f32, (dst.y-self.y) as f32);
+        let angle = dy.atan2(dx);
+        let octant = ( 8f32 * angle / (2f32*PI) + 8f32 ).round() as usize % 8;
+        [Right, RightDown, Down, DownLeft, Left, LeftUp, Up, UpRight][octant]
     }
     pub fn is_in_dir(&self, dst: Pos, dir: Dir) -> bool {
         let (dx, dy) = (dst.x-self.x, dst.y-self.y);

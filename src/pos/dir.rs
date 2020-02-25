@@ -3,6 +3,8 @@ use {
     serde::{Serialize, Deserialize},
 };
 
+/// All Compass directions.
+/// The first four ones are called "quadrant" dir in the rest of the code.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Dir {
     Up,
