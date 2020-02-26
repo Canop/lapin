@@ -8,14 +8,8 @@ use {
         screen::*,
     },
     crossterm::{
-        cursor,
-        style::{
-            SetForegroundColor,
-        },
         terminal::ClearType,
-        QueueableCommand,
     },
-    std::io::Write,
     super::{
         drawing_action::*,
         ink::*,

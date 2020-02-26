@@ -11,6 +11,7 @@ pub struct Areas {
     pub header: Area,
     pub board: Area,
     pub pen_panel: Area, // the ink pen_panel panel
+    pub help: Area,
     pub status: Area,
     pub ink_margin: u16, // 0 or 1
 }
@@ -56,10 +57,17 @@ impl Layout {
                 self.header_height + self.pen_panel_height + self.status_height
             ),
         );
+        let help = Area::new(
+            con.left,
+            con.top,
+            con.width,
+            con.height - self.status_height,
+        );
         Areas {
             header,
             board,
             pen_panel,
+            help,
             status,
             ink_margin,
         }

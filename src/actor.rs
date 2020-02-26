@@ -5,6 +5,9 @@ use {
         skin::*,
     },
     serde::{Serialize, Deserialize},
+    termimad::{
+        StyledChar,
+    },
 };
 
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
@@ -85,15 +88,15 @@ impl ActorKind {
             _ => false,
         }
     }
-    pub fn skin(self, skin: &Skin) -> FgSkin {
+    pub fn skin(self, skin: &Skin) -> &StyledChar {
         use ActorKind::*;
         match self {
-            Fox => skin.fox,
-            Hunter => skin.hunter,
-            Knight => skin.knight,
-            Lapin => skin.lapin,
-            Sheep => skin.sheep,
-            Wolf => skin.wolf,
+            Fox => &skin.fox,
+            Hunter => &skin.hunter,
+            Knight => &skin.knight,
+            Lapin => &skin.lapin,
+            Sheep => &skin.sheep,
+            Wolf => &skin.wolf,
         }
     }
 }
@@ -158,19 +161,19 @@ impl Actor {
     pub fn is_aiming(self) -> bool {
         self.state.aim.is_some()
     }
-    pub fn skin(self, skin: &Skin) -> FgSkin {
-        let mut s = self.kind.skin(skin);
+    pub fn skin(self, skin: &Skin) -> StyledChar {
+        let mut s = self.kind.skin(skin).clone();
         if let Some(dir) = self.state.aim {
-            s.chr = match dir {
+            s.set_char(match dir {
                 Dir::Up => skin.aiming_up,
                 Dir::Right => skin.aiming_right,
                 Dir::Down => skin.aiming_down,
                 Dir::Left => skin.aiming_left,
-                _ => '?',
-            };
+                _ => '?', // did I implement diagonal fire ?
+            });
         }
         if self.state.drunk {
-            s.color = skin.hunter_drunk.color;
+            s.set_fg(skin.drunk_color);
         }
         s
     }

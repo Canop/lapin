@@ -20,6 +20,9 @@ use {
         },
         QueueableCommand,
     },
+    termimad::{
+        StyledChar,
+    },
 };
 
 /// a struct able to do drawing and animations, centered
@@ -85,9 +88,12 @@ impl<'d> BoardDrawer<'d> {
     pub fn draw_fg(
         &mut self,
         pos: Pos,
-        fg_skin: FgSkin,
+        sc: &StyledChar,
     ) -> Result<()> {
-        self.draw_chr(pos, fg_skin.chr, fg_skin.color)
+        if let Some(c) = sc.get_fg() {
+            self.draw_chr(pos, sc.get_char(), c)?;
+        }
+        Ok(())
     }
 
     pub fn draw(
@@ -109,11 +115,10 @@ impl<'d> BoardDrawer<'d> {
                     last_cell = cell;
                 }
                 if let Some(actor) = self.actor_map.get(pos) {
-                    let fg_skin = actor.skin(&self.screen.skin);
-                    self.w.queue(fg_skin.fg_command())?;
-                    self.w.queue(Print(fg_skin.chr))?;
+                    actor.skin(&self.screen.skin).queue(self.w)?;
+                    self.w.queue(self.screen.skin.bg_command(cell))?;
                 } else if let Some(item) = self.board.items.get(pos) {
-                    self.w.queue(self.screen.skin.styled_item_char(item, cell))?;
+                    item.kind.skin(&self.screen.skin).queue(self.w)?;
                     self.w.queue(self.screen.skin.bg_command(cell))?;
                 } else {
                     self.w.queue(Print(' '))?;

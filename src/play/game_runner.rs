@@ -1,16 +1,17 @@
 use {
+    anyhow::Result,
     crate::{
         app_state::StateTransition,
         board::*,
         board_drawer::BoardDrawer,
         edit::EditLevelState,
+        help,
         io::W,
         pos::*,
         screen::Screen,
         status::Status,
         task_sync::*,
     },
-    anyhow::Result,
     crossterm::{
         event::{
             KeyCode,
@@ -36,7 +37,11 @@ impl<'s> GameRunner<'s> {
     pub fn new(state: &'s PlayLevelState) -> Result<Self> {
         let board = Board::from(&*state.level);
         let status = Status::from_message(
-            "Hit *arrows* to move, *q* to quit".to_string()
+            if state.comes_from_edit {
+                "Hit *arrows* to move, *q* to quit, *?* for the help, *esc* to go back to editor"
+            } else {
+                "Hit *arrows* to move, *q* to quit, *?* for the help"
+            }
         );
         Ok(Self {
             board,
@@ -48,8 +53,10 @@ impl<'s> GameRunner<'s> {
     fn handle_key_event(
         &mut self,
         code: KeyCode,
-    ) -> Option<StateTransition> {
-        match Command::from(code) {
+        w: &mut W,
+        dam: &mut Dam,
+    ) -> Result<Option<StateTransition>> {
+        Ok(match Command::from(code) {
             None => None,
             Some(Command::Back) if self.state.comes_from_edit => {
                 if let Some(path) = &self.state.path {
@@ -61,6 +68,10 @@ impl<'s> GameRunner<'s> {
                     None
                 }
             }
+            Some(Command::Help) => {
+                let mut help_view = help::View::new(help_text::MARKDOWN, LAYOUT);
+                help_view.run(w, dam)?
+            }
             Some(Command::Quit) => {
                 Some(StateTransition::Quit)
             }
@@ -69,19 +80,19 @@ impl<'s> GameRunner<'s> {
                 self.apply(move_result);
                 None
             }
-        }
+        })
     }
 
     fn apply(&mut self, move_result: MoveResult)  {
         match move_result {
             MoveResult::PlayerWin => {
                 self.status = Status::from_message(
-                    "You **WIN!**".to_string()
+                    "You **WIN!**"
                 );
             }
             MoveResult::PlayerLose => {
                 self.status = Status::from_error(
-                    "You **LOSE!**".to_string()
+                    "You **LOSE!**"
                 );
             }
             _ => {}
@@ -126,7 +137,7 @@ impl<'s> GameRunner<'s> {
                 dam.unblock();
                 match event {
                     Event::Key(KeyEvent { code, .. }) => {
-                        let next_state = self.handle_key_event(code);
+                        let next_state = self.handle_key_event(code, w, dam)?;
                         if let Some(next_state) = next_state {
                             return Ok(next_state);
                         }

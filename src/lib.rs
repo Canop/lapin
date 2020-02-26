@@ -16,6 +16,7 @@ pub mod consts;
 pub mod board_drawer;
 pub mod edit;
 pub mod fromage;
+pub mod help;
 pub mod io;
 pub mod item;
 pub mod layout;

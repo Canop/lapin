@@ -85,6 +85,19 @@ impl Pen {
     pub fn shape_started(&self) -> bool {
         self.shape_start.is_some()
     }
+    /// return the help to display depending on the state,
+    /// if any.
+    pub fn status_help(&self) -> Option<&'static str> {
+        match self.shape {
+            PenShape::Line if self.shape_start.is_some() => {
+                Some("Click again to draw a line - with the *ctrl* key down to force compass directions")
+            }
+            PenShape::Rect if self.shape_start.is_some() => {
+                Some("Click again to draw a rectangle")
+            }
+            _ => None,
+        }
+    }
 
 }
 

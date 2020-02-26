@@ -37,6 +37,8 @@ use {
     },
 };
 
+const DEFAULT_STATUS: &str = "Use arrows to move, *q* to quit, *s* to save, *t* to test, *u*/*r* to undo/redo";
+
 pub struct LevelEditor<'l> {
     board: Board,
     pub pen: Pen,
@@ -54,9 +56,7 @@ impl<'l> LevelEditor<'l> {
         let level = &*state.level;
         let path = state.path.to_path_buf();
         let board = Board::from(level);
-        let status = Status::from_message(
-            "click at random to do random things, *q* to quit, *s* to save, *t* to test".to_string()
-        );
+        let status = Status::from_message(DEFAULT_STATUS);
         let pen = Pen::new_for(level);
         let center = board.lapin_pos();
         let history = DrawingHistory::new(level);
@@ -68,14 +68,6 @@ impl<'l> LevelEditor<'l> {
             center,
             history,
         }
-    }
-
-    fn write_status(
-        &mut self,
-        w: &mut W,
-        screen: &Screen,
-    ) -> Result<()> {
-        self.status.display(w, screen)
     }
 
     fn save_to_file(
@@ -119,16 +111,11 @@ impl<'l> LevelEditor<'l> {
             KeyCode::Char('s') => {
                 match self.save_to_file() {
                     Err(e) => {
-                        self.status = Status::from_error(format!(
-                            "level saving failed: `{:?}`",
-                            e,
-                        ));
+                        warn!("error while saving level: {:?}", e);
+                        self.status = Status::from_error("level saving failed");
                     }
                     _ => {
-                        self.status = Status::from_message(format!(
-                            "level saved in file `{:?}`",
-                            &self.path,
-                        ));
+                        self.status = Status::from_message("level saved");
                     }
                 }
                 None
@@ -155,7 +142,6 @@ impl<'l> LevelEditor<'l> {
         dam: &mut Dam,
     ) -> Result<StateTransition> {
         let mut screen = Screen::new(LAYOUT);
-        self.write_status(w, &screen)?;
         loop {
             let mut bd = BoardDrawer::new_around(&self.board, w, &screen, self.center);
             bd.draw()?;
@@ -163,6 +149,7 @@ impl<'l> LevelEditor<'l> {
             pen_panel.draw(w)?;
             let mut head_panel = EditorHeadPanel::new(&self.board, &screen);
             head_panel.draw(w)?;
+            self.status.display(w, &screen)?;
             let event = dam.next_event().unwrap();
             dam.unblock();
             let next_state = match event {
@@ -171,7 +158,6 @@ impl<'l> LevelEditor<'l> {
                 }
                 Event::Resize(width, height) => {
                     screen.set_terminal_size(width, height);
-                    self.write_status(w, &screen)?;
                     None
                 }
                 Event::Click(x, y, modifiers) => {
@@ -182,7 +168,6 @@ impl<'l> LevelEditor<'l> {
                         self.pen.click(
                             pos_converter.to_real(sp),
                             modifiers.contains(KeyModifiers::CONTROL),
-
                         )
                     } else if sp.is_in(&screen.areas.pen_panel) {
                         pen_panel.click(sp);
@@ -193,6 +178,9 @@ impl<'l> LevelEditor<'l> {
                     if let Some(action) = action {
                         self.history.apply(action, &mut self.board);
                     }
+                    self.status = Status::from_message(
+                        self.pen.status_help().unwrap_or(DEFAULT_STATUS)
+                    );
                     None
                 }
                 _ => {

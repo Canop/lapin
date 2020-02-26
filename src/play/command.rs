@@ -11,6 +11,7 @@ use {
 pub enum Command {
     Back,
     Move(Dir),
+    Help,
     Quit,
 }
 
@@ -23,6 +24,7 @@ impl Command {
             KeyCode::Down => Some(Command::Move(Dir::Down)),
             KeyCode::Left => Some(Command::Move(Dir::Left)),
             KeyCode::Char('q') => Some(Command::Quit),
+            KeyCode::Char('?') => Some(Command::Help),
             _ => None,
         }
     }

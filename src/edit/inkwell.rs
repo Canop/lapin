@@ -25,10 +25,6 @@ pub struct InkWell {
     pub ink: Ink,
 }
 
-// TODO faire un InkPanel ? Il faut
-// le w, le screen
-//  -> non : pas bon sémantiquement comme on avance le curseur, une méthode c'est mieux
-
 const ERASER_CHAR: char = '╳';
 
 // draw ink_well in the cursor position
@@ -52,17 +48,19 @@ fn draw_inkwell(
             cs.queue(w, ERASER_CHAR)?;
         }
         Ink::Item(item_kind) => {
-            let item_skin = item_kind.skin(&skin);
-            w.queue(item_skin.styled_char_over(Some(skin.bg(FIELD))))?;
+            let mut item_skin = item_kind.skin(&skin).clone();
+            item_skin.set_bg(skin.bg(FIELD));
+            item_skin.queue(w)?;
         }
         Ink::EraseActor => {
             cs.queue(w, ERASER_CHAR)?;
         }
         Ink::Actor(actor_kind) => {
-            let actor_skin = actor_kind.skin(&skin);
-            w.queue(actor_skin.styled_char_over(
-                skin.editor.paragraph.compound_style.get_bg()
-            ))?;
+            let mut actor_skin = actor_kind.skin(&skin).clone();
+            if let Some(c) = skin.editor.paragraph.compound_style.get_bg() {
+                actor_skin.set_bg(c);
+            }
+            actor_skin.queue(w)?;
         }
     }
     if selected {
@@ -74,7 +72,8 @@ fn draw_inkwell(
     Ok(())
 }
 
-///
+/// draw all the inks and return a vector of the inkwells with
+/// the correct positions.
 ///
 /// The cursor must already be at sp: this function doesn't do
 /// the goto. sp is modified to progress with the drawing.

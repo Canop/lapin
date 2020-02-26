@@ -4,6 +4,9 @@ use {
         skin::*,
     },
     serde::{Serialize, Deserialize},
+    termimad::{
+        StyledChar,
+    },
 };
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
@@ -12,10 +15,10 @@ pub enum ItemKind {
     Wine,
 }
 impl ItemKind {
-    pub fn skin(self, skin: &Skin) -> FgSkin {
+    pub fn skin(self, skin: &Skin) -> &StyledChar {
         match self {
-            ItemKind::Carrot => skin.carrot,
-            ItemKind::Wine => skin.wine,
+            ItemKind::Carrot => &skin.carrot,
+            ItemKind::Wine => &skin.wine,
         }
     }
 }

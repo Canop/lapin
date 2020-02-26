@@ -73,7 +73,7 @@ impl<'d> BoardDrawer<'d> {
         let sp_dst = self.pos_converter.to_screen(dst);
         let start_bg = self.screen.skin.bg(self.board.get(start));
         let dst_bg = if let Some(dst_actor) = self.actor_map.get(dst) {
-            dst_actor.kind.skin(&self.screen.skin).color
+            dst_actor.kind.skin(&self.screen.skin).get_fg().unwrap()
         } else {
             self.screen.skin.bg(self.board.get(dst))
         };
@@ -112,7 +112,7 @@ impl<'d> BoardDrawer<'d> {
         if av%2==1 {
             self.draw_chr(start, '█', color)?;
             if let Some(kind) = killed_id.map(|id| self.board.actors[id].kind) {
-                self.draw_chr(dst, kind.skin(&self.screen.skin).chr, Color::Red)?;
+                self.draw_chr(dst, kind.skin(&self.screen.skin).get_char(), Color::Red)?;
             }
         } else {
             self.draw_chr(start, ' ', color)?;
@@ -136,8 +136,8 @@ impl<'d> BoardDrawer<'d> {
                 }
             }
             let fg_skin = match dir {
-                Dir::Up | Dir::Down => self.screen.skin.fire_vertical,
-                _ => self.screen.skin.fire_horizontal,
+                Dir::Up | Dir::Down => &self.screen.skin.fire_vertical,
+                _ => &self.screen.skin.fire_horizontal,
             };
             self.draw_fg(pos, fg_skin)?;
         }
@@ -159,7 +159,7 @@ impl<'d> BoardDrawer<'d> {
                         self.draw_move_step(
                             actor.pos,
                             dir,
-                            actor.kind.skin(&self.screen.skin).color,
+                            actor.kind.skin(&self.screen.skin).get_fg().unwrap(),
                             av,
                         )?;
                     }
@@ -167,7 +167,7 @@ impl<'d> BoardDrawer<'d> {
                         self.draw_kill_step(
                             actor.pos,
                             dir,
-                            actor.kind.skin(&self.screen.skin).color,
+                            actor.kind.skin(&self.screen.skin).get_fg().unwrap(),
                             actor_move.target_id,
                             av,
                         )?;
@@ -184,7 +184,7 @@ impl<'d> BoardDrawer<'d> {
                         actor.state.aim = Some(dir);
                         self.draw_fg(
                             actor.pos,
-                            actor.skin(&self.screen.skin),
+                            &actor.skin(&self.screen.skin),
                         )?;
                     }
                     _ => {}

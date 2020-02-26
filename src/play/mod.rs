@@ -11,6 +11,7 @@ use {
 mod animate;
 mod command;
 mod game_runner;
+mod help_text;
 mod move_result;
 mod state;
 mod world;
