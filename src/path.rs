@@ -55,9 +55,6 @@ pub enum Goal {
     Pos(Pos),
     Terrain(Cell),
     ActorKinds(&'static[ActorKind]),
-    //Anyone, // any other actor is a target!
-}
-impl Goal {
 }
 
 pub struct PathFinder<'b> {
@@ -92,7 +89,7 @@ impl<'b> PathFinder<'b> {
     fn reached(&self, pos: Pos, goal: Goal) -> bool {
         match goal {
             Goal::Pos(goal_pos) => goal_pos == pos,
-            Goal::Terrain(cell) => self.board.get(pos) == cell,
+            Goal::Terrain(cell) => self.board.get(pos) == cell && !self.actors_map.has_key(pos),
             Goal::ActorKinds(kinds) => self.actors_map.get(pos)
                 .map_or(false, |actor| kinds.contains(&actor.kind)),
         }
@@ -181,7 +178,7 @@ impl<'b> PathFinder<'b> {
     ///
     /// The returned path contains the goal but not the start.
     ///
-    /// The heuristic function h used here is the Manhattan distance
+    /// The heuristic function h used here is the Euclidian distance
     /// to the hint (which may be the goal).
     fn find_astar(
         &mut self,
