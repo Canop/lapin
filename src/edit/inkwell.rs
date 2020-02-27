@@ -2,10 +2,10 @@
 use {
     anyhow::Result,
     crate::{
-        consts::*,
         io::W,
         pos::ScreenPos,
         screen::*,
+        terrain::*,
     },
     crossterm::{
         cursor,
@@ -40,8 +40,8 @@ fn draw_inkwell(
         Ink::EraseTerrain => {
             cs.queue(w, ERASER_CHAR)?;
         }
-        Ink::Terrain(cell) => {
-            w.queue(skin.bg_command(cell))?;
+        Ink::Terrain(terrain) => {
+            w.queue(terrain.bg_command(skin))?;
             write!(w, " ")?;
         }
         Ink::EraseItem => {
@@ -49,7 +49,7 @@ fn draw_inkwell(
         }
         Ink::Item(item_kind) => {
             let mut item_skin = item_kind.skin(&skin).clone();
-            item_skin.set_bg(skin.bg(FIELD));
+            item_skin.set_bg(Terrain::Mud.bg(skin));
             //if let Some(c) = skin.editor.paragraph.compound_style.get_bg() {
             //    item_skin.set_bg(c);
             //}

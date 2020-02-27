@@ -30,8 +30,7 @@ impl TryFrom<EditSubCommand> for EditLevelState {
         let level = if path.exists() {
             debug!("trying to deserialize the file");
             let file = File::open(&path)?;
-            serde_json::from_reader(file)?
-            // FIXME call validity checks here
+            deser = serde_json::from_reader(file)
         } else {
             debug!("non existing file : starting with a clean board");
             Level::default()

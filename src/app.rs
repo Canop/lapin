@@ -1,5 +1,6 @@
 
 use {
+    anyhow::Result,
     crate::{
         app_state::StateTransition,
         edit,
@@ -12,7 +13,7 @@ use {
 };
 
 pub struct App {
-    // TODO remove this ?
+    // TODO remove this ? It's not yet used
     previous_transitions: Vec<StateTransition>,
 }
 
@@ -27,29 +28,23 @@ impl App {
         w: &mut W,
         dam: &mut Dam,
         fromage: Fromage,
-    ) {
+    ) -> Result<()>{
         use StateTransition::*;
-        let mut current_transition = fromage.try_into();
+        let mut current_transition = fromage.try_into()?;
         loop {
-            match current_transition {
-                Ok(transition) => {
-                    let next_transition =  match &transition {
-                        EditLevel (state) => {
-                            edit::run(w, dam, state)
-                        }
-                        PlayLevel (state) => {
-                            play::run(w, dam, state)
-                        }
-                        Quit => { return; }
-                    };
-                    self.previous_transitions.push(transition);
-                    current_transition = next_transition;
+            let next_transition =  match &current_transition {
+                EditLevel (state) => {
+                    edit::run(w, dam, state)?
                 }
-                Err(e) => {
-                    println!("damn: {:?}", e);
-                    return; // we just quit
+                PlayLevel (state) => {
+                    play::run(w, dam, state)?
                 }
-            }
+                Quit => {
+                    return Ok(());
+                }
+            };
+            self.previous_transitions.push(current_transition);
+            current_transition = next_transition;
         }
     }
 }

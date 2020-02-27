@@ -1,8 +1,8 @@
 use {
     crate::{
-        consts::*,
         pos::*,
         skin::*,
+        terrain::*,
     },
     serde::{Serialize, Deserialize},
     std::fmt,
@@ -129,14 +129,14 @@ impl Actor {
             state: ActorState::default(),
         }
     }
-    pub fn can_enter(self, terrain: Cell) -> bool {
-        use ActorKind::*;
+    pub fn can_enter(self, terrain: Terrain) -> bool {
+        use {ActorKind::*, Terrain::*};
         match (self.kind, terrain) {
-            (_, FIELD) => true,
-            (_, GRASS) => true,
-            (Knight, SAND) => false,
-            (_, SAND) => true,
-            _ => false, // WATER and WALL
+            (_, Mud) => true,
+            (_, Grass) => true,
+            (Knight, Sand) => false,
+            (_, Sand) => true,
+            _ => false, // water and wall
         }
     }
     pub fn preys(self) -> Option<&'static[ActorKind]> {

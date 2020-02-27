@@ -77,12 +77,16 @@ fn main() -> Result<()> {
     w.queue(EnableMouseCapture)?;
     let mut dam = Dam::new()?;
     let mut app = App::new();
-    app.run(&mut w, &mut dam, fromage);
+    let r = app.run(&mut w, &mut dam, fromage);
     //dam.kill();
     w.queue(DisableMouseCapture)?;
     terminal::disable_raw_mode()?;
     w.queue(cursor::Show)?;
     w.queue(LeaveAlternateScreen)?;
     w.flush()?;
+    if let Err(e) = r {
+        warn!("Error: {:?}", e);
+        println!("Error: {:?}", e);
+    }
     Ok(())
 }

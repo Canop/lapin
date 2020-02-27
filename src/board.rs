@@ -1,11 +1,11 @@
 use {
     crate::{
         actor::*,
-        consts::*,
         item::*,
         level::Level,
         play::*,
         pos::*,
+        terrain::*,
     },
     std::{
         ops::{
@@ -19,7 +19,7 @@ static GAME_AREA: PosArea = PosArea::new(-1000..1000, -1000..1000);
 /// the game state
 pub struct Board {
     pub area: PosArea,
-    pub cells: PosMap<Cell>,
+    pub terrains: PosMap<Terrain>,
     pub actors: Vec<Actor>, // Lapin always at index 0
     pub items: OptionPosMap<Item>,
     pub current_player: Player, // whose turn it is
@@ -27,7 +27,7 @@ pub struct Board {
 
 impl From<&Level> for Board {
     fn from(level: &Level) -> Self {
-        let mut board = Board::new(PosArea::empty(), level.default_cell);
+        let mut board = Board::new(PosArea::empty(), level.default_terrain);
         board.reset_to(level);
         board
     }
@@ -35,37 +35,37 @@ impl From<&Level> for Board {
 
 impl Board {
 
-    pub fn new(area: PosArea, default_cell: Cell) -> Self {
-        let cells = PosMap::new(area.clone(), default_cell);
+    pub fn new(area: PosArea, default_terrain: Terrain) -> Self {
+        let terrains = PosMap::new(area.clone(), default_terrain);
         let mut actors = Vec::new();
         actors.push(Actor::new(ActorKind::Lapin, 0, 0));
         let items = OptionPosMap::new(area.clone(), None);
         Self {
             area,
-            cells,
+            terrains,
             actors,
             items,
             current_player: Player::Lapin,
         }
     }
 
-    pub fn default_cell(&self) -> Cell {
-        self.cells.default
+    pub fn default_terrain(&self) -> Terrain {
+        self.terrains.default
     }
 
     pub fn reset_to(&mut self, level: &Level) {
         let pos_distribution = PosDistribution::from(
-            level.cells.iter()
-                .filter(|lc| lc.v != level.default_cell)
+            level.terrains.iter()
+                .filter(|lc| lc.v != level.default_terrain)
                 .map(|&lc| lc.pos)
         )
         .unwrap_or_default();
         // FIXME check area not to wide
         self.items = OptionPosMap::new(pos_distribution.area.clone(), None);
-        self.cells = PosMap::new(pos_distribution.area, level.default_cell);
+        self.terrains = PosMap::new(pos_distribution.area, level.default_terrain);
         self.actors = level.actors.clone();
-        for &lc in level.cells.iter() {
-            self.cells.set_lc(lc);
+        for &lc in level.terrains.iter() {
+            self.terrains.set_lc(lc);
         }
         for lc in &level.items {
             self.items.set_some(lc.pos, lc.v);
@@ -86,24 +86,24 @@ impl Board {
     pub fn add_item_in(&mut self, kind: ItemKind, x: Int, y: Int) {
         self.items.set_some(Pos::new(x, y), Item { kind });
     }
-    pub fn set(&mut self, pos: Pos, cell: Cell) {
-        self.cells.set(pos, cell);
+    pub fn set(&mut self, pos: Pos, terrain: Terrain) {
+        self.terrains.set(pos, terrain);
     }
-    pub fn set_range(&mut self, rx: Range<Int>, ry: Range<Int>, cell: Cell) {
+    pub fn set_range(&mut self, rx: Range<Int>, ry: Range<Int>, terrain: Terrain) {
         for x in rx {
             for y in ry.clone() {
-                self.set(Pos::new(x, y), cell);
+                self.set(Pos::new(x, y), terrain);
             }
         }
     }
-    pub fn set_h_line(&mut self, rx: Range<Int>, y: Int, cell: Cell) {
-        self.set_range(rx, y..y+1, cell);
+    pub fn set_h_line(&mut self, rx: Range<Int>, y: Int, terrain: Terrain) {
+        self.set_range(rx, y..y+1, terrain);
     }
-    pub fn set_v_line(&mut self, x: Int, ry: Range<Int>, cell: Cell) {
-        self.set_range(x..x+1, ry, cell);
+    pub fn set_v_line(&mut self, x: Int, ry: Range<Int>, terrain: Terrain) {
+        self.set_range(x..x+1, ry, terrain);
     }
-    pub fn get(&self, pos: Pos) -> Cell {
-        self.cells.get(pos)
+    pub fn get(&self, pos: Pos) -> Terrain {
+        self.terrains.get(pos)
     }
 
     /// return a pos_set with the positions of all actors preset
@@ -144,7 +144,7 @@ impl Board {
                 }
                 if self.actors[0].can_enter(self.get(pos)) {
                     self.actors[0].pos = pos;
-                    if self.get(pos) == GRASS {
+                    if self.get(pos) == Terrain::Grass {
                         self.current_player = Player::None;
                         return MoveResult::PlayerWin;
                     }

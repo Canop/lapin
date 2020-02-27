@@ -1,8 +1,8 @@
 use {
     crate::{
-        consts::*,
         level::Level,
         pos::*,
+        terrain::Terrain,
     },
     super::{
         drawing_action::*,
@@ -32,7 +32,11 @@ impl Pen {
     pub fn new_for(level: &Level) -> Self {
         Self {
             shape: PenShape::Dot,
-            ink: Ink::Terrain(if level.default_cell==FIELD { WALL } else { FIELD }),
+            ink: Ink::Terrain(if level.default_terrain==Terrain::Mud {
+                Terrain::Stone
+            } else {
+                Terrain::Mud
+            }),
             shape_start: None,
         }
     }

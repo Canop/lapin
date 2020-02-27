@@ -3,8 +3,8 @@ use {
     crate::{
         actor::*,
         board::Board,
-        consts::Cell,
         pos::*,
+        terrain::Terrain,
     },
     std::{
         collections::{
@@ -53,7 +53,7 @@ impl PartialOrd for ValuedPos {
 #[derive(Debug, Clone, Copy)]
 pub enum Goal {
     Pos(Pos),
-    Terrain(Cell),
+    Terrain(Terrain),
     ActorKinds(&'static[ActorKind]),
 }
 
@@ -79,7 +79,7 @@ impl<'b> PathFinder<'b> {
         }
     }
 
-    /// tells whether the cell can be an intermediate step on the path.
+    /// tells whether the terrain can be an intermediate step on the path.
     // This function will usually return false for the goal. It's
     // thus necessary to check the goal before calling this one.
     fn can_enter(&self, pos: Pos) -> bool {
@@ -90,7 +90,7 @@ impl<'b> PathFinder<'b> {
     fn reached(&self, pos: Pos, goal: Goal) -> bool {
         match goal {
             Goal::Pos(goal_pos) => goal_pos == pos,
-            Goal::Terrain(cell) => self.board.get(pos) == cell && !self.actors_map.has_key(pos),
+            Goal::Terrain(terrain) => self.board.get(pos) == terrain && !self.actors_map.has_key(pos),
             Goal::ActorKinds(kinds) => self.actors_map.get(pos)
                 .map_or(false, |actor| kinds.contains(&actor.kind)),
         }
@@ -102,7 +102,7 @@ impl<'b> PathFinder<'b> {
         hint: Option<Pos>,
     ) -> Option<Vec<Pos>> {
         match hint {
-            // when we target a precise cell or have a global direction,
+            // when we target a precise terrain or have a global direction,
             // there's nothing better than A*. This is especially true
             // in open spaces when there's no limits to moves
             Some(pos) => self.find_astar(goal, pos),
@@ -112,7 +112,7 @@ impl<'b> PathFinder<'b> {
         }
     }
 
-    /// find the shortest path to any cell verifying the goal.
+    /// find the shortest path to any terrain verifying the goal.
     /// Doesn't use any heuristic so is slower than A* but works
     /// for many goals.
     /// This function is based on Dijkstra's algorithm.

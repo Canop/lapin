@@ -19,7 +19,7 @@ use {
 
 /// display widgets to edit general level stuff:
 /// - name
-/// - default cell
+/// - default terrain
 pub struct EditorHeadPanel<'s> {
     board: &'s Board,
     screen: &'s Screen,
@@ -52,7 +52,7 @@ impl<'s> EditorHeadPanel<'s> {
         self.screen.goto(w, 0, area.top + 2)?;
         cs.clear(w, ClearType::UntilNewLine)?;
 
-        // Default Cell
+        // Default Terrain
         let mut sp = ScreenPos::new(0, area.top + 1);
         sp.goto(w)?;
         self.inkwells.extend(draw_inkwells(
@@ -61,7 +61,7 @@ impl<'s> EditorHeadPanel<'s> {
             &mut sp,
             " Default terrain:",
             &TERRAIN_INKS[1..],
-            Ink::Terrain(self.board.default_cell()),
+            Ink::Terrain(self.board.default_terrain()),
         )?);
         cs.clear(w, ClearType::UntilNewLine)?;
 
@@ -73,8 +73,8 @@ impl<'s> EditorHeadPanel<'s> {
         for inkwell in &self.inkwells {
             if inkwell.sp == sp {
                 match inkwell.ink {
-                    Ink::Terrain(cell) => {
-                        return Some(DrawingAction::DefaultCell(cell));
+                    Ink::Terrain(terrain) => {
+                        return Some(DrawingAction::DefaultTerrain(terrain));
                     }
                     _ => {
                         warn!("unexptected ink");

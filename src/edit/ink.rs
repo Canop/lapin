@@ -1,8 +1,8 @@
 use {
     crate::{
         actor::*,
-        consts::*,
         item::*,
+        terrain::*,
     },
     std::fmt,
 };
@@ -10,7 +10,7 @@ use {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Ink {
     EraseTerrain,
-    Terrain(Cell),
+    Terrain(Terrain),
     EraseItem,
     Item(ItemKind),
     EraseActor,
@@ -19,11 +19,11 @@ pub enum Ink {
 
 pub static TERRAIN_INKS: &[Ink] = &[
     Ink::EraseTerrain,
-    Ink::Terrain(FIELD),
-    Ink::Terrain(SAND),
-    Ink::Terrain(WALL),
-    Ink::Terrain(GRASS),
-    Ink::Terrain(WATER),
+    Ink::Terrain(Terrain::Mud),
+    Ink::Terrain(Terrain::Sand),
+    Ink::Terrain(Terrain::Stone),
+    Ink::Terrain(Terrain::Grass),
+    Ink::Terrain(Terrain::Water),
 ];
 pub static ITEM_INKS: &[Ink] = &[
     Ink::EraseItem,
@@ -44,7 +44,7 @@ impl fmt::Display for Ink {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Ink::EraseTerrain => write!(f, "remove terrain"),
-            Ink::Terrain(c) => write!(f, "{}", TERRAIN_NAMES[*c as usize]),
+            Ink::Terrain(t) => t.fmt(f),
             Ink::EraseItem => write!(f, "remove item"),
             Ink::Item(ik) => ik.fmt(f),
             Ink::EraseActor => write!(f, "remove actor"),

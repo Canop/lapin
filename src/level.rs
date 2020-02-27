@@ -2,9 +2,9 @@ use {
     crate::{
         actor::*,
         board::Board,
-        consts::*,
         item::*,
         pos::*,
+        terrain::*,
     },
     serde::{Serialize, Deserialize},
 };
@@ -13,8 +13,8 @@ use {
 /// and edition (but not game)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Level {
-    pub default_cell: Cell,
-    pub cells: Vec<Located<Cell>>,
+    pub default_terrain: Terrain,
+    pub terrains: Vec<Located<Terrain>>,
     pub actors: Vec<Actor>, // actors[0] must be the Lapin
     pub items: Vec<Located<Item>>,
 }
@@ -22,8 +22,8 @@ pub struct Level {
 impl Default for Level {
     fn default() -> Self {
         Self {
-            default_cell: FIELD,
-            cells: Vec::new(),
+            default_terrain: Terrain::Mud,
+            terrains: Vec::new(),
             actors: vec![Actor::new(ActorKind::Lapin, 0, 0)],
             items: Vec::new(),
         }
@@ -33,11 +33,11 @@ impl Default for Level {
 impl From<&Board> for Level {
     fn from(board: &Board) -> Self {
         let mut level = Level::default();
-        level.default_cell = board.cells.default;
+        level.default_terrain = board.terrains.default;
         level.actors = board.actors.clone();
-        for lc in board.cells.iter() {
-            if lc.v != level.default_cell {
-                level.cells.push(lc);
+        for lc in board.terrains.iter() {
+            if lc.v != level.default_terrain {
+                level.terrains.push(lc);
             }
         }
         for lc in board.items.iter_some() {

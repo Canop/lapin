@@ -1,7 +1,4 @@
 use {
-    crate::{
-        consts::*,
-    },
     crossterm::{
         style::{
             Attribute,
@@ -20,7 +17,12 @@ use {
 };
 
 pub struct Skin {
-    pub cell_bg: [Color; NB_TERRAINS as usize],
+    // terrains
+    pub mud: Color,
+    pub stone: Color,
+    pub grass: Color,
+    pub water: Color,
+    pub sand: Color,
     // actors
     pub fox: StyledChar,
     pub hunter: StyledChar,
@@ -49,19 +51,12 @@ pub struct Skin {
 
 impl Default for Skin {
     fn default() -> Self {
-        let cell_bg = [
-            //rgb(36, 27, 17),  // FIELD
-            gray(3),  // FIELD
-            //rgb(51, 41, 29),  // FIELD
-            //rgb(42, 32, 27),  // FIELD
-            ansi(59), // WALL
-            ansi(22), // GRASS
-            ansi(25), // WATER
-            //rgb(83, 72, 59),  // SAND
-            ansi(137), // SAND
-        ];
         Self {
-            cell_bg,
+            mud: gray(3),  // FIELD
+            stone: ansi(59), // WALL
+            grass: ansi(22), // GRASS
+            water: ansi(25), // WATER
+            sand: ansi(137), // SAND
             // actors
             fox: StyledChar::from_fg_char(ansi(166), '█'),
             hunter: StyledChar::from_fg_char(ansi(58), '█'),
@@ -93,15 +88,6 @@ impl Default for Skin {
 impl Skin {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn bg_command(&self, cell: Cell) -> SetBackgroundColor {
-        SetBackgroundColor(self.cell_bg[cell as usize])
-    }
-    pub fn bg(&self, cell: Cell) -> Color {
-        self.cell_bg[cell as usize]
-    }
-    pub fn bg_as_styled_char(&self, cell: Cell) -> StyledChar {
-        StyledChar::from_fg_char(self.bg(cell), '█')
     }
 }
 

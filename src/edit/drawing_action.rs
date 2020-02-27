@@ -3,8 +3,8 @@ use {
     crate::{
         actor::*,
         board::*,
-        consts::*,
         pos::*,
+        terrain::*,
     },
     super::{
         ink::*,
@@ -19,19 +19,19 @@ pub enum DrawingAction {
     LineInk (Ink, Pos, Pos),
     CompassLineInk (Ink, Pos, Pos), // a line in one of the 8 compass directions
     RectInk (Ink, Pos, Pos),
-    DefaultCell(Cell),
+    DefaultTerrain(Terrain),
 }
 
 /// apply a drop of ink at some pos of the board.
 /// Take care of keeping only one Lapin and only
-/// one actor or item at most per cell.
+/// one actor or item at most per terrain.
 fn ink_pos(ink: Ink, pos: Pos, board: &mut Board) {
     match ink {
         Ink::EraseTerrain => {
-            board.cells.unset(pos);
+            board.terrains.unset(pos);
         }
-        Ink::Terrain(cell) => {
-            board.cells.set(pos, cell);
+        Ink::Terrain(terrain) => {
+            board.terrains.set(pos, terrain);
         }
         Ink::EraseItem => {
             board.items.remove(pos);
@@ -145,8 +145,8 @@ impl DrawingAction {
             DrawingAction::RectInk(ink, a, b) => {
                 ink_rect(*ink, *a, *b, board);
             }
-            DrawingAction::DefaultCell(cell) => {
-                board.cells.default = *cell;
+            DrawingAction::DefaultTerrain(terrain) => {
+                board.terrains.default = *terrain;
             }
         }
     }

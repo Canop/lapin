@@ -2,12 +2,12 @@ use {
     crate::{
         actor::*,
         board::Board,
-        consts::*,
         path::{
             Goal,
             PathFinder,
         },
         pos::*,
+        terrain::Terrain,
     },
 };
 
@@ -71,7 +71,7 @@ impl<'t> WorldPlayer<'t> {
             if pos == target {
                 return true;
             }
-            if self.board.get(pos) == WALL {
+            if self.board.get(pos) == Terrain::Stone {
                 return false;
             }
         }
@@ -109,10 +109,10 @@ impl<'t> WorldPlayer<'t> {
     }
 
     fn find_grazer_move(&self, actor_id: usize, actor: Actor) -> Option<ActorMove> {
-        if self.board.get(actor.pos) == GRASS {
+        if self.board.get(actor.pos) == Terrain::Grass {
             None
         } else {
-            self.move_to_goal(actor_id, actor, Goal::Terrain(GRASS))
+            self.move_to_goal(actor_id, actor, Goal::Terrain(Terrain::Grass))
         }
     }
 

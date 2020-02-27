@@ -7,7 +7,6 @@ use {
     anyhow::Result,
     crate::{
         app_state::StateTransition,
-        consts::*,
         io::W,
         layout::Layout,
         pos::*,
@@ -15,6 +14,7 @@ use {
         skin::Skin,
         status::Status,
         task_sync::*,
+        terrain::Terrain,
     },
     crossterm::{
         event::{
@@ -36,7 +36,7 @@ use {
 
 fn make_mad_skin(skin: &Skin) -> MadSkin {
     let mut ms = MadSkin::default();
-    let bg = skin.bg(FIELD);
+    let bg = Terrain::Mud.bg(skin);
     ms.set_headers_fg(AnsiValue(178));
     ms.paragraph.align = Alignment::Center;
     let mut lapin = skin.lapin.clone();
@@ -51,8 +51,8 @@ fn make_mad_skin(skin: &Skin) -> MadSkin {
     ms.special_chars.insert(Compound::raw_str("F").code(), skin.fox.clone());
     ms.special_chars.insert(Compound::raw_str("S").code(), skin.sheep.clone());
     ms.special_chars.insert(Compound::raw_str("W").code(), skin.wolf.clone());
-    ms.special_chars.insert(Compound::raw_str("g").code(), skin.bg_as_styled_char(GRASS));
-    ms.special_chars.insert(Compound::raw_str("s").code(), skin.bg_as_styled_char(SAND));
+    ms.special_chars.insert(Compound::raw_str("g").code(), Terrain::Grass.bg_as_styled_char(skin));
+    ms.special_chars.insert(Compound::raw_str("s").code(), Terrain::Sand.bg_as_styled_char(skin));
     ms.special_chars.insert(Compound::raw_str("c").code(), carrot);
     ms.special_chars.insert(Compound::raw_str("w").code(), wine);
     ms.italic.set_fg(AnsiValue(178));

@@ -71,11 +71,11 @@ impl<'d> BoardDrawer<'d> {
         let sp_start = self.pos_converter.to_screen(start);
         let dst = start.in_dir(dir);
         let sp_dst = self.pos_converter.to_screen(dst);
-        let start_bg = self.screen.skin.bg(self.board.get(start));
+        let start_bg = self.board.get(start).bg(&self.screen.skin);
         let dst_bg = if let Some(dst_actor) = self.actor_map.get(dst) {
             dst_actor.kind.skin(&self.screen.skin).get_fg().unwrap()
         } else {
-            self.screen.skin.bg(self.board.get(dst))
+            self.board.get(dst).bg(&self.screen.skin)
         };
         match dir {
             Dir::Up => {

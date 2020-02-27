@@ -2,10 +2,10 @@ use {
     crate::{
         actor::*,
         board::Board,
-        consts::*,
         io::W,
         pos::*,
         screen::Screen,
+        terrain::*,
     },
     anyhow::Result,
     crossterm::{
@@ -80,8 +80,8 @@ impl<'d> BoardDrawer<'d> {
         chr: char,
         color: Color,
     ) -> Result<()> {
-        let cell = self.board.get(pos);
-        self.draw_chr_bg(pos, chr, color, self.screen.skin.bg(cell))
+        let terrain = self.board.get(pos);
+        self.draw_chr_bg(pos, chr, color, terrain.bg(&self.screen.skin))
     }
 
     pub fn draw_fg(
@@ -100,25 +100,25 @@ impl<'d> BoardDrawer<'d> {
     ) -> Result<()> {
 
         // background and items
-        let mut last_cell = FIELD;
-        self.w.queue(self.screen.skin.bg_command(last_cell))?;
+        let mut last_terrain = Terrain::Mud;
+        self.w.queue(last_terrain.bg_command(&self.screen.skin))?;
         for j in 0..self.screen.areas.board.height {
             let sy = self.screen.areas.board.top + j;
             let mut sx = self.screen.areas.board.left;
             self.w.queue(cursor::MoveTo(sx, sy))?;
             for _ in 0..self.screen.areas.board.width {
                 let pos = self.pos_converter.to_real(ScreenPos::new(sx, sy));
-                let cell = self.board.get(pos);
-                if cell != last_cell {
-                    self.w.queue(self.screen.skin.bg_command(cell))?;
-                    last_cell = cell;
+                let terrain = self.board.get(pos);
+                if terrain != last_terrain {
+                    self.w.queue(terrain.bg_command(&self.screen.skin))?;
+                    last_terrain = terrain;
                 }
                 if let Some(actor) = self.actor_map.get(pos) {
                     actor.skin(&self.screen.skin).queue(self.w)?;
-                    self.w.queue(self.screen.skin.bg_command(cell))?;
+                    self.w.queue(terrain.bg_command(&self.screen.skin))?;
                 } else if let Some(item) = self.board.items.get(pos) {
                     item.kind.skin(&self.screen.skin).queue(self.w)?;
-                    self.w.queue(self.screen.skin.bg_command(cell))?;
+                    self.w.queue(terrain.bg_command(&self.screen.skin))?;
                 } else {
                     self.w.queue(Print(' '))?;
                 }

@@ -12,7 +12,6 @@ pub mod actor;
 pub mod app;
 pub mod app_state;
 pub mod board;
-pub mod consts;
 pub mod board_drawer;
 pub mod edit;
 pub mod fromage;
@@ -28,5 +27,6 @@ pub mod screen;
 pub mod skin;
 pub mod status;
 pub mod task_sync;
+pub mod terrain;
 pub mod test_level;
 
