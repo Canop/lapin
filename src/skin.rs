@@ -15,7 +15,6 @@ use {
         CompoundStyle,
         gray,
         MadSkin,
-        rgb,
         StyledChar,
     },
 };
@@ -51,14 +50,15 @@ pub struct Skin {
 impl Default for Skin {
     fn default() -> Self {
         let cell_bg = [
-            rgb(36, 27, 17),  // FIELD
+            //rgb(36, 27, 17),  // FIELD
+            gray(3),  // FIELD
             //rgb(51, 41, 29),  // FIELD
             //rgb(42, 32, 27),  // FIELD
             ansi(59), // WALL
             ansi(22), // GRASS
             ansi(25), // WATER
-            rgb(83, 72, 59),  // SAND
-            //ansi(137), // SAND
+            //rgb(83, 72, 59),  // SAND
+            ansi(137), // SAND
         ];
         Self {
             cell_bg,
@@ -126,7 +126,8 @@ fn make_error_status_mad_skin() -> MadSkin {
 fn make_editor_mad_skin() -> MadSkin {
     let mut mad_skin = MadSkin::default();
     mad_skin.paragraph.set_fg(gray(1));
-    mad_skin.paragraph.set_bg(ansi(137));
+    mad_skin.paragraph.set_bg(ansi(66));
+    //mad_skin.paragraph.set_bg(ansi(137));
     //mad_skin.paragraph.set_bg(rgb(83, 72, 59));
     mad_skin.bold = CompoundStyle::new(Some(ansi(208)), None, Attribute::Bold.into());
     mad_skin

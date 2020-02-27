@@ -20,7 +20,6 @@ Fortunately, you're not alone:
 a pink knight `K` fights all your foes!
 
 Now, you probably know enough to play
-
 (hit *esc* to get back to the game)
 
 ----
