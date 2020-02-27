@@ -8,3 +8,10 @@ pub const SAND: Cell = 4;
 
 pub const NB_TERRAINS: u8 = 5;
 
+pub const TERRAIN_NAMES: &[&str] = &[
+    "mud",
+    "stone",
+    "grass",
+    "water",
+    "sand",
+];

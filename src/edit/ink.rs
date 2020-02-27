@@ -4,6 +4,7 @@ use {
         consts::*,
         item::*,
     },
+    std::fmt,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -38,3 +39,16 @@ pub static ACTOR_INKS: &[Ink] = &[
     Ink::Actor(ActorKind::Hunter),
     Ink::Actor(ActorKind::Sheep),
 ];
+
+impl fmt::Display for Ink {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Ink::EraseTerrain => write!(f, "remove terrain"),
+            Ink::Terrain(c) => write!(f, "{}", TERRAIN_NAMES[*c as usize]),
+            Ink::EraseItem => write!(f, "remove item"),
+            Ink::Item(ik) => ik.fmt(f),
+            Ink::EraseActor => write!(f, "remove actor"),
+            Ink::Actor(ak) => ak.fmt(f),
+        }
+    }
+}

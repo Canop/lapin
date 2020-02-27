@@ -5,6 +5,7 @@ use {
         skin::*,
     },
     serde::{Serialize, Deserialize},
+    std::fmt,
     termimad::{
         StyledChar,
     },
@@ -24,6 +25,19 @@ pub enum ActorKind {
     Fox,
     Hunter,
     Sheep,
+}
+impl fmt::Display for ActorKind {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use ActorKind::*;
+        match self {
+            Lapin => write!(f, "lapin"),
+            Knight => write!(f, "knight"),
+            Wolf => write!(f, "wolf"),
+            Fox => write!(f, "fox"),
+            Hunter => write!(f, "hunter"),
+            Sheep => write!(f, "sheep"),
+        }
+    }
 }
 pub static ACTORS: &[ActorKind] = &[
     ActorKind::Lapin,

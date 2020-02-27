@@ -6,7 +6,6 @@ use {
         io::W,
         pos::*,
         screen::Screen,
-        skin::*,
     },
     anyhow::Result,
     crossterm::{

@@ -79,13 +79,14 @@ impl<'b> PathFinder<'b> {
         }
     }
 
-    ///
-    // note: this function will usually return false for the goal. It's
+    /// tells whether the cell can be an intermediate step on the path.
+    // This function will usually return false for the goal. It's
     // thus necessary to check the goal before calling this one.
     fn can_enter(&self, pos: Pos) -> bool {
         self.actor.can_enter(self.board.get(pos)) && !self.actors_map.has_key(pos)
     }
 
+    /// tells whether the pos is a/the goal
     fn reached(&self, pos: Pos, goal: Goal) -> bool {
         match goal {
             Goal::Pos(goal_pos) => goal_pos == pos,
@@ -174,9 +175,13 @@ impl<'b> PathFinder<'b> {
         None
     }
 
-    /// Find the shortest path between start and goal using A*.
+    /// Find a short path between start and goal using A*.
     ///
     /// The returned path contains the goal but not the start.
+    ///
+    /// If the goal is different from the hinted pos, the path
+    /// found may not be the absolute best one (i.e. a different
+    /// goal in opposite direction of the hint can be nearer).
     ///
     /// The heuristic function h used here is the Euclidian distance
     /// to the hint (which may be the goal).

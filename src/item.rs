@@ -4,6 +4,7 @@ use {
         skin::*,
     },
     serde::{Serialize, Deserialize},
+    std::fmt,
     termimad::{
         StyledChar,
     },
@@ -19,6 +20,15 @@ impl ItemKind {
         match self {
             ItemKind::Carrot => &skin.carrot,
             ItemKind::Wine => &skin.wine,
+        }
+    }
+}
+
+impl fmt::Display for ItemKind {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ItemKind::Carrot => write!(f, "carrot"),
+            ItemKind::Wine => write!(f, "wine bottle"),
         }
     }
 }

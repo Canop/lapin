@@ -50,6 +50,9 @@ fn draw_inkwell(
         Ink::Item(item_kind) => {
             let mut item_skin = item_kind.skin(&skin).clone();
             item_skin.set_bg(skin.bg(FIELD));
+            //if let Some(c) = skin.editor.paragraph.compound_style.get_bg() {
+            //    item_skin.set_bg(c);
+            //}
             item_skin.queue(w)?;
         }
         Ink::EraseActor => {
@@ -66,7 +69,10 @@ fn draw_inkwell(
     if selected {
         w.queue(cursor::MoveDown(1))?;
         w.queue(cursor::MoveLeft(1))?;
-        screen.skin.editor.paragraph.compound_style.queue(w, '▴')?;
+        let mark = format!("▴ {}", ink);
+        let len = mark.len() as u16;
+        screen.skin.editor.paragraph.compound_style.queue(w, mark)?;
+        w.queue(cursor::MoveLeft(len - 3))?;
         w.queue(cursor::MoveUp(1))?;
     }
     Ok(())
