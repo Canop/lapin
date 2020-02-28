@@ -4,11 +4,13 @@ use {
         app_state::StateTransition,
         board::*,
         board_drawer::BoardDrawer,
+        fromage::*,
         io::W,
         level::Level,
         play::PlayLevelState,
         pos::*,
         screen::Screen,
+        serde,
         status::Status,
         task_sync::*,
     },
@@ -21,7 +23,6 @@ use {
     },
     std::{
         boxed::Box,
-        fs,
         path::PathBuf,
     },
     super::{
@@ -46,12 +47,15 @@ pub struct LevelEditor<'l> {
     status: Status,
     center: Pos,    // the pos shown at center of the screen
     history: DrawingHistory<'l>,
+    head_panel: EditorHeadPanel,
+    fromage: &'l Fromage,
 }
 
 impl<'l> LevelEditor<'l> {
 
     pub fn new(
         state: &'l EditLevelState,
+        fromage: &'l Fromage,
     ) -> Self {
         let level = &*state.level;
         let path = state.path.to_path_buf();
@@ -60,6 +64,7 @@ impl<'l> LevelEditor<'l> {
         let pen = Pen::new_for(level);
         let center = board.lapin_pos();
         let history = DrawingHistory::new(level);
+        let head_panel = EditorHeadPanel::new();
         Self {
             board,
             pen,
@@ -67,6 +72,8 @@ impl<'l> LevelEditor<'l> {
             status,
             center,
             history,
+            head_panel,
+            fromage,
         }
     }
 
@@ -74,9 +81,13 @@ impl<'l> LevelEditor<'l> {
         &mut self,
     ) -> Result<()> {
         let level = Level::from(&self.board);
-        let serialized = serde_json::to_string(&level)?;
-        fs::write(&self.path, serialized)?;
-        Ok(())
+        let format = self.fromage.output_format()
+            .and_then(|key| serde::SerdeFormat::from_key(&key));
+        serde::write_file(
+            &level,
+            &self.path,
+            format,
+        )
     }
 
     fn handle_key_event(
@@ -84,6 +95,9 @@ impl<'l> LevelEditor<'l> {
         code: KeyCode,
     ) -> Option<StateTransition> {
         debug!("code: {:?}", code);
+        if self.head_panel.handle_key_event(code, &mut self.board) {
+            return None; // the event was handled by the input field
+        }
         match code {
             KeyCode::Char('q') => {
                 Some(StateTransition::Quit)
@@ -147,8 +161,7 @@ impl<'l> LevelEditor<'l> {
             bd.draw()?;
             let mut pen_panel = PenPanel::new(&mut self.pen, &screen);
             pen_panel.draw(w)?;
-            let mut head_panel = EditorHeadPanel::new(&self.board, &screen);
-            head_panel.draw(w)?;
+            self.head_panel.draw(w, &self.board, &screen)?;
             self.status.display(w, &screen)?;
             let event = dam.next_event().unwrap();
             dam.unblock();
@@ -163,17 +176,22 @@ impl<'l> LevelEditor<'l> {
                 Event::Click(x, y, modifiers) => {
                     let sp = ScreenPos{ x, y };
                     debug!("click in {:?}", sp);
-                    let action = if sp.is_in(&screen.areas.board) {
-                        let pos_converter = PosConverter::from(self.center, &screen);
-                        self.pen.click(
-                            pos_converter.to_real(sp),
-                            modifiers.contains(KeyModifiers::CONTROL),
-                        )
-                    } else if sp.is_in(&screen.areas.pen_panel) {
-                        pen_panel.click(sp);
-                        None
-                    } else { // normally in head_panel
-                        head_panel.click(sp)
+                    let action = if sp.is_in(&screen.areas.header) {
+                        self.head_panel.click(sp, &mut self.board)
+                    } else {
+                        self.head_panel.click_outside(&mut self.board);
+                        if sp.is_in(&screen.areas.board) {
+                            let pos_converter = PosConverter::from(self.center, &screen);
+                            self.pen.click(
+                                pos_converter.to_real(sp),
+                                modifiers.contains(KeyModifiers::CONTROL),
+                            )
+                        } else if sp.is_in(&screen.areas.pen_panel) {
+                            pen_panel.click(sp);
+                            None
+                        } else {
+                            None
+                        }
                     };
                     if let Some(action) = action {
                         self.history.apply(action, &mut self.board);

@@ -26,6 +26,9 @@ impl Pos {
     pub fn sq_euclidian_distance(a: Pos, b: Pos) -> Int {
         (a.x-b.x)*(a.x-b.x) + (a.y-b.y)*(a.y-b.y)
     }
+    pub fn euclidian_distance(a: Pos, b: Pos) -> Int {
+        (Pos::sq_euclidian_distance(a, b) as f32).sqrt() as Int
+    }
     pub fn manhattan_distance(a: Pos, b: Pos) -> Int {
         (a.x-b.x).abs() + (a.y-b.y).abs()
     }

@@ -38,7 +38,7 @@ pub static TERRAINS: &[Terrain] = &[
 impl fmt::Display for Terrain {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Terrain::Mud => write!(f, "mud"),
+            Terrain::Mud => write!(f, "ground"),
             Terrain::Stone => write!(f, "stone"),
             Terrain::Grass => write!(f, "grass"),
             Terrain::Water => write!(f, "water"),

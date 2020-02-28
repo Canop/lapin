@@ -4,7 +4,6 @@ use {
             Attribute,
             Attributes,
             Color,
-            SetBackgroundColor,
         },
     },
     termimad::{

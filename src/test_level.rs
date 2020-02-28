@@ -12,7 +12,11 @@ use {
 };
 
 pub fn build() -> Level {
-    let mut board = Board::new(PosArea::new(-20..100, -20..100), Mud);
+    let mut board = Board::new(
+        "test level".to_string(),
+        PosArea::new(-20..100, -20..100),
+        Mud,
+    );
     board.actors[0].pos = Pos::new(30, 10);
 
     board.set_v_line(2, 3..5, Stone);

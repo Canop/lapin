@@ -18,6 +18,7 @@ static GAME_AREA: PosArea = PosArea::new(-1000..1000, -1000..1000);
 
 /// the game state
 pub struct Board {
+    pub name: String,
     pub area: PosArea,
     pub terrains: PosMap<Terrain>,
     pub actors: Vec<Actor>, // Lapin always at index 0
@@ -27,7 +28,11 @@ pub struct Board {
 
 impl From<&Level> for Board {
     fn from(level: &Level) -> Self {
-        let mut board = Board::new(PosArea::empty(), level.default_terrain);
+        let mut board = Board::new(
+            level.name.clone(),
+            PosArea::empty(),
+            level.default_terrain,
+        );
         board.reset_to(level);
         board
     }
@@ -35,12 +40,17 @@ impl From<&Level> for Board {
 
 impl Board {
 
-    pub fn new(area: PosArea, default_terrain: Terrain) -> Self {
+    pub fn new(
+        name: String,
+        area: PosArea,
+        default_terrain: Terrain,
+    ) -> Self {
         let terrains = PosMap::new(area.clone(), default_terrain);
         let mut actors = Vec::new();
         actors.push(Actor::new(ActorKind::Lapin, 0, 0));
         let items = OptionPosMap::new(area.clone(), None);
         Self {
+            name,
             area,
             terrains,
             actors,

@@ -4,15 +4,13 @@ use {
     crate::{
         fromage::*,
         level::Level,
+        serde,
         test_level,
     },
     std::{
         boxed::Box,
         convert::{
             TryFrom,
-        },
-        fs::{
-            File,
         },
         path::PathBuf,
     },
@@ -21,7 +19,7 @@ use {
 
 pub struct PlayLevelState {
     pub comes_from_edit: bool,
-    pub path: Option<PathBuf>,
+    pub path: Option<PathBuf>, // TODO remove (we can just keep the path)
     pub level: Box<Level>,
 }
 
@@ -39,8 +37,7 @@ impl TryFrom<PlaySubCommand> for PlayLevelState {
     type Error = anyhow::Error;
     fn try_from(psc: PlaySubCommand) -> Result<Self, Self::Error> {
         let level = if let Some(path) = &psc.path {
-            let file = File::open(path)?;
-            serde_json::from_reader(file)?
+            serde::read_file(path)?
             // FIXME call level validity checks here
         } else {
             test_level::build()

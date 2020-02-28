@@ -30,11 +30,11 @@ impl App {
         fromage: Fromage,
     ) -> Result<()>{
         use StateTransition::*;
-        let mut current_transition = fromage.try_into()?;
+        let mut current_transition = fromage.clone().try_into()?;
         loop {
             let next_transition =  match &current_transition {
                 EditLevel (state) => {
-                    edit::run(w, dam, state)?
+                    edit::run(w, dam, state, &fromage)?
                 }
                 PlayLevel (state) => {
                     play::run(w, dam, state)?

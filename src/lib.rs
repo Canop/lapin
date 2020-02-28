@@ -24,6 +24,7 @@ pub mod path;
 pub mod play;
 pub mod pos;
 pub mod screen;
+pub mod serde;
 pub mod skin;
 pub mod status;
 pub mod task_sync;

@@ -14,6 +14,16 @@ use {
     },
 };
 
+/// the immutable context, read once from launch
+/// arguments
+//pub struct Context {
+//    pub path: Option<PathBuf>,
+//    pub output_format: Option<SerdeFormat>,
+//}
+//impl From<&Fromage> for Context {
+//
+//}
+
 pub enum StateTransition {
     EditLevel(EditLevelState),
     PlayLevel(PlayLevelState),

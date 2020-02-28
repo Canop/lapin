@@ -2,6 +2,7 @@ use {
     anyhow::Result,
     crate::{
         app_state::StateTransition,
+        fromage::*,
         io::W,
         layout::Layout,
         task_sync::*,
@@ -30,8 +31,10 @@ pub fn run(
     w: &mut W,
     dam: &mut Dam,
     state: &EditLevelState,
+    fromage: &Fromage,
 ) -> Result<StateTransition> {
-    let mut level_editor = level_editor::LevelEditor::new(state);
+    let mut level_editor = level_editor::LevelEditor::new(state, fromage);
+    //let output_format = if let Some(
     level_editor.run(w, dam)
 }
 

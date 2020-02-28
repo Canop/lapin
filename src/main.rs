@@ -17,6 +17,7 @@ use {
     lapin::{
         app::App,
         fromage::*,
+        serde,
         task_sync::*,
         test_level,
     },
@@ -65,9 +66,13 @@ fn main() -> Result<()> {
     if fromage.is_test() {
         // testing serialization of level
         let level = test_level::build();
-        let serialized = serde_json::to_string(&level).unwrap();
-        println!("{}", serialized);
-        return Ok(());
+        let format = fromage.output_format()
+            .and_then(|key| serde::SerdeFormat::from_key(&key));
+        return serde::write(
+            &mut std::io::stdout(),
+            &level,
+            format.unwrap_or(serde::SerdeFormat::default()),
+        );
     }
 
     let mut w = std::io::stderr();

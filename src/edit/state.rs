@@ -4,14 +4,12 @@ use {
     crate::{
         level::Level,
         fromage::EditSubCommand,
+        serde,
     },
     std::{
         boxed::Box,
         convert::{
             TryFrom,
-        },
-        fs::{
-            File,
         },
         path::PathBuf,
     },
@@ -28,9 +26,8 @@ impl TryFrom<EditSubCommand> for EditLevelState {
         let path = psc.path;
         debug!("opening level editor on {:?}", &path);
         let level = if path.exists() {
-            debug!("trying to deserialize the file");
-            let file = File::open(&path)?;
-            deser = serde_json::from_reader(file)
+            serde::read_file(&path)?
+            // FIXME call level validity checks here
         } else {
             debug!("non existing file : starting with a clean board");
             Level::default()

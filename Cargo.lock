@@ -309,6 +309,7 @@ dependencies = [
  "lazy_static",
  "log",
  "minimad",
+ "rmp-serde",
  "serde",
  "serde_json",
  "simplelog",
@@ -484,6 +485,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "rmp"
+version = "0.8.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0f10b46df14cf1ee1ac7baa4d2fbc2c52c0622a4b82fa8740e37bc452ac0184f"
+dependencies = [
+ "byteorder",
+ "num-traits",
+]
+
+[[package]]
+name = "rmp-serde"
+version = "0.14.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4c1ee98f14fe8b8e9c5ea13d25da7b2a1796169202c57a09d7288de90d56222b"
+dependencies = [
+ "byteorder",
+ "rmp",
+ "serde",
+]
+
+[[package]]
 name = "rust-argon2"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -630,9 +652,9 @@ dependencies = [
 
 [[package]]
 name = "termimad"
-version = "0.8.16"
+version = "0.8.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68146205b8a9a22c6e37946c1c7597c9ccd5f5cdb91767058f4b7828b1a30ba4"
+checksum = "2465304c4e990f37468138d3ef5e8e8bfca744983486fb292368d71bf73bfd99"
 dependencies = [
  "crossbeam",
  "crossterm",
