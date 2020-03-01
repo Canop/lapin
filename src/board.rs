@@ -146,37 +146,34 @@ impl Board {
                     warn!("Lapin is too far!");
                     return MoveResult::Invalid;
                 }
+                if !self.actors[0].can_enter(self.get(pos)) {
+                    debug!("can't go there");
+                    return MoveResult::Invalid
+                }
                 for i in 1..self.actors.len() {
                     if self.actors[i].pos == pos {
-                        debug!("the place is taken");
-                        return MoveResult::Invalid;
-                    }
-                }
-                if self.actors[0].can_enter(self.get(pos)) {
-                    self.actors[0].pos = pos;
-                    if self.get(pos) == Terrain::Grass {
-                        self.current_player = Player::None;
-                        return MoveResult::PlayerWin;
-                    }
-                    if let Some(Item{kind:ItemKind::Carrot}) = self.items.get(pos) {
-                        self.items.remove(pos);
-                        info!("Lapin eats a carrot and replays");
-                        end_turn = false;
-                    }
-                    for i in 1..self.actors.len() {
-                        if self.actors[i].pos == pos {
-                        self.current_player = Player::None;
+                        if self.actors[i].runs_after(self.actors[0]) {
+                            self.current_player = Player::None;
                             return MoveResult::PlayerLose;
+                        } else {
+                            return MoveResult::Invalid;
                         }
                     }
-                    if end_turn {
-                        self.current_player = Player::World;
-                    }
-                    MoveResult::Ok
-                } else {
-                    debug!("can't go there");
-                    MoveResult::Invalid
                 }
+                self.actors[0].pos = pos;
+                if self.get(pos) == Terrain::Grass {
+                    self.current_player = Player::None;
+                    return MoveResult::PlayerWin;
+                }
+                if let Some(Item{kind:ItemKind::Carrot}) = self.items.get(pos) {
+                    self.items.remove(pos);
+                    info!("Lapin eats a carrot and replays");
+                    end_turn = false;
+                }
+                if end_turn {
+                    self.current_player = Player::World;
+                }
+                MoveResult::Ok
             }
             _ => {
                 debug!("a pa capito");
