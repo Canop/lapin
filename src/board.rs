@@ -154,7 +154,9 @@ impl Board {
                     if self.actors[i].pos == pos {
                         if self.actors[i].runs_after(self.actors[0]) {
                             self.current_player = Player::None;
-                            return MoveResult::PlayerLose;
+                            return MoveResult::PlayerLose(format!(
+                                "You have been eaten by a *{:?}*.", self.actors[i].kind
+                            ));
                         } else {
                             return MoveResult::Invalid;
                         }
@@ -163,7 +165,9 @@ impl Board {
                 self.actors[0].pos = pos;
                 if self.get(pos) == Terrain::Grass {
                     self.current_player = Player::None;
-                    return MoveResult::PlayerWin;
+                    return MoveResult::PlayerWin(
+                        "You're on the grass.".to_string()
+                    );
                 }
                 if let Some(Item{kind:ItemKind::Carrot}) = self.items.get(pos) {
                     self.items.remove(pos);
@@ -185,6 +189,7 @@ impl Board {
     pub fn apply_world_move(&mut self, world_move: WorldMove) -> MoveResult {
         let mut killed = vec![false; self.actors.len()];
         let mut actor_pos_set = self.actor_pos_set();
+        let mut result = MoveResult::Ok;
         for actor_move in world_move.actor_moves {
             let actor_id = actor_move.actor_id;
             actor_pos_set.remove(self.actors[actor_id].pos);
@@ -194,6 +199,12 @@ impl Board {
                     debug!("target is is_immune_to_fire");
                 } else {
                     killed[target_id] = true;
+                    if target_id == 0 {
+                        self.current_player = Player::None;
+                        result = MoveResult::PlayerLose(
+                            format!("You have been killed by a *{:?}*.", self.actors[actor_id].kind)
+                        );
+                    }
                 }
             }
             match actor_move.action {
@@ -227,18 +238,13 @@ impl Board {
             actor_pos_set.insert(self.actors[actor_id].pos);
         }
         self.current_player = Player::Lapin;
-        if killed[0] {
-            self.current_player = Player::None;
-            MoveResult::PlayerLose
-        } else {
-            let mut i = self.actors.len() - 1;
-            while i > 0 {
-                if killed[i] {
-                    self.actors.remove(i);
-                }
-                i -= 1;
+        let mut i = self.actors.len() - 1;
+        while i > 0 {
+            if killed[i] {
+                self.actors.remove(i);
             }
-            MoveResult::Ok
+            i -= 1;
         }
+        result
     }
 }

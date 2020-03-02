@@ -10,7 +10,10 @@ use {
         },
     },
     serde::{Serialize, Deserialize},
-    std::fmt,
+    std::{
+        fmt,
+        hash::Hash,
+    },
     termimad::{
         StyledChar,
     },
@@ -18,7 +21,7 @@ use {
 
 // TODO define all those with a macro
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum Terrain {
     Mud,
     Stone,

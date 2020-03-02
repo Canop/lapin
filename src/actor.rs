@@ -5,13 +5,16 @@ use {
         terrain::*,
     },
     serde::{Serialize, Deserialize},
-    std::fmt,
+    std::{
+        fmt,
+        hash::Hash,
+    },
     termimad::{
         StyledChar,
     },
 };
 
-#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, Hash)]
 pub struct ActorState {
     pub aim: Option<Dir>,
     pub drunk: bool,
@@ -115,7 +118,7 @@ impl ActorKind {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Hash)]
 pub struct Actor {
     pub kind: ActorKind,
     pub pos: Pos, // TODO remove and use Located<Actor> where the pos is needed?

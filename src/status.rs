@@ -17,27 +17,27 @@ use {
 /// the status contains information written on the grey line
 ///  near the bottom of the screen
 pub struct Status {
-    message: &'static str, // markdown
+    message: String, // markdown
     error: bool, // is the current message an error?
 }
 
 impl Status {
 
-    pub fn from_message(message: &'static str) -> Status {
+    pub fn from_message(message: String) -> Status {
         Self {
             message,
             error: false,
         }
     }
 
-    pub fn from_error(message: &'static str) -> Status {
+    pub fn from_error(message: String) -> Status {
         Self {
             message,
             error: true,
         }
     }
 
-    pub fn from(message: &'static str, error: bool) -> Status {
+    pub fn from(message: String, error: bool) -> Status {
         Self {
             message,
             error,

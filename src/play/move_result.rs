@@ -5,8 +5,8 @@
 pub enum MoveResult {
     Ok, // RAS
     Invalid, // move does nothing,
-    PlayerWin,
-    PlayerLose,
+    PlayerWin(String),
+    PlayerLose(String),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

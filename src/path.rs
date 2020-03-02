@@ -204,7 +204,7 @@ impl<'b> PathFinder<'b> {
 
         // the nodes from which we may expand
         let mut open_set: BinaryHeap<ValuedPos> = BinaryHeap::new();
-        open_set.push(ValuedPos::from(start, Pos::euclidian_distance(start, hint)));
+        open_set.push(ValuedPos::from(start, 0));
 
         while let Some(mut current) = open_set.pop().map(|vp| vp.pos) {
             closed_set.insert(current);
@@ -231,7 +231,7 @@ impl<'b> PathFinder<'b> {
                 if tentative_g_score < previous_g_score {
                     came_from.set(neighbour, current);
                     g_score.set(neighbour, tentative_g_score);
-                    let new_f_score = tentative_g_score + Pos::euclidian_distance(neighbour, hint);
+                    let new_f_score = tentative_g_score + 2 * Pos::euclidian_distance(neighbour, hint);
                     open_set.push(ValuedPos::from(neighbour, new_f_score));
                 }
             }

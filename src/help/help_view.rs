@@ -88,7 +88,7 @@ impl View {
             skin,
         );
         loop {
-            Status::from_message("Hit *esc* to close the help").display(w, &screen)?;
+            Status::from_message("Hit *esc* to close the help".to_string()).display(w, &screen)?;
             mad_view.write_on(w)?;
             let event = dam.next_event().unwrap();
             dam.unblock();

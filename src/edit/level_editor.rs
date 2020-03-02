@@ -60,7 +60,7 @@ impl<'l> LevelEditor<'l> {
         let level = &*state.level;
         let path = state.path.to_path_buf();
         let board = Board::from(level);
-        let status = Status::from_message(DEFAULT_STATUS);
+        let status = Status::from_message(DEFAULT_STATUS.to_string());
         let pen = Pen::new_for(level);
         let center = board.lapin_pos();
         let history = DrawingHistory::new(level);
@@ -126,10 +126,10 @@ impl<'l> LevelEditor<'l> {
                 match self.save_to_file() {
                     Err(e) => {
                         warn!("error while saving level: {:?}", e);
-                        self.status = Status::from_error("level saving failed");
+                        self.status = Status::from_error("level saving failed".to_string());
                     }
                     _ => {
-                        self.status = Status::from_message("level saved");
+                        self.status = Status::from_message("level saved".to_string());
                     }
                 }
                 None
@@ -197,7 +197,7 @@ impl<'l> LevelEditor<'l> {
                         self.history.apply(action, &mut self.board);
                     }
                     self.status = Status::from_message(
-                        self.pen.status_help().unwrap_or(DEFAULT_STATUS)
+                        self.pen.status_help().unwrap_or(DEFAULT_STATUS.to_string())
                     );
                     None
                 }

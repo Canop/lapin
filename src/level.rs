@@ -7,11 +7,12 @@ use {
         terrain::*,
     },
     serde::{Serialize, Deserialize},
+    std::hash::Hash,
 };
 
 /// the description of a level for (de)serialization
 /// and edition (but not game nor edition)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Hash)]
 pub struct Level {
     pub name: String,
     pub default_terrain: Terrain,

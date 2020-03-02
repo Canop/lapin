@@ -4,13 +4,16 @@ use {
         skin::*,
     },
     serde::{Serialize, Deserialize},
-    std::fmt,
+    std::{
+        fmt,
+        hash::Hash,
+    },
     termimad::{
         StyledChar,
     },
 };
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum ItemKind {
     Carrot,
     Wine,
@@ -35,7 +38,7 @@ impl fmt::Display for ItemKind {
 
 pub static ITEMS: &[ItemKind] = &[ItemKind::Carrot, ItemKind::Wine];
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Hash)]
 pub struct Item {
     pub kind: ItemKind,
 }

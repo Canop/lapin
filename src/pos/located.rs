@@ -5,7 +5,7 @@ use {
 };
 
 /// a glorified tuple of a pos and a value
-#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, Hash)]
 pub struct Located<V>
     where V: Copy
 {

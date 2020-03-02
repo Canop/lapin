@@ -38,9 +38,9 @@ impl<'s> GameRunner<'s> {
         let board = Board::from(&*state.level);
         let status = Status::from_message(
             if state.comes_from_edit {
-                "Hit *arrows* to move, *q* to quit, *?* for the help, *esc* to go back to editor"
+                "Hit *arrows* to move, *q* to quit, *?* for the help, *esc* to go back to editor".to_string()
             } else {
-                "Hit *arrows* to move, *q* to quit, *?* for the help"
+                "Hit *arrows* to move, *q* to quit, *?* for the help".to_string()
             }
         );
         Ok(Self {
@@ -85,14 +85,14 @@ impl<'s> GameRunner<'s> {
 
     fn apply(&mut self, move_result: MoveResult)  {
         match move_result {
-            MoveResult::PlayerWin => {
+            MoveResult::PlayerWin(s) => {
                 self.status = Status::from_message(
-                    "You **WIN!**"
+                    format!("{} You **WIN!**", s)
                 );
             }
-            MoveResult::PlayerLose => {
+            MoveResult::PlayerLose(s) => {
                 self.status = Status::from_error(
-                    "You **LOSE!**"
+                    format!("{} You **LOSE!**", s)
                 );
             }
             _ => {}
