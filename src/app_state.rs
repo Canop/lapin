@@ -3,7 +3,11 @@ use {
     anyhow,
     crate::{
         fromage::*,
-        play::PlayLevelState,
+        play::{
+            self,
+            PlayCampaignState,
+            PlayLevelState,
+        },
         edit::EditLevelState,
     },
     std::{
@@ -14,18 +18,9 @@ use {
     },
 };
 
-/// the immutable context, read once from launch
-/// arguments
-//pub struct Context {
-//    pub path: Option<PathBuf>,
-//    pub output_format: Option<SerdeFormat>,
-//}
-//impl From<&Fromage> for Context {
-//
-//}
-
 pub enum StateTransition {
     EditLevel(EditLevelState),
+    PlayCampaign(PlayCampaignState),
     PlayLevel(PlayLevelState),
     Quit,
 }
@@ -39,9 +34,9 @@ impl Default for StateTransition {
 impl TryFrom<Fromage> for StateTransition {
     type Error = anyhow::Error;
     fn try_from(fromage: Fromage) -> Result<Self, Self::Error> {
-        Ok(match fromage.sub {
-            Some(SubCommand::Edit ( esc )) => StateTransition::EditLevel(esc.try_into()?),
-            Some(SubCommand::Play ( psc )) => StateTransition::PlayLevel(psc.try_into()?),
+        Ok(match fromage.command {
+            Some(Command::Edit ( esc )) => StateTransition::EditLevel(esc.try_into()?),
+            Some(Command::Play ( psc )) => play::play_state_transition(psc)?,
             _ => Self::default(),
         })
     }

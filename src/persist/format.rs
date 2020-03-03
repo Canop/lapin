@@ -1,13 +1,4 @@
 
-use {
-    anyhow::Result,
-    serde::{Serialize, de::DeserializeOwned},
-    std::{
-        fs::File,
-        io::Write,
-        path::Path,
-    },
-};
 
 /// Formats usable for writing (and reading) levels.
 ///
@@ -20,6 +11,11 @@ pub enum SerdeFormat {
     MessagePack,
 }
 
+pub static FORMATS: &[SerdeFormat] = &[
+    SerdeFormat::Json,
+    SerdeFormat::MessagePack,
+];
+
 impl SerdeFormat {
     pub fn key(self) -> &'static str {
         match self {
@@ -30,7 +26,7 @@ impl SerdeFormat {
     pub fn from_key(key: &str) -> Option<Self> {
         match key {
             "json" => Some(SerdeFormat::Json),
-            "mpack" | "mp" => Some(SerdeFormat::MessagePack),
+            "mpack" => Some(SerdeFormat::MessagePack),
             _ => None,
         }
     }
@@ -43,73 +39,6 @@ impl Default for SerdeFormat {
 }
 
 
-/// write an object (typically a Level) to a file
-/// The real path may be different from the passed one if
-/// a specific file format is requested
-pub fn write_file<T>(
-    val: &T,
-    suggested_path: &Path,
-    requested_format: Option<SerdeFormat>,
-) -> Result<()>
-where
-    T: Serialize,
-{
-    let format = requested_format
-        .or(suggested_path.extension()
-            .and_then(|os| os.to_str())
-            .and_then(|ext| SerdeFormat::from_key(ext))
-        )
-        .unwrap_or_default();
-    let path = suggested_path.with_extension(format.key());
-    let mut file = File::create(path)?;
-    write(&mut file, val, format)
-}
-
-/// write an object (typically a Level) to a stream
-pub fn write<W: ?Sized, T>(
-    w: &mut W,
-    val: &T,
-    format: SerdeFormat,
-) -> Result<()>
-where
-    W: Write,
-    T: Serialize,
-{
-    match format {
-        SerdeFormat::Json => {
-            let serialized = serde_json::to_string(val)?;
-            write!(w, "{}", serialized)?;
-        }
-        SerdeFormat::MessagePack => {
-            rmp_serde::encode::write(w, val)?;
-        }
-    }
-    Ok(())
-}
-
-/// read an object (typically a Level) from a file,
-/// guessing the format from the file extension
-pub fn read_file<T>(
-    path: &Path,
-) -> Result<T>
-where
-    T: DeserializeOwned,
-{
-    let format = path.extension()
-        .and_then(|os| os.to_str())
-        .and_then(|ext| SerdeFormat::from_key(ext))
-        .unwrap_or_default();
-    let file = File::open(path)?;
-    debug!("read file {:?} with format {:?}", path, format);
-    Ok(match format {
-        SerdeFormat::Json => {
-            serde_json::from_reader(file)?
-        }
-        SerdeFormat::MessagePack => {
-            rmp_serde::decode::from_read(file)?
-        }
-    })
-}
 
 
 // Study of different formats:

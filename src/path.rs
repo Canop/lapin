@@ -92,7 +92,7 @@ impl<'b> PathFinder<'b> {
             Goal::Pos(goal_pos) => goal_pos == pos,
             Goal::Terrain(terrain) => self.board.get(pos) == terrain && !self.actors_map.has_key(pos),
             Goal::ActorKinds(kinds) => self.actors_map.get(pos)
-                .map_or(false, |actor| kinds.contains(&actor.kind)),
+                .map_or(false, |actor| kinds.contains(&actor.kind) && self.actor.can_enter(self.board.get(pos))),
         }
     }
 

@@ -34,7 +34,6 @@ pub fn run(
     fromage: &Fromage,
 ) -> Result<StateTransition> {
     let mut level_editor = level_editor::LevelEditor::new(state, fromage);
-    //let output_format = if let Some(
     level_editor.run(w, dam)
 }
 

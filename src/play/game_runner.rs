@@ -11,6 +11,7 @@ use {
         screen::Screen,
         status::Status,
         task_sync::*,
+        win_db::*,
     },
     crossterm::{
         event::{
@@ -36,6 +37,8 @@ pub struct GameRunner<'s> {
 impl<'s> GameRunner<'s> {
     pub fn new(state: &'s PlayLevelState) -> Result<Self> {
         let board = Board::from(&*state.level);
+        let signature = Signature::new(&*state.level);
+        debug!("signautree: {:?}", signature);
         let status = Status::from_message(
             if state.comes_from_edit {
                 "Hit *arrows* to move, *q* to quit, *?* for the help, *esc* to go back to editor".to_string()
@@ -50,15 +53,23 @@ impl<'s> GameRunner<'s> {
         })
     }
 
+    fn handle_player_dir(
+        &mut self,
+        dir: Dir,
+    ) -> Option<StateTransition> {
+        let move_result = self.board.apply_player_move(dir);
+        self.apply(move_result);
+        None
+    }
+
     fn handle_key_event(
         &mut self,
         code: KeyCode,
         w: &mut W,
         dam: &mut Dam,
     ) -> Result<Option<StateTransition>> {
-        Ok(match Command::from(code) {
-            None => None,
-            Some(Command::Back) if self.state.comes_from_edit => {
+        Ok(match code {
+            KeyCode::Esc if self.state.comes_from_edit => {
                 if let Some(path) = &self.state.path {
                     Some(StateTransition::EditLevel(EditLevelState{
                         path: path.clone(),
@@ -68,22 +79,22 @@ impl<'s> GameRunner<'s> {
                     None
                 }
             }
-            Some(Command::Help) => {
+            KeyCode::Up => self.handle_player_dir(Dir::Up),
+            KeyCode::Right => self.handle_player_dir(Dir::Right),
+            KeyCode::Down => self.handle_player_dir(Dir::Down),
+            KeyCode::Left => self.handle_player_dir(Dir::Left),
+            KeyCode::Char('q') => Some(StateTransition::Quit),
+            KeyCode::Char('?') => {
                 let mut help_view = help::View::new(help_text::MARKDOWN, LAYOUT);
                 help_view.run(w, dam)?
             }
-            Some(Command::Quit) => {
-                Some(StateTransition::Quit)
-            }
-            Some(cmd) => {
-                let move_result = self.board.apply_player_move(cmd);
-                self.apply(move_result);
-                None
-            }
+            _ => None,
         })
     }
 
-    fn apply(&mut self, move_result: MoveResult)  {
+    /// change the state of the runner accordingly to the move_result
+    /// returned on a move by either the player or the world
+    fn apply(&mut self, move_result: MoveResult) {
         match move_result {
             MoveResult::PlayerWin(s) => {
                 self.status = Status::from_message(

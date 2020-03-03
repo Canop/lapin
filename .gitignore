@@ -2,8 +2,12 @@
 build
 release.zip
 
-# levels & campaign files are, today, personal
-levels
+# campaigns of the canop & dystroy distributions of Lapin
+canop
+dystroy
+
+# personal level & campaign files
+user
 
 # personal scripts and resources
 deploy.sh

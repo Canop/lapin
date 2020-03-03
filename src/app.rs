@@ -1,4 +1,4 @@
-
+/// Execute all the functions which need the terminal UI
 use {
     anyhow::Result,
     crate::{
@@ -13,14 +13,11 @@ use {
 };
 
 pub struct App {
-    // TODO remove this ? It's not yet used
-    previous_transitions: Vec<StateTransition>,
 }
 
 impl App {
     pub fn new() -> Self {
         Self {
-            previous_transitions: Vec::new(),
         }
     }
     pub fn run(
@@ -28,22 +25,25 @@ impl App {
         w: &mut W,
         dam: &mut Dam,
         fromage: Fromage,
-    ) -> Result<()>{
+    ) -> Result<()> {
         use StateTransition::*;
+        debug!("fromage: {:?}", &fromage);
         let mut current_transition = fromage.clone().try_into()?;
         loop {
-            let next_transition =  match &current_transition {
+            let next_transition =  match current_transition {
                 EditLevel (state) => {
-                    edit::run(w, dam, state, &fromage)?
+                    edit::run(w, dam, &state, &fromage)?
                 }
                 PlayLevel (state) => {
-                    play::run(w, dam, state)?
+                    play::play_level(w, dam, &state)?
+                }
+                PlayCampaign(state) => {
+                    play::play_campaign(w, dam, state)?
                 }
                 Quit => {
                     return Ok(());
                 }
             };
-            self.previous_transitions.push(current_transition);
             current_transition = next_transition;
         }
     }

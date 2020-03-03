@@ -16,8 +16,9 @@ use {
     },
     lapin::{
         app::App,
+        campaign,
         fromage::*,
-        serde,
+        persist,
         task_sync::*,
         test_level,
     },
@@ -57,24 +58,29 @@ fn configure_log() {
     }
 }
 
-fn main() -> Result<()> {
-    configure_log();
+/// execute the "test" command, which doesn't need the TUI
+fn do_test_command(fromage: Fromage) -> Result<()> {
+    // testing serialization of level
+    let level = test_level::build();
+    let format = fromage.output_format()
+        .and_then(|key| persist::SerdeFormat::from_key(&key));
+    persist::write(
+        &mut std::io::stdout(),
+        &level,
+        format.unwrap_or(persist::SerdeFormat::default()),
+        false,
+    )
+}
 
-    let fromage: Fromage = argh::from_env();
-    debug!("fromage: {:?}", &fromage);
-
-    if fromage.is_test() {
-        // testing serialization of level
-        let level = test_level::build();
-        let format = fromage.output_format()
-            .and_then(|key| serde::SerdeFormat::from_key(&key));
-        return serde::write(
-            &mut std::io::stdout(),
-            &level,
-            format.unwrap_or(serde::SerdeFormat::default()),
-        );
+/// execute a "campaign" command, which doesn't need the TUI
+fn do_campaign_command(cc: &CampaignCommand) -> Result<()> {
+    match &cc.sub {
+        CampaignSubCommand::New(ncc) => campaign::create(ncc),
     }
+}
 
+/// execute all the commands which need the TUI
+fn do_tui_command(fromage: Fromage) -> Result<()> {
     let mut w = std::io::stderr();
     w.queue(EnterAlternateScreen)?;
     w.queue(cursor::Hide)?; // hiding the cursor
@@ -83,15 +89,25 @@ fn main() -> Result<()> {
     let mut dam = Dam::new()?;
     let mut app = App::new();
     let r = app.run(&mut w, &mut dam, fromage);
-    //dam.kill();
     w.queue(DisableMouseCapture)?;
     terminal::disable_raw_mode()?;
     w.queue(cursor::Show)?;
     w.queue(LeaveAlternateScreen)?;
     w.flush()?;
+    r
+}
+
+fn main() {
+    configure_log();
+    let fromage: Fromage = argh::from_env();
+    debug!("fromage: {:?}", &fromage);
+    let r = match &fromage.command {
+        Some(Command::Campaign(cc)) => do_campaign_command(cc),
+        Some(Command::Test(_)) => do_test_command(fromage),
+        _ => do_tui_command(fromage),
+    };
     if let Err(e) = r {
         warn!("Error: {:?}", e);
         println!("Error: {:?}", e);
     }
-    Ok(())
 }

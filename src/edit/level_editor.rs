@@ -10,7 +10,7 @@ use {
         play::PlayLevelState,
         pos::*,
         screen::Screen,
-        serde,
+        persist,
         status::Status,
         task_sync::*,
     },
@@ -82,11 +82,13 @@ impl<'l> LevelEditor<'l> {
     ) -> Result<()> {
         let level = Level::from(&self.board);
         let format = self.fromage.output_format()
-            .and_then(|key| serde::SerdeFormat::from_key(&key));
-        serde::write_file(
-            &level,
+            .and_then(|key| persist::SerdeFormat::from_key(&key));
+        let bag = persist::Bag::from(level);
+        persist::write_file(
+            &bag,
             &self.path,
             format,
+            false,
         )
     }
 

@@ -134,62 +134,55 @@ impl Board {
         actor_pos_map
     }
 
-    pub fn apply_player_move(&mut self, cmd: Command) -> MoveResult {
+    pub fn apply_player_move(&mut self, dir: Dir) -> MoveResult {
         if self.current_player != Player::Lapin {
             return MoveResult::Invalid;
         }
-        match cmd {
-            Command::Move(dir) => {
-                let mut end_turn = true;
-                let pos = self.lapin_pos().in_dir(dir);
-                if !GAME_AREA.contains(pos) {
-                    warn!("Lapin is too far!");
+        let mut end_turn = true;
+        let pos = self.lapin_pos().in_dir(dir);
+        if !GAME_AREA.contains(pos) {
+            warn!("Lapin is too far!");
+            return MoveResult::Invalid;
+        }
+        if !self.actors[0].can_enter(self.get(pos)) {
+            debug!("can't go there");
+            return MoveResult::Invalid
+        }
+        for i in 1..self.actors.len() {
+            if self.actors[i].pos == pos {
+                if self.actors[i].runs_after(self.actors[0]) {
+                    self.current_player = Player::None;
+                    return MoveResult::PlayerLose(format!(
+                        "You have been eaten by a *{:?}*.", self.actors[i].kind
+                    ));
+                } else {
                     return MoveResult::Invalid;
                 }
-                if !self.actors[0].can_enter(self.get(pos)) {
-                    debug!("can't go there");
-                    return MoveResult::Invalid
-                }
-                for i in 1..self.actors.len() {
-                    if self.actors[i].pos == pos {
-                        if self.actors[i].runs_after(self.actors[0]) {
-                            self.current_player = Player::None;
-                            return MoveResult::PlayerLose(format!(
-                                "You have been eaten by a *{:?}*.", self.actors[i].kind
-                            ));
-                        } else {
-                            return MoveResult::Invalid;
-                        }
-                    }
-                }
-                self.actors[0].pos = pos;
-                if self.get(pos) == Terrain::Grass {
-                    self.current_player = Player::None;
-                    return MoveResult::PlayerWin(
-                        "You're on the grass.".to_string()
-                    );
-                }
-                if let Some(Item{kind:ItemKind::Carrot}) = self.items.get(pos) {
-                    self.items.remove(pos);
-                    info!("Lapin eats a carrot and replays");
-                    end_turn = false;
-                }
-                if end_turn {
-                    self.current_player = Player::World;
-                }
-                MoveResult::Ok
-            }
-            _ => {
-                debug!("a pa capito");
-                MoveResult::Invalid
             }
         }
+        self.actors[0].pos = pos;
+        if self.get(pos) == Terrain::Grass {
+            self.current_player = Player::None;
+            return MoveResult::PlayerWin(
+                "You're on the grass.".to_string()
+            );
+        }
+        if let Some(Item{kind:ItemKind::Carrot}) = self.items.get(pos) {
+            self.items.remove(pos);
+            info!("Lapin eats a carrot and replays");
+            end_turn = false;
+        }
+        if end_turn {
+            self.current_player = Player::World;
+        }
+        MoveResult::Ok
     }
 
     pub fn apply_world_move(&mut self, world_move: WorldMove) -> MoveResult {
         let mut killed = vec![false; self.actors.len()];
         let mut actor_pos_set = self.actor_pos_set();
         let mut result = MoveResult::Ok;
+        self.current_player = Player::Lapin;
         for actor_move in world_move.actor_moves {
             let actor_id = actor_move.actor_id;
             actor_pos_set.remove(self.actors[actor_id].pos);
@@ -237,7 +230,6 @@ impl Board {
             }
             actor_pos_set.insert(self.actors[actor_id].pos);
         }
-        self.current_player = Player::Lapin;
         let mut i = self.actors.len() - 1;
         while i > 0 {
             if killed[i] {

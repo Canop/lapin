@@ -136,11 +136,13 @@ impl<'t> WorldPlayer<'t> {
             }
             if let Some(dir) = actor.pos.dir_to(other.pos) {
                 // we can make a direct kill (may be a diagonal move)
-                return Some(ActorMove {
-                    actor_id,
-                    target_id: Some(other_id),
-                    action: Action::Eats(dir),
-                });
+                if actor.can_enter(self.board.get(other.pos)) {
+                    return Some(ActorMove {
+                        actor_id,
+                        target_id: Some(other_id),
+                        action: Action::Eats(dir),
+                    });
+                }
             }
         }
         self.move_to_goal(

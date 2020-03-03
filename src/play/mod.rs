@@ -9,16 +9,19 @@ use {
 };
 
 mod animate;
-mod command;
 mod game_runner;
 mod help_text;
+mod level_chooser;
 mod move_result;
 mod state;
 mod world;
 
 pub use move_result::*;
-pub use command::*;
-pub use state::PlayLevelState;
+pub use state::{
+    play_state_transition,
+    PlayCampaignState,
+    PlayLevelState,
+};
 pub use world::*;
 
 
@@ -28,11 +31,20 @@ pub const LAYOUT: Layout = Layout {
     status_height: 1,
 };
 
-pub fn run(
+pub fn play_level(
     w: &mut W,
     dam: &mut Dam,
     state: &PlayLevelState,
 ) -> Result<StateTransition> {
     let mut game_runner = game_runner::GameRunner::new(state)?;
     game_runner.run(w, dam)
+}
+
+pub fn play_campaign(
+    w: &mut W,
+    dam: &mut Dam,
+    state: PlayCampaignState,
+) -> Result<StateTransition> {
+    let mut chooser = level_chooser::LevelChooser::new(state)?;
+    chooser.run(w, dam)
 }
