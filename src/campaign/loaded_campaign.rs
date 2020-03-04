@@ -6,11 +6,10 @@ use {
         persist::{
             Bag,
         },
-        win_db::*,
+        win_db,
     },
     std::{
         path::Path,
-        time::SystemTime,
     },
     super::*,
 };
@@ -25,6 +24,7 @@ pub struct LoadedCampaign {
 
 pub struct LoadedLevel {
     pub level: Level,
+    pub won: bool,
 }
 
 fn load_external_level(
@@ -54,12 +54,15 @@ impl LoadedCampaign {
         // a campaign
         let campaign = bag.campaigns.pop().expect("tried to load a bag without campaign");
         let mut levels = Vec::new();
+        let win_file = win_db::WinFile::load().ok();
         for key in &campaign.levels {
             let level = match bag.levels.remove(key) {
                 Some(level) => level,
                 None => load_external_level(path, key)?,
             };
+            let signature = win_db::Signature::new(&level)?;
             levels.push(LoadedLevel {
+                won: win_file.as_ref().map_or(false, |wf| wf.has_win(&signature)),
                 level,
             });
         }

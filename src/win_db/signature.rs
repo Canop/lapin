@@ -20,7 +20,7 @@ use {
 /// accidental collisions.
 /// The signature is the hexa representation of the RIPEMD-160 hash
 /// of the message pack serialization of the level.
-#[derive(Debug, Clone, Serialize, Deserialize, Hash)]
+#[derive(Debug, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
 pub struct Signature(String);
 
 impl Signature {
@@ -40,5 +40,15 @@ impl Signature {
         Ok(Signature(hexa))
     }
 
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+
+}
+
+impl From<String> for Signature {
+    fn from(s: String) -> Self {
+        Self(s)
+    }
 }
 

@@ -47,6 +47,7 @@ pub fn make(skin: &Skin) -> MadSkin {
     ms.headers[2] = Default::default();
     ms.headers[2].align = Alignment::Center;
     ms.headers[2].set_bg(ansi(24));
+    ms.inline_code.set_bg(ansi(22));
     //ms.headers[2].compound_style.
     ms
 }

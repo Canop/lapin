@@ -11,7 +11,7 @@ use {
         screen::Screen,
         status::Status,
         task_sync::*,
-        win_db::*,
+        win_db,
     },
     crossterm::{
         event::{
@@ -37,8 +37,6 @@ pub struct GameRunner<'s> {
 impl<'s> GameRunner<'s> {
     pub fn new(state: &'s PlayLevelState) -> Result<Self> {
         let board = Board::from(&*state.level);
-        let signature = Signature::new(&*state.level);
-        debug!("signautree: {:?}", signature);
         let status = Status::from_message(
             if state.comes_from_edit {
                 "Hit *arrows* to move, *q* to quit, *?* for the help, *esc* to go back to editor".to_string()
@@ -100,6 +98,10 @@ impl<'s> GameRunner<'s> {
                 self.status = Status::from_message(
                     format!("{} You **WIN!**", s)
                 );
+                debug!("maybe saving win...");
+                if let Err(e) = win_db::save_win(&*self.state.level) {
+                    warn!("Saving win failed: {:?}", e);
+                }
             }
             MoveResult::PlayerLose(s) => {
                 self.status = Status::from_error(

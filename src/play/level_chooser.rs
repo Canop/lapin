@@ -51,11 +51,13 @@ impl LevelChooser {
         let mut md = String::new();
         write!(md, "\n# {}\n", self.loaded_campaign.name())?;
         for (i, level) in self.loaded_campaign.levels.iter().enumerate() {
-            if i == self.selection {
-                write!(md, "\n### `K` {} `F`", level.level.name)?;
-            } else {
-                write!(md, "\n {}", level.level.name)?;
-            }
+            write!(
+                md,
+                "\n{}{}{}",
+                if i == self.selection { "### " } else { "" },
+                level.level.name,
+                if level.won { " ` WON `" } else { "" },
+            )?;
         }
         Ok(md)
     }
