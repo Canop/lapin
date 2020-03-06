@@ -1,14 +1,8 @@
 use {
     crate::{
-        actor::*,
-        board::Board,
-        path::{
-            Goal,
-            PathFinder,
-        },
         pos::*,
-        terrain::Terrain,
     },
+    super::*,
 };
 
 pub const FIRING_RANGE: Int = 6;
@@ -82,9 +76,9 @@ impl<'t> WorldPlayer<'t> {
         &self,
         actor_id: usize,
         actor: Actor,
-        goal: Goal,
+        goal: path::Goal,
     ) -> Option<ActorMove> {
-        let mut path_finder = PathFinder::new(
+        let mut path_finder = path::PathFinder::new(
             actor,
             &self.board,
             &self.actor_pos_map,
@@ -112,7 +106,7 @@ impl<'t> WorldPlayer<'t> {
         if self.board.get(actor.pos) == Terrain::Grass {
             None
         } else {
-            self.move_to_goal(actor_id, actor, Goal::Terrain(Terrain::Grass))
+            self.move_to_goal(actor_id, actor, path::Goal::Terrain(Terrain::Grass))
         }
     }
 
@@ -125,7 +119,7 @@ impl<'t> WorldPlayer<'t> {
                 action: Action::Eats(dir),
             });
         }
-        self.move_to_goal(actor_id, actor, Goal::Pos(self.board.lapin_pos()))
+        self.move_to_goal(actor_id, actor, path::Goal::Pos(self.board.lapin_pos()))
     }
 
     // for actors who hunt several types of actors (not the fox)
@@ -148,7 +142,7 @@ impl<'t> WorldPlayer<'t> {
         self.move_to_goal(
             actor_id,
             actor,
-            Goal::ActorKinds(actor.preys().unwrap()),
+            path::Goal::ActorKinds(actor.preys().unwrap()),
         )
     }
 
@@ -222,7 +216,11 @@ impl<'t> WorldPlayer<'t> {
                         })
                 )
         } else {
-            self.move_to_goal(actor_id, actor, Goal::ActorKinds(actor.preys().unwrap()))
+            self.move_to_goal(
+                actor_id,
+                actor,
+                path::Goal::ActorKinds(actor.preys().unwrap()),
+            )
         }
     }
 

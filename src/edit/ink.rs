@@ -1,8 +1,6 @@
 use {
     crate::{
-        actor::*,
-        item::*,
-        terrain::*,
+        core::*,
     },
     std::fmt,
 };

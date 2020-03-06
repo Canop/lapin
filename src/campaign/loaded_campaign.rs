@@ -46,23 +46,24 @@ fn load_external_level(
 }
 
 impl LoadedCampaign {
+    /// load the levels
+    ///
+    /// Don't check if some levels have been won (call check_wins for that).
+    /// This should only be called after you've checked the bag does contain
+    /// a campaign
     pub fn load(
         path: &Path,
         mut bag: Bag,
     ) -> Result<Self> {
-        // this should only be called after you've checked the bag does contain
-        // a campaign
         let campaign = bag.campaigns.pop().expect("tried to load a bag without campaign");
         let mut levels = Vec::new();
-        let win_file = win_db::WinFile::load().ok();
         for key in &campaign.levels {
             let level = match bag.levels.remove(key) {
                 Some(level) => level,
                 None => load_external_level(path, key)?,
             };
-            let signature = win_db::Signature::new(&level)?;
             levels.push(LoadedLevel {
-                won: win_file.as_ref().map_or(false, |wf| wf.has_win(&signature)),
+                won: false,
                 level,
             });
         }
@@ -74,6 +75,15 @@ impl LoadedCampaign {
                 levels,
             })
         }
+    }
+    pub fn check_wins(&mut self) -> Result<()> {
+        if let Ok(win_file) = win_db::WinFile::load() {
+            for level in self.levels.iter_mut() {
+                let signature = win_db::Signature::new(&level.level)?;
+                level.won = win_file.has_win(&signature);
+            }
+        }
+        Ok(())
     }
     pub fn name(&self) -> &str {
         &self.campaign.name

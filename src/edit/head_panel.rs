@@ -2,10 +2,12 @@
 use {
     anyhow::Result,
     crate::{
-        board::*,
-        io::W,
+        core::Board,
+        display::{
+            Screen,
+            W,
+        },
         pos::ScreenPos,
-        screen::*,
     },
     crossterm::{
         event::KeyCode,

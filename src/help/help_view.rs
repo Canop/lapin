@@ -1,19 +1,21 @@
 
-/// The help modal view is displayed over state runners
-/// with their collaboration
-///
-
 use {
     anyhow::Result,
     crate::{
-        app_state::StateTransition,
-        io::W,
-        layout::Layout,
-        mad_skin,
+        app::{
+            Dam,
+            State,
+            StateTransition,
+        },
+        display::{
+            Layout,
+            mad_skin,
+            Screen,
+            Status,
+            W,
+        },
+        level::Level,
         pos::*,
-        screen::Screen,
-        status::Status,
-        task_sync::*,
     },
     crossterm::{
         event::{
@@ -28,24 +30,33 @@ use {
 };
 
 pub struct View {
-    layout: Layout, // whole screen layout
+    layout: Layout,
     markdown: &'static str,
 }
 
 impl View {
-
-    pub fn new(markdown: &'static str, layout: Layout) -> Self {
+    pub fn new(
+        markdown: &'static str,
+        layout: Layout,
+    ) -> Self {
         Self {
             markdown,
             layout,
         }
     }
+}
 
-    pub fn run(
+impl State for View {
+
+    fn label(&self) -> &'static str {
+        "help"
+    }
+
+    fn run(
         &mut self,
         w: &mut W,
         dam: &mut Dam,
-    ) -> Result<Option<StateTransition>> {
+    ) -> Result<StateTransition> {
         let mut screen = Screen::new(self.layout);
         let skin = mad_skin::make(&screen.skin);
         let mut mad_view = MadView::from(
@@ -75,10 +86,10 @@ impl View {
                             mad_view.try_scroll_pages(1);
                         }
                         KeyCode::Char('q') => {
-                            return Ok(Some(StateTransition::Quit));
+                            return Ok(StateTransition::Quit);
                         }
                         KeyCode::Esc => {
-                            return Ok(None);
+                            return Ok(StateTransition::Back);
                         }
                         _ => {
                             debug!("ignored code");
@@ -99,4 +110,12 @@ impl View {
             }
         }
     }
+
+    fn get_level(
+        &self,
+        _level_idx: usize,
+    ) -> Option<Level> {
+        None
+    }
+
 }

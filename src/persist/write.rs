@@ -10,9 +10,8 @@ use {
     super::*,
 };
 
-
-
-/// write an object (typically a Level) to a file
+/// write an object (typically a Level or campaign) to a file.
+///
 /// The real path may be different from the passed one if
 /// a specific file format is requested
 pub fn write_file<T>(

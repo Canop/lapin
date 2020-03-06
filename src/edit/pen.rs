@@ -2,7 +2,7 @@ use {
     crate::{
         level::Level,
         pos::*,
-        terrain::Terrain,
+        core::Terrain,
     },
     super::{
         drawing_action::*,

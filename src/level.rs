@@ -1,10 +1,7 @@
 use {
     crate::{
-        actor::*,
-        board::Board,
-        item::*,
+        core::*,
         pos::*,
-        terrain::*,
     },
     serde::{Serialize, Deserialize},
 };

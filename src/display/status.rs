@@ -1,9 +1,5 @@
 use {
     anyhow::Result,
-    crate::{
-        io::W,
-        screen::Screen,
-    },
     crossterm::{
         style::ResetColor,
         QueueableCommand,
@@ -12,6 +8,7 @@ use {
         Alignment,
         Composite,
     },
+    super::*,
 };
 
 /// the status contains information written on the grey line

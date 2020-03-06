@@ -15,11 +15,9 @@ use {
         QueueableCommand,
     },
     lapin::{
-        app::App,
+        app::*,
         campaign,
-        fromage::*,
         persist,
-        task_sync::*,
         test_level,
     },
     log::LevelFilter,

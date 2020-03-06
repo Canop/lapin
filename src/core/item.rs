@@ -1,7 +1,7 @@
 
 use {
     crate::{
-        skin::*,
+        display::Skin,
     },
     serde::{Serialize, Deserialize},
     std::{

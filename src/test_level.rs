@@ -1,16 +1,18 @@
-/// make a level to test many things
 
 use {
     crate::{
-        actor::ActorKind::*,
-        board::Board,
-        item::ItemKind::*,
+        core::{
+            *,
+            ActorKind::*,
+            ItemKind::*,
+            Terrain::*,
+        },
         level::Level,
         pos::*,
-        terrain::Terrain::*,
     },
 };
 
+/// make a level to test many things
 pub fn build() -> Level {
     let mut board = Board::new(
         "test level".to_string(),

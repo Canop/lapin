@@ -1,18 +1,12 @@
 use {
     anyhow::Result,
-    crate::{
-        layout::{
-            Areas,
-            Layout,
-        },
-        skin::Skin,
-    },
     crossterm::{
         cursor,
         terminal::{Clear, ClearType},
         QueueableCommand,
     },
     std::io::Write,
+    super::*,
     termimad::Area,
 };
 

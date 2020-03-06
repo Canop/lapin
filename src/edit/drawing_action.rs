@@ -1,10 +1,8 @@
 
 use {
     crate::{
-        actor::*,
-        board::*,
+        core::*,
         pos::*,
-        terrain::*,
     },
     super::{
         ink::*,

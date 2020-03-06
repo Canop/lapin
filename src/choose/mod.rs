@@ -1,3 +1,4 @@
+
 use {
     crate::{
         display::Layout,
@@ -6,9 +7,7 @@ use {
 
 mod state;
 
-pub use {
-    state::PlayLevelState,
-};
+pub use state::ChooseLevelState;
 
 pub const LAYOUT: Layout = Layout {
     header_height: 0,

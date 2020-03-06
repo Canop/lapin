@@ -2,17 +2,19 @@
 use {
     anyhow::Result,
     crate::{
-        io::W,
+        display::{
+            Screen,
+            W,
+        },
         pos::ScreenPos,
-        screen::*,
     },
     crossterm::{
         terminal::ClearType,
     },
     super::{
-        pen::*,
         ink::*,
         inkwell::*,
+        pen::*,
     },
     termimad::{
         Area,

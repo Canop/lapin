@@ -1,8 +1,6 @@
 
 use {
-    crate::{
-        skin::*,
-    },
+    crate::display::Skin,
     crossterm::{
         style::{
             Color,
@@ -14,9 +12,7 @@ use {
         fmt,
         hash::Hash,
     },
-    termimad::{
-        StyledChar,
-    },
+    termimad::StyledChar,
 };
 
 // TODO define all those with a macro

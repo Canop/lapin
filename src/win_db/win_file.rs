@@ -45,7 +45,8 @@ impl WinFile {
             wins,
         })
     }
-    ///
+    /// tell whether the signature is in the current file
+    /// (i.e. if the level was won)
     pub fn has_win(&self, signature: &Signature) -> bool {
         self.wins.contains(signature)
     }

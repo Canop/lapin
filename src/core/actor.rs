@@ -1,14 +1,14 @@
 use {
     crate::{
         pos::*,
-        skin::*,
-        terrain::*,
+        display::Skin,
     },
     serde::{Serialize, Deserialize},
     std::{
         fmt,
         hash::Hash,
     },
+    super::*,
     termimad::{
         StyledChar,
     },

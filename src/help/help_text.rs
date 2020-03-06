@@ -2,7 +2,7 @@
 
 /// This markdown contains special_chars
 /// (based on code) which are replaced as
-/// defined in the skin of help_view
+/// defined in the skin of mad_skin
 pub static MARKDOWN: &str = r#"
 
 # Lapin

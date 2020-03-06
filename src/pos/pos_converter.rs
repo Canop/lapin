@@ -1,6 +1,6 @@
 use {
     crate::{
-        screen::Screen,
+        display::Screen,
     },
     super::*,
 };

@@ -2,7 +2,7 @@
 use {
     anyhow::Result,
     crate::{
-        io::W,
+        display::W,
     },
     crossterm::{
         cursor,

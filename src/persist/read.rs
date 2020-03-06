@@ -12,7 +12,7 @@ use {
 };
 
 
-/// read an object (typically a Level) from a file,
+/// read an object from a file,
 /// guessing the format from the file extension
 pub fn read_file<T>(
     path: &Path,

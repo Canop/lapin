@@ -39,8 +39,6 @@ impl Default for SerdeFormat {
 }
 
 
-
-
 // Study of different formats:
 // sizes below for the test level as of 2020/02/28
 //

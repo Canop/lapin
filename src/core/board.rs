@@ -1,17 +1,14 @@
 use {
     crate::{
-        actor::*,
-        item::*,
         level::Level,
-        play::*,
         pos::*,
-        terrain::*,
     },
     std::{
         ops::{
             Range,
         },
     },
+    super::*,
 };
 
 static GAME_AREA: PosArea = PosArea::new(-1000..1000, -1000..1000);
@@ -167,7 +164,7 @@ impl Board {
                 "You're on the grass.".to_string()
             );
         }
-        if let Some(Item{kind:ItemKind::Carrot}) = self.items.get(pos) {
+        if let Some(Item{ kind: ItemKind::Carrot }) = self.items.get(pos) {
             self.items.remove(pos);
             info!("Lapin eats a carrot and replays");
             end_turn = false;

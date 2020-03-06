@@ -103,6 +103,7 @@ fn make_normal_status_mad_skin() -> MadSkin {
 /// when there's a error
 fn make_error_status_mad_skin() -> MadSkin {
     let mut mad_skin = MadSkin::default();
+    mad_skin.italic = CompoundStyle::new(Some(ansi(178)), None, Attributes::default());
     mad_skin.bold = CompoundStyle::new(Some(ansi(160)), None, Attribute::Bold.into());
     mad_skin
 }

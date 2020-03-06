@@ -2,10 +2,12 @@
 use {
     anyhow::Result,
     crate::{
-        io::W,
+        display::{
+            Screen,
+            W,
+        },
         pos::ScreenPos,
-        screen::*,
-        terrain::*,
+        core::Terrain,
     },
     crossterm::{
         cursor,

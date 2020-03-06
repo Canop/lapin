@@ -2,7 +2,7 @@
 use {
     anyhow::Result,
     crate::{
-        fromage::NewCampaignCommand,
+        app::NewCampaignCommand,
         persist::{
             self,
             Bag,
@@ -14,8 +14,10 @@ use {
 mod campaign;
 mod loaded_campaign;
 
-pub use campaign::Campaign;
-pub use loaded_campaign::LoadedCampaign;
+pub use {
+    campaign::Campaign,
+    loaded_campaign::LoadedCampaign,
+};
 
 pub fn create(ncc: &NewCampaignCommand) -> Result<()> {
     let mut c = Campaign::default();

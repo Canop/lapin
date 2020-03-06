@@ -374,7 +374,6 @@ dependencies = [
  "crossterm",
  "dirs 2.0.2",
  "fnv",
- "lazy_static",
  "log",
  "minimad",
  "ripemd160",

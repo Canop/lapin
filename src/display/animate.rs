@@ -1,9 +1,9 @@
 use {
     anyhow::Result,
     crate::{
-        board_drawer::*,
+        app::Dam,
+        core::*,
         pos::*,
-        task_sync::*,
     },
     crossterm::{
         cursor,

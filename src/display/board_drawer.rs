@@ -1,11 +1,7 @@
 use {
     crate::{
-        actor::*,
-        board::Board,
-        io::W,
+        core::*,
         pos::*,
-        screen::Screen,
-        terrain::*,
     },
     anyhow::Result,
     crossterm::{
@@ -19,6 +15,7 @@ use {
         },
         QueueableCommand,
     },
+    super::*,
     termimad::{
         StyledChar,
     },

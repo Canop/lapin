@@ -1,7 +1,6 @@
 use {
     crate::{
-        skin::Skin,
-        terrain::Terrain,
+        core::Terrain,
     },
     crossterm::{
         style::Color::*,
@@ -9,6 +8,7 @@ use {
     minimad::{
         Compound,
     },
+    super::Skin,
     termimad::{
         ansi,
         Alignment,

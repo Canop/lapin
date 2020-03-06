@@ -1,7 +1,9 @@
 
 use {
     crate::{
-        board::*,
+        core::{
+            Board,
+        },
         level::Level,
     },
     super::{
@@ -9,16 +11,15 @@ use {
     },
 };
 
-
 #[derive(Debug)]
-pub struct DrawingHistory<'l> {
+pub struct DrawingHistory {
     actions: Vec<DrawingAction>,
     cursor: usize, // is actions.len() when not in redo
-    initial_state: &'l Level,
+    initial_state: Level,
 }
 
-impl<'l> DrawingHistory<'l> {
-    pub fn new(level: &'l Level) -> Self {
+impl DrawingHistory {
+    pub fn new(level: Level) -> Self {
         Self {
             actions: Vec::new(),
             cursor: 0,
@@ -46,7 +47,7 @@ impl<'l> DrawingHistory<'l> {
             return false;
         }
         self.cursor -= 1;
-        board.reset_to(self.initial_state);
+        board.reset_to(&self.initial_state);
         for i in 0..self.cursor {
             self.actions[i].apply_to(board);
         }

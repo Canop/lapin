@@ -1,11 +1,9 @@
 
 use {
     crate::{
-        actor::*,
-        board::Board,
         pos::*,
-        terrain::Terrain,
     },
+    super::*,
     std::{
         collections::{
             BinaryHeap,

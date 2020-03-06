@@ -1,14 +1,10 @@
 
 use {
     crate::{
-        campaign::{
-            Campaign,
-        },
+        campaign::Campaign,
         level::Level,
     },
-    fnv::{
-        FnvHashMap,
-    },
+    fnv::FnvHashMap,
     serde::{Serialize, Deserialize},
 };
 

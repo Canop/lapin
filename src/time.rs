@@ -1,5 +1,5 @@
 /// print the time that executing $timed took
-/// but only when the log level is "debug".
+/// but only when the log level is the given one.
 /// The goal of this macro is to avoid doing useless
 /// `Instant::now` in non Debug executions.
 ///
