@@ -14,19 +14,16 @@ pub struct Screen {
     area: Area, // the complete screen
     pub areas: Areas, // the areas of the different sub parts
     layout: Layout,
-    pub skin: Skin,
 }
 
 impl Screen {
     pub fn new(layout: Layout) -> Screen {
-        let skin = Skin::new();
         let area = Area::full_screen();
         let areas = layout.compute(&area);
         Self {
             area,
             areas,
             layout,
-            skin,
         }
     }
     pub fn set_terminal_size(&mut self, w: u16, h: u16) {

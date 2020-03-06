@@ -5,7 +5,7 @@ use {
     },
     crate::{
         app::{
-            Dam,
+            Context,
             EditCommand,
             State,
             StateTransition,
@@ -182,19 +182,18 @@ impl State for LevelEditor {
 
     fn run(
         &mut self,
-        w: &mut W,
-        dam: &mut Dam,
+        con: &mut Context,
     ) -> Result<StateTransition> {
         let mut screen = Screen::new(LAYOUT);
         loop {
-            let mut bd = BoardDrawer::new_around(&self.board, w, &screen, self.center);
-            bd.draw()?;
+            let mut bd = BoardDrawer::new_around(&self.board, &screen, self.center);
+            bd.draw(con)?;
             let mut pen_panel = PenPanel::new(&mut self.pen, &screen);
-            pen_panel.draw(w)?;
-            self.head_panel.draw(w, &self.board, &screen)?;
-            self.status.display(w, &screen)?;
-            let event = dam.next_event().unwrap();
-            dam.unblock();
+            pen_panel.draw(con)?;
+            self.head_panel.draw(con, &self.board, &screen)?;
+            self.status.display(con, &screen)?;
+            let event = con.dam.next_event().unwrap();
+            con.dam.unblock();
             let next_state = match event {
                 Event::Key(KeyEvent { code, .. }) => {
                     self.handle_key_event(code)

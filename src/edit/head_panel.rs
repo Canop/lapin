@@ -2,11 +2,9 @@
 use {
     anyhow::Result,
     crate::{
+        app::Context,
         core::Board,
-        display::{
-            Screen,
-            W,
-        },
+        display::Screen,
         pos::ScreenPos,
     },
     crossterm::{
@@ -47,27 +45,27 @@ impl EditorHeadPanel {
 
     pub fn draw(
         &mut self,
-        w: &mut W,
+        con: &mut Context,
         board: & Board,
         screen: & Screen,
     ) -> Result<()> {
         let area = &screen.areas.header;
-        let cs = &screen.skin.editor.paragraph.compound_style;
+        let cs = con.skin.editor.paragraph.compound_style.clone();
         self.inkwells.clear();
 
         // clear first line
-        screen.goto(w, 0, area.top)?;
-        cs.clear(w, ClearType::UntilNewLine)?;
+        screen.goto(con.w, 0, area.top)?;
+        cs.clear(con.w, ClearType::UntilNewLine)?;
 
         // clear line below inkwells because we'll draw the marks
-        screen.goto(w, 0, area.top + 2)?;
-        cs.clear(w, ClearType::UntilNewLine)?;
+        screen.goto(con.w, 0, area.top + 2)?;
+        cs.clear(con.w, ClearType::UntilNewLine)?;
 
         // default Terrain
         let mut sp = ScreenPos::new(0, area.top + 1);
-        sp.goto(w)?;
+        sp.goto(con.w)?;
         self.inkwells.extend(draw_inkwells(
-            w,
+            con,
             screen,
             &mut sp,
             " Default terrain:",
@@ -75,11 +73,11 @@ impl EditorHeadPanel {
             Ink::Terrain(board.default_terrain()),
         )?);
 
-        cs.clear(w, ClearType::UntilNewLine)?;
+        cs.clear(con.w, ClearType::UntilNewLine)?;
 
         // name
         sp.x += 5;
-        sp.goto(w)?;
+        sp.goto(con.w)?;
         self.name_area = Area::new(
             sp.x,
             screen.areas.header.top + 1,
@@ -88,9 +86,9 @@ impl EditorHeadPanel {
         );
 
         if let Some(name_field) = &self.name_field {
-            name_field.display_on(w)?;
+            name_field.display_on(con.w)?;
         } else {
-            cs.queue_str(w, if board.name.is_empty() {
+            cs.queue_str(con.w, if board.name.is_empty() {
                 "-unnamed level-"
             } else {
                 &board.name

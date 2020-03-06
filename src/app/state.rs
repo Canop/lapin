@@ -2,11 +2,10 @@
 use {
     anyhow::Result,
     crate::{
-        display::W,
         level::Level,
     },
     super::{
-        Dam,
+        Context,
         transition::StateTransition,
     },
 };
@@ -26,10 +25,11 @@ pub trait State {
     /// a back to a previous state, it's ran again).
     fn run(
         &mut self,
-        w: &mut W,
-        dam: &mut Dam,
+        con: &mut Context,
     ) -> Result<StateTransition>;
 
+    /// provide a level (to the next state if it
+    /// needs one which should come from the current one)
     fn get_level(
         &self,
         level_idx: usize,

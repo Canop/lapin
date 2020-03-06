@@ -1,5 +1,6 @@
 use {
     crate::{
+        app::Context,
         core::*,
         pos::*,
     },
@@ -27,7 +28,6 @@ use {
 /// in case of board change or screen resize
 pub struct BoardDrawer<'d> {
     pub board: &'d Board,
-    pub w: &'d mut W,
     pub screen: &'d Screen,
     pub pos_converter: PosConverter,
     pub actor_map: ActorPosMap,
@@ -35,25 +35,24 @@ pub struct BoardDrawer<'d> {
 impl<'d> BoardDrawer<'d> {
     pub fn new(
         board: &'d Board,
-        w: &'d mut W,
         screen: &'d Screen,
     ) -> Self {
-        Self::new_around(board, w, screen, board.lapin_pos())
+        Self::new_around(board, screen, board.lapin_pos())
     }
 
     pub fn new_around(
         board: &'d Board,
-        w: &'d mut W,
         screen: &'d Screen,
         center: Pos,
     ) -> Self {
         let pos_converter = PosConverter::from(center, screen);
         let actor_map = board.actor_pos_map();
-        Self { board, w, screen, pos_converter, actor_map }
+        Self { board, screen, pos_converter, actor_map }
     }
 
     pub fn draw_chr_bg(
         &mut self,
+        con: &mut Context,
         pos: Pos,
         chr: char,
         fg_color: Color,
@@ -65,59 +64,62 @@ impl<'d> BoardDrawer<'d> {
                 background_color: Some(bg_color),
                 attributes: Attributes::default(),
             };
-            self.w.queue(cursor::MoveTo(sp.x, sp.y))?;
-            self.w.queue(PrintStyledContent(cs.apply(chr)))?;
+            con.w.queue(cursor::MoveTo(sp.x, sp.y))?;
+            con.w.queue(PrintStyledContent(cs.apply(chr)))?;
         }
         Ok(())
     }
 
     pub fn draw_chr(
         &mut self,
+        con: &mut Context,
         pos: Pos,
         chr: char,
         color: Color,
     ) -> Result<()> {
         let terrain = self.board.get(pos);
-        self.draw_chr_bg(pos, chr, color, terrain.bg(&self.screen.skin))
+        self.draw_chr_bg(con, pos, chr, color, terrain.bg(&con.skin))
     }
 
     pub fn draw_fg(
         &mut self,
+        con: &mut Context,
         pos: Pos,
-        sc: &StyledChar,
+        sc: StyledChar,
     ) -> Result<()> {
         if let Some(c) = sc.get_fg() {
-            self.draw_chr(pos, sc.get_char(), c)?;
+            self.draw_chr(con, pos, sc.get_char(), c)?;
         }
         Ok(())
     }
 
     pub fn draw(
         &mut self,
+        con: &mut Context,
     ) -> Result<()> {
 
         // background and items
         let mut last_terrain = Terrain::Mud;
-        self.w.queue(last_terrain.bg_command(&self.screen.skin))?;
+        con.w.queue(last_terrain.bg_command(&con.skin))?;
         for j in 0..self.screen.areas.board.height {
             let sy = self.screen.areas.board.top + j;
             let mut sx = self.screen.areas.board.left;
-            self.w.queue(cursor::MoveTo(sx, sy))?;
+            con.w.queue(cursor::MoveTo(sx, sy))?;
             for _ in 0..self.screen.areas.board.width {
                 let pos = self.pos_converter.to_real(ScreenPos::new(sx, sy));
                 let terrain = self.board.get(pos);
                 if terrain != last_terrain {
-                    self.w.queue(terrain.bg_command(&self.screen.skin))?;
+                    con.w.queue(terrain.bg_command(&con.skin))?;
                     last_terrain = terrain;
                 }
                 if let Some(actor) = self.actor_map.get(pos) {
-                    actor.skin(&self.screen.skin).queue(self.w)?;
-                    self.w.queue(terrain.bg_command(&self.screen.skin))?;
+                    actor.skin(&con.skin).queue(con.w)?;
+                    con.w.queue(terrain.bg_command(&con.skin))?;
                 } else if let Some(item) = self.board.items.get(pos) {
-                    item.kind.skin(&self.screen.skin).queue(self.w)?;
-                    self.w.queue(terrain.bg_command(&self.screen.skin))?;
+                    item.kind.skin(&con.skin).queue(con.w)?;
+                    con.w.queue(terrain.bg_command(&con.skin))?;
                 } else {
-                    self.w.queue(Print(' '))?;
+                    con.w.queue(Print(' '))?;
                 }
                 sx += 1;
             }

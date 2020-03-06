@@ -3,16 +3,14 @@ use {
     anyhow::Result,
     crate::{
         app::{
-            Dam,
+            Context,
             State,
             StateTransition,
         },
         display::{
             Layout,
-            mad_skin,
             Screen,
             Status,
-            W,
         },
         level::Level,
         pos::*,
@@ -54,22 +52,20 @@ impl State for View {
 
     fn run(
         &mut self,
-        w: &mut W,
-        dam: &mut Dam,
+        con: &mut Context,
     ) -> Result<StateTransition> {
         let mut screen = Screen::new(self.layout);
-        let skin = mad_skin::make(&screen.skin);
         let mut mad_view = MadView::from(
             self.markdown.to_string(),
             screen.areas.help.clone(),
-            skin,
+            con.mad_skin.clone(),
         );
         loop {
-            Status::from_message("Hit *esc* to close the help".to_string()).display(w, &screen)?;
-            mad_view.write_on(w)?;
-            let event = dam.next_event().unwrap();
-            dam.unblock();
-            debug!("help event: {:?}", event);
+            Status::from_message("Hit *esc* to close the help".to_string())
+                .display(con, &screen)?;
+            mad_view.write_on(con.w)?;
+            let event = con.dam.next_event().unwrap();
+            con.dam.unblock();
             match event {
                 Event::Key(KeyEvent { code, .. }) => {
                     match code {

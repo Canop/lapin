@@ -2,7 +2,7 @@ use {
     anyhow::Result,
     crate::{
         app::{
-            Dam,
+            Context,
             State,
             StateTransition,
         },
@@ -11,7 +11,6 @@ use {
             mad_skin,
             Screen,
             Status,
-            W,
         },
         level::Level,
     },
@@ -98,10 +97,10 @@ impl ChooseLevelState {
 
     fn write_status(
         &mut self,
-        w: &mut W,
+        con: &mut Context,
         screen: &Screen,
     ) -> Result<()> {
-        self.status.display(w, screen)
+        self.status.display(con, screen)
     }
 
     /// update the won property of levels and determine
@@ -136,24 +135,23 @@ impl State for ChooseLevelState {
 
     fn run(
         &mut self,
-        w: &mut W,
-        dam: &mut Dam,
+        con: &mut Context,
     ) -> Result<StateTransition> {
         let mut screen = Screen::new(LAYOUT);
-        let skin = mad_skin::make(&screen.skin);
+        let skin = mad_skin::make(&con.skin);
         // we do this here so that wins are verified when coming back from a game
         self.check_wins()?;
         loop {
-            self.write_status(w, &screen)?;
+            self.write_status(con, &screen)?;
             let md = self.markdown()?;
             let text = skin.area_text(&md, &screen.areas.board);
             let text_view = TextView::from(
                 &screen.areas.board,
                 &text,
             );
-            text_view.write_on(w)?;
-            let event = dam.next_event().unwrap();
-            dam.unblock();
+            text_view.write_on(con.w)?;
+            let event = con.dam.next_event().unwrap();
+            con.dam.unblock();
             match event {
                 Event::Key(KeyEvent { code, .. }) => {
                     let next_state = self.handle_key_event(code)?;

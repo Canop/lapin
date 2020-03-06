@@ -20,7 +20,6 @@ use {
 /// make a mad skin which may be used in termimad views.
 /// Include direct replacements for Lapin characters.
 ///
-// TODO don't recreate every time ?
 pub fn make(skin: &Skin) -> MadSkin {
     let mut ms = MadSkin::default();
     let bg = Terrain::Mud.bg(skin);

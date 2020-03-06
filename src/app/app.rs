@@ -25,10 +25,12 @@ impl App {
     fn current_state(&mut self) -> &mut dyn State {
         self.states
             .last_mut()
-            .expect("No path has been pushed")
+            .expect("No state has been pushed")
             .as_mut()
     }
 
+    /// Run the whole TUI part of the application, by
+    /// running app states until the user quits
     pub fn run(
         &mut self,
         w: &mut W,
@@ -38,10 +40,11 @@ impl App {
         debug!("fromage: {:?}", &fromage);
         use StateTransition::*;
         self.states.push(initial_state::make(&fromage)?);
+        let mut con = Context::new(dam, w);
         loop {
             let label = self.current_state().label();
             info!("opening state {:?}", label);
-            match self.current_state().run(w, dam)? {
+            match self.current_state().run(&mut con)? {
                 PlayLevel{level_idx} => {
                     if let Some(level) = self.current_state().get_level(level_idx) {
                         self.states.push(Box::new(

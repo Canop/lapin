@@ -2,7 +2,7 @@ use {
     anyhow::Result,
     crate::{
         app::{
-            Dam,
+            Context,
             State,
             StateTransition,
         },
@@ -11,7 +11,6 @@ use {
             BoardDrawer,
             Screen,
             Status,
-            W,
         },
         edit,
         level::Level,
@@ -130,10 +129,10 @@ impl PlayLevelState {
 
     fn write_status(
         &mut self,
-        w: &mut W,
+        con: &mut Context,
         screen: &Screen,
     ) -> Result<()> {
-        self.status.display(w, screen)
+        self.status.display(con, screen)
     }
 }
 
@@ -145,31 +144,27 @@ impl State for PlayLevelState {
 
     fn run(
         &mut self,
-        w: &mut W,
-        dam: &mut Dam,
+        con: &mut Context,
     ) -> Result<StateTransition> {
         let mut screen = Screen::new(LAYOUT);
         let mut seed = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .map_or(0, |d| (d.as_secs()%7) as usize);
         loop {
-            let mut bd = BoardDrawer::new(&self.board, w, &screen);
-            bd.draw()?;
-            self.write_status(w, &screen)?;
+            BoardDrawer::new(&self.board, &screen).draw(con)?;
+            self.write_status(con, &screen)?;
             if self.board.current_player == Player::World {
                 let world_player = WorldPlayer::new(&self.board, seed);
                 seed += 1;
                 let world_move = time!(Info, "world play", world_player.play());
-                let mut bd = BoardDrawer::new(&self.board, w, &screen);
-                bd.animate(&world_move, dam)?;
+                BoardDrawer::new(&self.board, &screen).animate(con, &world_move)?;
                 let move_result = self.board.apply_world_move(world_move);
-                let mut bd = BoardDrawer::new(&self.board, w, &screen);
-                bd.draw()?;
+                BoardDrawer::new(&self.board, &screen).draw(con)?;
                 self.apply(move_result);
             } else {
                 // we're here also after end of game, when current_player is None
-                let event = dam.next_event().unwrap();
-                dam.unblock();
+                let event = con.dam.next_event().unwrap();
+                con.dam.unblock();
                 match event {
                     Event::Key(KeyEvent { code, .. }) => {
                         let next_state = self.handle_key_event(code)?;

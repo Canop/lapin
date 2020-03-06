@@ -1,5 +1,8 @@
 use {
     anyhow::Result,
+    crate::{
+        app::Context,
+    },
     crossterm::{
         style::ResetColor,
         QueueableCommand,
@@ -41,21 +44,25 @@ impl Status {
         }
     }
 
-    pub fn display(&self, w: &mut W, screen: &Screen) -> Result<()> {
+    pub fn display(
+        &self,
+        con: &mut Context,
+        screen: &Screen,
+    ) -> Result<()> {
         let area = &screen.areas.status;
-        screen.goto_clear(w, 0, area.top)?;
-        screen.goto(w, area.left, area.top)?;
+        screen.goto_clear(con.w, 0, area.top)?;
+        screen.goto(con.w, area.left, area.top)?;
         let skin = if self.error {
-            &screen.skin.error_status
+            &con.skin.error_status
         } else {
-            &screen.skin.normal_status
+            &con.skin.normal_status
         };
-        w.queue(ResetColor)?;
-        skin.write_inline_on(w, " ")?;
+        con.w.queue(ResetColor)?;
+        skin.write_inline_on(con.w, " ")?;
         let remaining_width = (area.width - area.left - 1) as usize;
         let composite = Composite::from_inline(&self.message);
-        skin.write_composite_fill(w, composite, remaining_width, Alignment::Left)?;
-        screen.clear_line(w)
+        skin.write_composite_fill(con.w, composite, remaining_width, Alignment::Left)?;
+        screen.clear_line(con.w)
     }
 }
 

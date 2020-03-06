@@ -2,6 +2,7 @@
 ///
 
 mod app;
+mod context;
 mod fromage;
 mod initial_state;
 mod state;
@@ -10,6 +11,7 @@ mod transition;
 
 pub use {
     app::App,
+    context::Context,
     fromage::*,
     state::State,
     task_sync::Dam,

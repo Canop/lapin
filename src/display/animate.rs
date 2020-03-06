@@ -1,7 +1,7 @@
 use {
     anyhow::Result,
     crate::{
-        app::Dam,
+        app::Context,
         core::*,
         pos::*,
     },
@@ -27,6 +27,7 @@ static VERTICAL_BC:   [char; 9] = [' ', '▁', '▂', '▃', '▄', '▅', '▆'
 impl<'d> BoardDrawer<'d> {
     fn draw_bicolor_horizontal(
         &mut self,
+        con: &mut Context,
         sp: Option<ScreenPos>,
         left_color: Color,
         right_color: Color,
@@ -38,13 +39,14 @@ impl<'d> BoardDrawer<'d> {
                 background_color: Some(right_color),
                 attributes: Attributes::default(),
             };
-            self.w.queue(cursor::MoveTo(sp.x, sp.y))?;
-            self.w.queue(PrintStyledContent(cs.apply(HORIZONTAL_BC[av])))?;
+            con.w.queue(cursor::MoveTo(sp.x, sp.y))?;
+            con.w.queue(PrintStyledContent(cs.apply(HORIZONTAL_BC[av])))?;
         }
         Ok(())
     }
     fn draw_bicolor_vertical(
         &mut self,
+        con: &mut Context,
         sp: Option<ScreenPos>,
         top_color: Color,
         bottom_color: Color,
@@ -56,13 +58,14 @@ impl<'d> BoardDrawer<'d> {
                 background_color: Some(bottom_color),
                 attributes: Attributes::default(),
             };
-            self.w.queue(cursor::MoveTo(sp.x, sp.y))?;
-            self.w.queue(PrintStyledContent(cs.apply(VERTICAL_BC[av])))?;
+            con.w.queue(cursor::MoveTo(sp.x, sp.y))?;
+            con.w.queue(PrintStyledContent(cs.apply(VERTICAL_BC[av])))?;
         }
         Ok(())
     }
     fn draw_move_step(
         &mut self,
+        con: &mut Context,
         start: Pos,
         dir: Dir,
         color: Color,
@@ -71,28 +74,28 @@ impl<'d> BoardDrawer<'d> {
         let sp_start = self.pos_converter.to_screen(start);
         let dst = start.in_dir(dir);
         let sp_dst = self.pos_converter.to_screen(dst);
-        let start_bg = self.board.get(start).bg(&self.screen.skin);
+        let start_bg = self.board.get(start).bg(&con.skin);
         let dst_bg = if let Some(dst_actor) = self.actor_map.get(dst) {
-            dst_actor.kind.skin(&self.screen.skin).get_fg().unwrap()
+            dst_actor.kind.skin(&con.skin).get_fg().unwrap()
         } else {
-            self.board.get(dst).bg(&self.screen.skin)
+            self.board.get(dst).bg(&con.skin)
         };
         match dir {
             Dir::Up => {
-                self.draw_bicolor_vertical(sp_start, start_bg, color, av)?;
-                self.draw_bicolor_vertical(sp_dst, color, dst_bg, av)?;
+                self.draw_bicolor_vertical(con, sp_start, start_bg, color, av)?;
+                self.draw_bicolor_vertical(con, sp_dst, color, dst_bg, av)?;
             }
             Dir::Left => {
-                self.draw_bicolor_horizontal(sp_start, color, start_bg, 8-av)?;
-                self.draw_bicolor_horizontal(sp_dst, dst_bg, color, 8-av)?;
+                self.draw_bicolor_horizontal(con, sp_start, color, start_bg, 8-av)?;
+                self.draw_bicolor_horizontal(con, sp_dst, dst_bg, color, 8-av)?;
             }
             Dir::Down => {
-                self.draw_bicolor_vertical(sp_start, color, start_bg, 8-av)?;
-                self.draw_bicolor_vertical(sp_dst, dst_bg, color, 8-av)?;
+                self.draw_bicolor_vertical(con, sp_start, color, start_bg, 8-av)?;
+                self.draw_bicolor_vertical(con, sp_dst, dst_bg, color, 8-av)?;
             }
             Dir::Right => {
-                self.draw_bicolor_horizontal(sp_start, start_bg, color, av)?;
-                self.draw_bicolor_horizontal(sp_dst, color, dst_bg, av)?;
+                self.draw_bicolor_horizontal(con, sp_start, start_bg, color, av)?;
+                self.draw_bicolor_horizontal(con, sp_dst, color, dst_bg, av)?;
             }
             _ => {
                 // should not happen
@@ -102,6 +105,7 @@ impl<'d> BoardDrawer<'d> {
     }
     fn draw_kill_step(
         &mut self,
+        con: &mut Context,
         start: Pos,
         dir: Dir,
         color: Color,
@@ -110,18 +114,19 @@ impl<'d> BoardDrawer<'d> {
     ) -> Result<()> {
         let dst = start.in_dir(dir);
         if av%2==1 {
-            self.draw_chr(start, '█', color)?;
+            self.draw_chr(con, start, '█', color)?;
             if let Some(kind) = killed_id.map(|id| self.board.actors[id].kind) {
-                self.draw_chr(dst, kind.skin(&self.screen.skin).get_char(), Color::Red)?;
+                self.draw_chr(con, dst, kind.skin(&con.skin).get_char(), Color::Red)?;
             }
         } else {
-            self.draw_chr(start, ' ', color)?;
-            self.draw_chr(dst, '█', color)?;
+            self.draw_chr(con, start, ' ', color)?;
+            self.draw_chr(con, dst, '█', color)?;
         }
         Ok(())
     }
     fn draw_fire_step(
         &mut self,
+        con: &mut Context,
         start: Pos,
         dir: Dir,
         target_id: Option<usize>,
@@ -136,10 +141,10 @@ impl<'d> BoardDrawer<'d> {
                 }
             }
             let fg_skin = match dir {
-                Dir::Up | Dir::Down => &self.screen.skin.fire_vertical,
-                _ => &self.screen.skin.fire_horizontal,
+                Dir::Up | Dir::Down => con.skin.fire_vertical.clone(),
+                _ => con.skin.fire_horizontal.clone(),
             };
-            self.draw_fg(pos, fg_skin)?;
+            self.draw_fg(con, pos, fg_skin)?;
         }
         Ok(())
     }
@@ -147,8 +152,8 @@ impl<'d> BoardDrawer<'d> {
     /// we draw only the moving things
     pub fn animate(
         &mut self,
+        con: &mut Context,
         world_move: &WorldMove,
-        dam: &mut Dam,
     ) -> Result<()> {
         for av in 0..=8 {
             for actor_move in &world_move.actor_moves {
@@ -157,23 +162,26 @@ impl<'d> BoardDrawer<'d> {
                 match actor_move.action {
                     Action::Moves(dir) => {
                         self.draw_move_step(
+                            con,
                             actor.pos,
                             dir,
-                            actor.kind.skin(&self.screen.skin).get_fg().unwrap(),
+                            actor.kind.skin(&con.skin).get_fg().unwrap(),
                             av,
                         )?;
                     }
                     Action::Eats(dir) => {
                         self.draw_kill_step(
+                            con,
                             actor.pos,
                             dir,
-                            actor.kind.skin(&self.screen.skin).get_fg().unwrap(),
+                            actor.kind.skin(&con.skin).get_fg().unwrap(),
                             actor_move.target_id,
                             av,
                         )?;
                     }
                     Action::Fires(dir) => {
                         self.draw_fire_step(
+                            con,
                             actor.pos,
                             dir,
                             actor_move.target_id,
@@ -183,14 +191,15 @@ impl<'d> BoardDrawer<'d> {
                     Action::Aims(dir) => {
                         actor.state.aim = Some(dir);
                         self.draw_fg(
+                            con,
                             actor.pos,
-                            &actor.skin(&self.screen.skin),
+                            actor.skin(&con.skin).clone(),
                         )?;
                     }
                     _ => {}
                 }
             }
-            if !dam.try_wait(Duration::from_millis(50)) {
+            if !con.dam.try_wait(Duration::from_millis(50)) {
                 break;
             }
         }

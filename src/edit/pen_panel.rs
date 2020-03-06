@@ -2,10 +2,8 @@
 use {
     anyhow::Result,
     crate::{
-        display::{
-            Screen,
-            W,
-        },
+        app::Context,
+        display::Screen,
         pos::ScreenPos,
     },
     crossterm::{
@@ -51,24 +49,27 @@ impl<'s> PenPanel<'s> {
         }
     }
 
-    fn draw_shape_pen_panel(&mut self, w: &mut W) -> Result<()> {
-        let cs = &self.screen.skin.editor.paragraph.compound_style;
+    fn draw_shape_pen_panel(
+        &mut self,
+        con: &mut Context,
+    ) -> Result<()> {
+        let cs = &con.skin.editor.paragraph.compound_style;
         let area = &self.screen.areas.pen_panel;
         let width = 8;
         let x = area.left + area.width - width;
         let mut y = area.top;
         for &shape in PEN_SHAPES {
-            self.screen.goto(w, x, y)?;
+            self.screen.goto(con.w, x, y)?;
             if self.pen.shape == shape {
                 if self.pen.shape_started() {
-                    cs.queue_str(w, "▸▸")?;
+                    cs.queue_str(con.w, "▸▸")?;
                 } else {
-                    cs.queue_str(w, "▸ ")?;
+                    cs.queue_str(con.w, "▸ ")?;
                 }
             } else {
-                cs.queue_str(w, "  ")?;
+                cs.queue_str(con.w, "  ")?;
             }
-            cs.queue(w, format!("{:?}", shape))?;
+            cs.queue(con.w, format!("{:?}", shape))?;
             self.shapewells.push(ShapeWell {
                 shape,
                 area: Area::new(x, y, width, 1),
@@ -78,25 +79,28 @@ impl<'s> PenPanel<'s> {
         Ok(())
     }
 
-    pub fn draw(&mut self, w: &mut W) -> Result<()> {
+    pub fn draw(
+        &mut self,
+        con: &mut Context,
+    ) -> Result<()> {
         let area = &self.screen.areas.pen_panel;
-        let cs = &self.screen.skin.editor.paragraph.compound_style;
+        let cs = con.skin.editor.paragraph.compound_style.clone();
         self.inkwells.clear();
         self.shapewells.clear();
 
         // clear first line
-        self.screen.goto(w, 0, area.top)?;
-        cs.clear(w, ClearType::UntilNewLine)?;
+        self.screen.goto(con.w, 0, area.top)?;
+        cs.clear(con.w, ClearType::UntilNewLine)?;
 
         // clear line below inkwells because we'll draw the marks
-        self.screen.goto(w, 0, area.top + 2)?;
-        cs.clear(w, ClearType::UntilNewLine)?;
+        self.screen.goto(con.w, 0, area.top + 2)?;
+        cs.clear(con.w, ClearType::UntilNewLine)?;
 
         // Terrains
         let mut sp = ScreenPos::new(0, area.top + 1);
-        sp.goto(w)?;
+        sp.goto(con.w)?;
         self.inkwells.extend(draw_inkwells(
-            w,
+            con,
             self.screen,
             &mut sp,
             " Terrain:",
@@ -106,7 +110,7 @@ impl<'s> PenPanel<'s> {
 
         // Items
         self.inkwells.extend(draw_inkwells(
-            w,
+            con,
             self.screen,
             &mut sp,
             " Item:",
@@ -116,7 +120,7 @@ impl<'s> PenPanel<'s> {
 
         // Actors
         self.inkwells.extend(draw_inkwells(
-            w,
+            con,
             self.screen,
             &mut sp,
             " Actor:",
@@ -124,9 +128,9 @@ impl<'s> PenPanel<'s> {
             self.pen.ink,
         )?);
 
-        cs.clear(w, ClearType::UntilNewLine)?;
+        cs.clear(con.w, ClearType::UntilNewLine)?;
 
-        self.draw_shape_pen_panel(w)?;
+        self.draw_shape_pen_panel(con)?;
 
         Ok(())
     }
