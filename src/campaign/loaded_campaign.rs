@@ -72,17 +72,40 @@ impl LoadedCampaign {
         let mut levels = Vec::new();
         for key in &campaign.levels {
             let level = match preferred_origin {
-                Bag => match bag.levels.remove(key) {
+                LoadOrigin::Bag => match bag.levels.remove(key) {
                     Some(level) => level,
                     None => load_external_level(path, key)?
                         .ok_or(anyhow!("Level {:?} not found", key))?,
                 }
-                External => match load_external_level(path, key)? {
+                LoadOrigin::External => match load_external_level(path, key)? {
                     Some(level) => level,
                     None => bag.levels.remove(key)
                         .ok_or(anyhow!("Level {:?} not found", key))?,
                 }
             };
+            levels.push(LoadedLevel {
+                won: false,
+                level,
+            });
+        }
+        if levels.is_empty() {
+            Err(anyhow!("Empty campaign"))
+        } else {
+            Ok(Self {
+                campaign,
+                levels,
+            })
+        }
+    }
+
+    /// build a loaded campaing assuming the bag already
+    /// contains all the levels.
+    pub fn from_packed_bag(mut bag: Bag) -> Result<Self> {
+        let campaign = bag.campaigns.pop().expect("bag without campaign");
+        let mut levels = Vec::new();
+        for key in &campaign.levels {
+            let level = bag.levels.remove(key)
+                .ok_or(anyhow!("Level {:?} not in bag", key))?;
             levels.push(LoadedLevel {
                 won: false,
                 level,

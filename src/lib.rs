@@ -17,6 +17,7 @@ pub mod choose;
 pub mod display;
 pub mod edit;
 pub mod help;
+pub mod included;
 pub mod level;
 pub mod play;
 pub mod pos;

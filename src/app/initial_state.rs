@@ -7,12 +7,12 @@ use {
         },
         choose,
         edit,
+        included,
         play,
         persist::{
             self,
             Bag,
         },
-        test_level,
     },
     std::{
         convert::TryFrom,
@@ -34,8 +34,9 @@ pub fn make(fromage: &Fromage) -> Result<Box<dyn State>> {
 
 /// A default state for when there's nothing in the fromage
 fn default_state() -> Result<Box<dyn State>> {
-    let level = test_level::build();
-    Ok(Box::new(play::PlayLevelState::new(&level, None)?))
+    Ok(Box::new(choose::ChooseLevelState::new(
+        included::loaded_campaign()?
+    )?))
 }
 
 fn play_state(pc: &PlayCommand) -> Result<Box<dyn State>> {

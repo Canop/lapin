@@ -11,6 +11,23 @@ use {
     super::*,
 };
 
+pub fn read_bytes<T>(
+    bytes: &[u8],
+    format: SerdeFormat,
+) -> Result<T>
+where
+    T: DeserializeOwned,
+{
+    Ok(match format {
+        SerdeFormat::Json => {
+            serde_json::from_slice(bytes)?
+        }
+        SerdeFormat::MessagePack => {
+            rmp_serde::decode::from_slice(bytes)?
+        }
+    })
+}
+
 
 /// read an object from a file,
 /// guessing the format from the file extension

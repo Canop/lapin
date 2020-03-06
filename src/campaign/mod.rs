@@ -41,7 +41,7 @@ pub fn create(ncc: &NewCampaignCommand) -> Result<()> {
 /// (which are found preferably in external files and
 /// in the initial bag if not found externally)
 pub fn pack(pcc: &PackCampaignCommand) -> Result<()> {
-    let mut in_bag: Bag = persist::read_file(&pcc.unpacked_path)?;
+    let in_bag: Bag = persist::read_file(&pcc.unpacked_path)?;
     if !in_bag.is_campaign() {
         Err(anyhow!("no campaign found in bag"))?
     }
