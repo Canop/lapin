@@ -3,6 +3,7 @@ use {
     crate::{
         campaign::{
             LoadedCampaign,
+            LoadOrigin,
         },
         choose,
         edit,
@@ -43,7 +44,7 @@ fn play_state(pc: &PlayCommand) -> Result<Box<dyn State>> {
         if let Some(level) = bag.as_sole_level() {
             Ok(Box::new(play::PlayLevelState::new(&level, None)?))
         } else if bag.is_campaign() {
-            let loaded_campaign = LoadedCampaign::load(&path, bag)?;
+            let loaded_campaign = LoadedCampaign::load(&path, bag, LoadOrigin::Bag)?;
             Ok(Box::new(choose::ChooseLevelState::new(loaded_campaign)?))
         } else {
             Err(anyhow!("nothing found in bag"))

@@ -74,6 +74,7 @@ fn do_test_command(fromage: Fromage) -> Result<()> {
 fn do_campaign_command(cc: &CampaignCommand) -> Result<()> {
     match &cc.sub {
         CampaignSubCommand::New(ncc) => campaign::create(ncc),
+        CampaignSubCommand::Pack(pcc) => campaign::pack(pcc),
     }
 }
 

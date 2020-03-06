@@ -22,6 +22,17 @@ pub struct LoadedCampaign {
     pub levels: Vec<LoadedLevel>,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum LoadOrigin {
+
+    /// the level comes from the same file than the campaign
+    Bag,
+
+    /// the level comes from an other file, found by key
+    External,
+
+}
+
 pub struct LoadedLevel {
     pub level: Level,
     pub won: bool,
@@ -30,7 +41,7 @@ pub struct LoadedLevel {
 fn load_external_level(
     campaign_path: &Path,
     level_key: &str,
-) -> Result<Level> {
+) -> Result<Option<Level>> {
     debug!("looking for level {:?} in {:?}", level_key, campaign_path);
     for sf in persist::FORMATS {
         let path = campaign_path.with_file_name(level_key).with_extension(sf.key());
@@ -38,14 +49,15 @@ fn load_external_level(
         if path.exists() {
             let mut bag: Bag = persist::read_file(&path)?;
             if let Some(level) = bag.as_sole_level() {
-                return Ok(level);
+                return Ok(Some(level));
             }
         }
     }
-    Err(anyhow!("Level {:?} not found", level_key))
+    Ok(None)
 }
 
 impl LoadedCampaign {
+
     /// load the levels
     ///
     /// Don't check if some levels have been won (call check_wins for that).
@@ -54,13 +66,22 @@ impl LoadedCampaign {
     pub fn load(
         path: &Path,
         mut bag: Bag,
+        preferred_origin: LoadOrigin,
     ) -> Result<Self> {
         let campaign = bag.campaigns.pop().expect("tried to load a bag without campaign");
         let mut levels = Vec::new();
         for key in &campaign.levels {
-            let level = match bag.levels.remove(key) {
-                Some(level) => level,
-                None => load_external_level(path, key)?,
+            let level = match preferred_origin {
+                Bag => match bag.levels.remove(key) {
+                    Some(level) => level,
+                    None => load_external_level(path, key)?
+                        .ok_or(anyhow!("Level {:?} not found", key))?,
+                }
+                External => match load_external_level(path, key)? {
+                    Some(level) => level,
+                    None => bag.levels.remove(key)
+                        .ok_or(anyhow!("Level {:?} not found", key))?,
+                }
             };
             levels.push(LoadedLevel {
                 won: false,
@@ -76,6 +97,7 @@ impl LoadedCampaign {
             })
         }
     }
+
     pub fn check_wins(&mut self) -> Result<()> {
         if let Ok(win_file) = win_db::WinFile::load() {
             for level in self.levels.iter_mut() {

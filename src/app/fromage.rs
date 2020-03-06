@@ -87,6 +87,7 @@ pub struct CampaignCommand {
 #[argh(subcommand)]
 pub enum CampaignSubCommand {
     New(NewCampaignCommand),
+    Pack(PackCampaignCommand),
 }
 
 #[derive(FromArgs, PartialEq, Eq, Debug, Clone)]
@@ -101,5 +102,20 @@ pub struct NewCampaignCommand {
     #[argh(positional)]
     /// path to the file to create
     pub path: PathBuf,
+
+}
+
+#[derive(FromArgs, PartialEq, Eq, Debug, Clone)]
+/// pack all levels into a campaign file
+#[argh(subcommand, name = "pack")]
+pub struct PackCampaignCommand {
+
+    #[argh(positional)]
+    /// path to the unpacked file
+    pub unpacked_path: PathBuf,
+
+    #[argh(positional)]
+    /// path to the packed file to create
+    pub packed_path: PathBuf,
 
 }
