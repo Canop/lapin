@@ -11,6 +11,7 @@ use {
     super::Skin,
     termimad::{
         ansi,
+        gray,
         Alignment,
         MadSkin,
     },
@@ -43,11 +44,19 @@ pub fn make(skin: &Skin) -> MadSkin {
     ms.special_chars.insert(Compound::raw_str("w").code(), wine);
     ms.italic.set_fg(AnsiValue(178));
     ms.scrollbar.thumb.set_fg(AnsiValue(178));
+    ms.inline_code.set_bg(ansi(22));
     ms.set_global_bg(bg);
+
+    // style for selected line
     ms.headers[2] = Default::default();
     ms.headers[2].align = Alignment::Center;
     ms.headers[2].set_bg(ansi(24));
-    ms.inline_code.set_bg(ansi(22));
-    //ms.headers[2].compound_style.
+
+    // style for unselectable line
+    ms.headers[3] = Default::default();
+    ms.headers[3].align = Alignment::Center;
+    ms.headers[3].set_fg(gray(9));
+    ms.headers[3].set_bg(bg);
+
     ms
 }

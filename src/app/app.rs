@@ -59,6 +59,9 @@ impl App {
                 }
                 Back => {
                     self.states.pop();
+                    if self.states.is_empty() {
+                        break;
+                    }
                 }
                 Quit => {
                     break;

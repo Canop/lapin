@@ -33,6 +33,7 @@ pub struct ChooseLevelState {
     status: Status,
     loaded_campaign: LoadedCampaign,
     selection: usize, // index of the selected level
+    nb_playable_levels: usize,
 }
 
 impl ChooseLevelState {
@@ -43,10 +44,12 @@ impl ChooseLevelState {
             "Hit *↓* and *↑* to change the selection, *enter* to open it, *q* to quit".to_string()
         );
         let selection = 0;
+        let nb_playable_levels = 0; // will be updated on check wins
         Ok(Self {
             status,
             loaded_campaign,
             selection,
+            nb_playable_levels,
         })
     }
 
@@ -57,7 +60,13 @@ impl ChooseLevelState {
             write!(
                 md,
                 "\n{}{}{}",
-                if i == self.selection { "### " } else { "" },
+                if i >= self.nb_playable_levels {
+                    "#### " // unplayable level
+                } else if i == self.selection {
+                    "### "  // selected level
+                } else {
+                    ""
+                },
                 level.level.name,
                 if level.won { " ` WON `" } else { "" },
             )?;
@@ -74,7 +83,7 @@ impl ChooseLevelState {
                 self.selection -= 1;
                 None
             }
-            KeyCode::Down if self.selection < self.loaded_campaign.levels.len() - 1 => {
+            KeyCode::Down if self.selection < self.nb_playable_levels - 1 => {
                 self.selection += 1;
                 None
             }
@@ -95,6 +104,28 @@ impl ChooseLevelState {
         self.status.display(w, screen)
     }
 
+    /// update the won property of levels and determine
+    /// what levels are open to the player
+    fn check_wins(
+        &mut self,
+    ) -> Result<()> {
+        self.loaded_campaign.check_wins()?;
+        self.nb_playable_levels = if self.loaded_campaign.campaign.allow_all_levels {
+            self.loaded_campaign.campaign.levels.len()
+        } else {
+            let mut nb = 0;
+            for level in &self.loaded_campaign.levels {
+                nb += 1;
+                if !level.won {
+                    break;
+                }
+            }
+            nb
+        };
+        debug!("nb_playable_levels: {:?}", self.nb_playable_levels);
+        Ok(())
+    }
+
 }
 
 impl State for ChooseLevelState {
@@ -111,7 +142,7 @@ impl State for ChooseLevelState {
         let mut screen = Screen::new(LAYOUT);
         let skin = mad_skin::make(&screen.skin);
         // we do this here so that wins are verified when coming back from a game
-        self.loaded_campaign.check_wins()?;
+        self.check_wins()?;
         loop {
             self.write_status(w, &screen)?;
             let md = self.markdown()?;

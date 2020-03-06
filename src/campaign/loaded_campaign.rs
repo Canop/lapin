@@ -18,7 +18,7 @@ use {
 /// - the level found in bag or on disk
 /// - win info related to the user
 pub struct LoadedCampaign {
-    campaign: Campaign,
+    pub campaign: Campaign,
     pub levels: Vec<LoadedLevel>,
 }
 
