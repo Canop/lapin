@@ -62,9 +62,10 @@ fn do_test_command(fromage: Fromage) -> Result<()> {
     let level = test_level::build();
     let format = fromage.output_format()
         .and_then(|key| persist::SerdeFormat::from_key(&key));
+    let bag = persist::Bag::from(level);
     persist::write(
         &mut std::io::stdout(),
-        &level,
+        &bag,
         format.unwrap_or(persist::SerdeFormat::default()),
         false,
     )

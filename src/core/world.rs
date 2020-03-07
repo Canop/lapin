@@ -146,7 +146,37 @@ impl<'t> WorldPlayer<'t> {
         )
     }
 
+    // this is a quick hack - the data model is about to change anyway
+    fn get_actor_id(&self, actor: Actor) -> Option<usize> {
+        for (id, a) in self.board.actors.iter().enumerate() {
+            if actor.pos == a.pos {
+                return Some(id);
+            }
+        }
+        None
+    }
+
     fn find_firer_move(&self, actor_id: usize, actor: Actor) -> Option<ActorMove> {
+        // we first check whether we have a target in the firing line
+        if let Some(dir) = actor.state.aim {
+            let mut pos = actor.pos;
+            for _ in 0..FIRING_RANGE {
+                pos = pos.in_dir(dir);
+                if let Some(other) = self.actor_pos_map.get(pos) {
+                    if actor.fires_on(other) {
+                        // fire!
+                        return Some(ActorMove {
+                            actor_id,
+                            target_id: self.get_actor_id(other),
+                            action: Action::Fires(dir),
+                        });
+                    }
+                }
+                if self.board.get(pos) == Terrain::Stone {
+                    break;
+                }
+            }
+        }
         let mut nearest_target: Option<(Pos, Int)> = None; // position, distance
         for (other_id, other) in self.board.actors.iter().enumerate() {
             if other_id == actor_id || self.killed[other_id] {
@@ -159,15 +189,9 @@ impl<'t> WorldPlayer<'t> {
             if dist <= FIRING_RANGE {
                 let quadrant_dir = actor.pos.quadrant_to(other.pos);
                 return if let Some(dir) = actor.state.aim {
-                    // is the target in the firing line ?
-                    if self.is_firing_dir(actor.pos, dir, other.pos) {
-                        // fire!
-                        Some(ActorMove {
-                            actor_id,
-                            target_id: Some(other_id),
-                            action: Action::Fires(quadrant_dir),
-                        })
-                    } else if dir != quadrant_dir {
+                    // at this point we know the target isn't in the firing line
+                    // (or we would have fired)
+                    if dir != quadrant_dir {
                         // target lost
                         Some(ActorMove {
                             actor_id,
@@ -196,6 +220,8 @@ impl<'t> WorldPlayer<'t> {
                 }
             }
         }
+        // at this point there's nothing on which to aim or fire, so
+        // we should walk
         if actor.is_aiming() {
             Some(ActorMove {
                 actor_id,
