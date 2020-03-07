@@ -135,31 +135,31 @@ mod pos_map_tests {
 
     use super::*;
     use crate::{
-        actor::*,
-        consts::*,
+        core::*,
     };
 
     #[test]
     fn test_idx() {
         let area = PosArea::new(-10..11, -100..151);
-        let mut m: PosMap<usize> = PosMap::new(area, 0);
+        let m: PosMap<usize> = PosMap::new(area, 0);
         let pos = Pos::new(-7, 54);
         assert_eq!(pos, m.pos_unchecked(m.idx(pos).unwrap()));
     }
 
     #[test]
     fn test_cell_map() {
+        use Terrain::*;
         let area = PosArea::new(-10..11, -100..151);
-        let mut cm: PosMap<Cell> = PosMap::new(area.clone(), WALL);
-        cm.set_xy(2, 3, GRASS);
-        cm.set_xy(-5, 3, WATER);
-        cm.set_xy(-15, 3, GRASS);
-        assert_eq!(cm.get_xy(0, 0), WALL);
-        assert_eq!(cm.get_xy(-1000, 0), WALL);
-        assert_eq!(cm.get_xy(2, 3), GRASS);
-        assert_eq!(cm.get_xy(-5, 3), WATER);
-        assert_eq!(cm.get_xy(-15, 3), GRASS); // out of area
-        let mut iter = cm.iter();
+        let mut cm: PosMap<Terrain> = PosMap::new(area.clone(), Stone);
+        cm.set_xy(2, 3, Grass);
+        cm.set_xy(-5, 3, Water);
+        cm.set_xy(-15, 3, Grass);
+        assert_eq!(cm.get_xy(0, 0), Stone);
+        assert_eq!(cm.get_xy(-1000, 0), Stone);
+        assert_eq!(cm.get_xy(2, 3), Grass);
+        assert_eq!(cm.get_xy(-5, 3), Water);
+        assert_eq!(cm.get_xy(-15, 3), Grass); // out of area
+        let iter = cm.iter();
         assert_eq!(
             iter.count() as i32,
             area.width()*area.height() + 1, // +1 for the outlier
