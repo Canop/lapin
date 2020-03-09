@@ -33,10 +33,6 @@ impl Dam {
         })
     }
 
-    //pub fn unlimited() -> Self {
-    //    Self::from(channel::never())
-    //}
-
     pub fn try_wait(&mut self, duration: Duration) -> bool {
         select! {
             recv(self.receiver) -> event => {

@@ -39,6 +39,8 @@ fn default_state() -> Result<Box<dyn State>> {
     )?))
 }
 
+/// compute the relevant initial state for a `lapin play` command
+/// (may be choosing a level or directly playing it)
 fn play_state(pc: &PlayCommand) -> Result<Box<dyn State>> {
     if let Some(path) = &pc.path {
         let mut bag: Bag = persist::read_file(&path)?;

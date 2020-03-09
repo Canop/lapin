@@ -19,7 +19,6 @@ use {
     },
 };
 
-
 /// An implementation of the wins storage based
 /// on just a file with one line per level hash.
 /// We use the hexa version for readability.

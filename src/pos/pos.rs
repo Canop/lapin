@@ -6,7 +6,7 @@ use {
     super::*,
 };
 
-// a position in the real world (the one full of rabbits and wolves)
+/// a position in the real world (the one full of rabbits and wolves)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
 pub struct Pos {
     pub x: Int,
@@ -109,6 +109,7 @@ impl Pos {
             }
         }
     }
+    /// return the pos in the given direction
     pub fn in_dir(&self, dir: Dir) -> Self {
         match dir {
             Dir::Up => Pos { x:self.x, y:self.y-1 },

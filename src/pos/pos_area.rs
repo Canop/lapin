@@ -4,7 +4,7 @@ use {
     super::*,
 };
 
-// note: the Range type is broken, not Copy and hard
+// note: the std Range type is broken, not Copy and hard
 // to pass around and use. It's better to avoid it
 // as much as possible.
 pub type IntRange = Range<Int>;
@@ -16,6 +16,7 @@ pub fn grow_range_to(range: &mut IntRange, i: Int) {
     }
 }
 
+/// A rectangle in the real world
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PosArea {
     pub x: Range<Int>,
@@ -64,6 +65,8 @@ impl PosArea {
             (self.y.start + self.y.end)/2,
         )
     }
+    /// return the pos in the area which is the nearest one
+    /// from the given external pos
     pub fn nearest(&self, mut pos: Pos) -> Pos {
         if pos.x < self.x.start {
             pos.x = self.x.start;
@@ -77,6 +80,8 @@ impl PosArea {
         }
         pos
     }
+    /// change the area so that it includes the
+    /// passed pos
     pub fn grow_to(&mut self, pos: Pos) {
         grow_range_to(&mut self.x, pos.x);
         grow_range_to(&mut self.y, pos.y);

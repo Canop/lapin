@@ -6,6 +6,9 @@ use {
     super::*,
 };
 
+/// A structure keeping pos indexed values.
+/// It makes sense when most of them are in a known rect but
+/// it allows outliers.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PosMap<V>
     where V: Copy

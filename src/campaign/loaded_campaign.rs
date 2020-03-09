@@ -14,6 +14,8 @@ use {
     super::*,
 };
 
+/// a ready to play or display campaign, with resources loaded.
+///
 /// A loaded campaign packs
 /// - the level found in bag or on disk
 /// - win info related to the user
@@ -121,6 +123,10 @@ impl LoadedCampaign {
         }
     }
 
+    /// check in the win database to determine what levels have been won.
+    ///
+    /// This can (and should) be called several times, when it may have
+    /// changed.
     pub fn check_wins(&mut self) -> Result<()> {
         if let Ok(win_file) = win_db::WinFile::load() {
             for level in self.levels.iter_mut() {
@@ -130,6 +136,7 @@ impl LoadedCampaign {
         }
         Ok(())
     }
+
     pub fn name(&self) -> &str {
         &self.campaign.name
     }

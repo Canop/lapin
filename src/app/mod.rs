@@ -1,5 +1,4 @@
 /// manage the state+transition based TUI of Lapin
-///
 
 mod app;
 mod context;

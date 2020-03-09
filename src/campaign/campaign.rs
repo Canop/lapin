@@ -3,8 +3,13 @@ use {
     serde::{Serialize, Deserialize},
 };
 
-/// a campaign doesn't actually contains the levels,
-/// only their reference (name)
+
+/// a campaign, that is mostly a list of reference
+/// to levels.
+///
+/// A campaign doesn't actually contains the levels,
+/// only their reference (name) which can be the stem
+/// of a file or the key in the same Bag
 #[derive(Default, Debug, Clone, Serialize, Deserialize)]
 pub struct Campaign {
 

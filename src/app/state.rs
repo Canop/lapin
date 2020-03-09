@@ -18,7 +18,7 @@ pub trait State {
     /// they could get back
     fn label(&self) -> &'static str;
 
-    /// display the state on screen and handled events until
+    /// display the state on screen and handle events until
     /// a transition must be done.
     ///
     /// This function can be called several times (if there's

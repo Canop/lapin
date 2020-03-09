@@ -27,7 +27,7 @@ pub struct InkWell {
 
 const ERASER_CHAR: char = '╳';
 
-// draw ink_well in the cursor position
+/// draw ink_well in the cursor position
 fn draw_inkwell(
     con: &mut Context,
     ink: Ink,

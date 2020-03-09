@@ -25,6 +25,7 @@ impl ScreenPos {
     pub fn new(x: u16, y:u16) -> Self {
         Self { x, y }
     }
+    /// move the terminal cursor
     pub fn goto(self, w: &mut W) -> Result<()> {
         w.queue(cursor::MoveTo(self.x, self.y))?;
         Ok(())

@@ -167,7 +167,7 @@ impl EditorHeadPanel {
                             return Some(DrawingAction::DefaultTerrain(terrain));
                         }
                         _ => {
-                            warn!("unexptected ink");
+                            warn!("unexpected ink");
                         }
                     }
                 }
