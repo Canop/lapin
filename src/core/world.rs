@@ -2,6 +2,7 @@ use {
     crate::{
         pos::*,
     },
+    rayon::prelude::*,
     super::*,
 };
 
@@ -197,23 +198,10 @@ impl<'t> WorldPlayer<'t> {
     }
 
     pub fn play(self) -> WorldMove {
-        let mut actor_moves = Vec::new();
-        // actor moves are computed sequentially so that the freed space
-        // and the newly occupied place can be better taken into account.
-        // Parallelizing would prevent optimal paths especially in case
-        // of herds
-        for id in 1..self.board.actors.len() {
-            // let actor_move = time!(
-            //     Debug,
-            //     "move",
-            //     format!("{:?}[{}]", actor.kind, id),
-            //     self.find_actor_move(id),
-            // );
-            let actor_move = self.find_actor_move(id);
-            if let Some(actor_move) = actor_move {
-                actor_moves.push(actor_move);
-            }
-        }
+        let actor_moves = (1..self.board.actors.len())
+            .into_par_iter()
+            .filter_map(|id| self.find_actor_move(id))
+            .collect();
         WorldMove { actor_moves }
     }
 }
