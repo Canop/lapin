@@ -12,7 +12,7 @@ use {
             Screen,
             Status,
         },
-        level::Level,
+        persist::Level,
     },
     crossterm::{
         event::{

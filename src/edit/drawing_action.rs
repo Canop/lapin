@@ -38,12 +38,12 @@ fn ink_pos(ink: Ink, pos: Pos, board: &mut Board) {
             board.add_item_in(item_kind, pos.x, pos.y);
         }
         Ink::EraseActor => {
-            board.actors.retain(|&actor| actor.pos != pos);
+            board.actors.remove_by_pos(pos);
         }
         Ink::Actor(actor_kind) => {
             if actor_kind == ActorKind::Lapin {
                 // we're just moving THE lapin
-                board.actors[0].pos = pos;
+                board.actors.move_lapin_to(pos);
                 return;
             }
             // we check we're not removing the lapin
@@ -51,9 +51,11 @@ fn ink_pos(ink: Ink, pos: Pos, board: &mut Board) {
                 return; // we make it a no-op
             }
             // we must now ensure any previous actor in pos is removed
-            board.actors.retain(|&actor| actor.pos != pos);
+            board.actors.remove_by_pos(pos);
             // and now we add the new actor
-            board.add_actor_in(actor_kind, pos.x, pos.y);
+            if let Err(e) = board.add_actor_in(actor_kind, pos.x, pos.y) {
+                warn!("err in adding actor: {:?}", e);
+            }
         }
     }
 }
@@ -130,6 +132,7 @@ fn ink_rect(ink: Ink, a: Pos, b: Pos, board: &mut Board) {
 
 impl DrawingAction {
     pub fn apply_to(&self, board: &mut Board) {
+        time!(Debug, "draw act",
         match self {
             DrawingAction::DotInk(ink, pos) => {
                 ink_pos(*ink, *pos, board);
@@ -147,5 +150,6 @@ impl DrawingAction {
                 board.terrains.default = *terrain;
             }
         }
+        )
     }
 }

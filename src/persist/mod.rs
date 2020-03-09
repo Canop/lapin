@@ -1,6 +1,7 @@
 
 mod bag;
 mod format;
+mod level;
 mod read;
 mod write;
 
@@ -10,6 +11,7 @@ pub use {
         SerdeFormat,
         FORMATS,
     },
+    level::Level,
     read::*,
     write::*,
 };

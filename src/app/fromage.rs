@@ -23,17 +23,6 @@ pub enum Command {
     Play(PlayCommand),
     Edit(EditCommand),
     Campaign(CampaignCommand),
-    Test(TestCommand),
-}
-
-impl Fromage {
-    pub fn output_format(&self) -> Option<String> {
-        match &self.command {
-            Some(Command::Edit(command)) => command.output_format.clone(),
-            Some(Command::Test(command)) => command.output_format.clone(),
-            _ => None,
-        }
-    }
 }
 
 #[derive(FromArgs, PartialEq, Debug, Default, Clone)]
@@ -60,18 +49,6 @@ pub struct EditCommand {
 }
 
 #[derive(FromArgs, PartialEq, Eq, Debug, Clone)]
-/// does a special test for the dev
-#[argh(subcommand, name = "test")]
-pub struct TestCommand {
-
-    /// format of the written level file (same as input if not precised)
-    #[argh(option, short='f')]
-    pub output_format: Option<String>, // argh doesn't support enum as values :(
-
-}
-
-
-#[derive(FromArgs, PartialEq, Eq, Debug, Clone)]
 /// campaign building/packing tool
 #[argh(subcommand, name = "campaign")]
 pub struct CampaignCommand {
@@ -80,7 +57,6 @@ pub struct CampaignCommand {
     pub sub: CampaignSubCommand,
 
 }
-
 
 /// various operations done on campaigns
 #[derive(FromArgs, PartialEq, Eq, Debug, Clone)]

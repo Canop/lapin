@@ -2,7 +2,7 @@
 use {
     anyhow::Result,
     crate::{
-        level::Level,
+        persist::Level,
     },
     super::{
         Context,

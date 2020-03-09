@@ -4,7 +4,7 @@ use {
         core::{
             Board,
         },
-        level::Level,
+        persist::Level,
     },
     super::{
         drawing_action::*,

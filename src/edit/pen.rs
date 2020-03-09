@@ -1,8 +1,8 @@
 use {
     crate::{
-        level::Level,
-        pos::*,
         core::Terrain,
+        persist::Level,
+        pos::*,
     },
     super::{
         drawing_action::*,

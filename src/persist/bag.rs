@@ -2,10 +2,10 @@
 use {
     crate::{
         campaign::Campaign,
-        level::Level,
     },
     fnv::FnvHashMap,
     serde::{Serialize, Deserialize},
+    super::Level,
 };
 
 

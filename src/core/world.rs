@@ -7,81 +7,28 @@ use {
 
 pub const FIRING_RANGE: Int = 6;
 
-#[derive(Debug, Clone, Copy)]
-pub enum Action {
-    Moves(Dir),
-    Aims(Dir),
-    StopsAiming,
-    Eats(Dir),
-    Fires(Dir),
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct ActorMove {
-    pub actor_id: usize,
-    pub target_id: Option<usize>, // the actor killed by the move
-    pub action: Action,
-}
-
-/// what the world plays in a non-player turn.
-/// Arrays here must be consistent with the board.
-#[derive(Debug)]
-pub struct WorldMove {
-    pub actor_moves: Vec<ActorMove>,
-}
-
 pub struct WorldPlayer<'t> {
     board: &'t Board,
-    actor_pos_map: ActorPosMap,
-    killed: Vec<bool>,
     seed: usize,
 }
 
 impl<'t> WorldPlayer<'t> {
     pub fn new(board: &'t Board, seed: usize) -> Self {
-        let actor_pos_map = board.actor_pos_map();
-        let killed = vec![false; board.actors.len()];
         Self {
             board,
-            actor_pos_map,
-            killed,
             seed,
         }
-    }
-    fn actor_pos(&self, actor_id: usize) -> Pos {
-        self.board.actors[actor_id].pos
-    }
-
-    /// tells whether the target is in the given direction and range
-    /// (i.e. if firing kills it)
-    pub fn is_firing_dir(
-        &self,
-        mut pos: Pos,
-        dir: Dir,
-        target: Pos,
-    ) -> bool {
-        for _ in 0..FIRING_RANGE {
-            pos = pos.in_dir(dir);
-            if pos == target {
-                return true;
-            }
-            if self.board.get(pos) == Terrain::Stone {
-                return false;
-            }
-        }
-        false
     }
 
     fn move_to_goal(
         &self,
-        actor_id: usize,
+        actor_id: ActorId,
         actor: Actor,
         goal: path::Goal,
     ) -> Option<ActorMove> {
         let mut path_finder = path::PathFinder::new(
             actor,
             &self.board,
-            &self.actor_pos_map,
             self.seed,
         );
         let hint = if actor.kind.runs_after(ActorKind::Lapin) {
@@ -93,49 +40,53 @@ impl<'t> WorldPlayer<'t> {
         path_finder.find(goal, hint)
             .map(|path| path[0])
             .and_then(|pos| actor.pos.dir_to(pos))
-            .map(|dir|
-                ActorMove {
-                    actor_id,
-                    target_id: None,
-                    action: Action::Moves(dir),
-                }
-            )
+            .map(|dir| ActorMove::new(actor_id, Action::Moves(dir)))
     }
 
-    fn find_grazer_move(&self, actor_id: usize, actor: Actor) -> Option<ActorMove> {
+    fn find_grazer_move(&self, actor_id: ActorId, actor: Actor) -> Option<ActorMove> {
         if self.board.get(actor.pos) == Terrain::Grass {
             None
         } else {
-            self.move_to_goal(actor_id, actor, path::Goal::Terrain(Terrain::Grass))
+            self.move_to_goal(
+                actor_id,
+                actor,
+                path::Goal::Terrain(Terrain::Grass),
+            )
         }
     }
 
-    fn find_lapin_eater_move(&self, actor_id: usize, actor: Actor) -> Option<ActorMove> {
+    fn find_lapin_eater_move(&self, actor_id: ActorId, actor: Actor) -> Option<ActorMove> {
         if let Some(dir) = actor.pos.dir_to(self.board.lapin_pos()) {
             // we can make a direct kill (may be a diagonal move)
-            return Some(ActorMove {
+            return Some(ActorMove::new(
                 actor_id,
-                target_id: Some(0),
-                action: Action::Eats(dir),
-            });
+                Action::Eats(dir, 0),
+            ));
         }
-        self.move_to_goal(actor_id, actor, path::Goal::Pos(self.board.lapin_pos()))
+        self.move_to_goal(
+            actor_id,
+            actor,
+            path::Goal::Pos(self.board.lapin_pos())
+        )
     }
 
     // for actors who hunt several types of actors (not the fox)
-    fn find_eater_move(&self, actor_id: usize, actor: Actor) -> Option<ActorMove> {
-        for (other_id, other) in self.board.actors.iter().enumerate() {
-            if other_id == actor_id || self.killed[other_id] || !actor.hits(*other) {
+    fn find_eater_move(&self, actor_id: ActorId, actor: Actor) -> Option<ActorMove> {
+        for other_id in 0..self.board.actors.len() {
+            if other_id == actor_id {
+                continue;
+            }
+            let other = self.board.actors.by_id(other_id);
+            if !actor.hits(other) {
                 continue;
             }
             if let Some(dir) = actor.pos.dir_to(other.pos) {
                 // we can make a direct kill (may be a diagonal move)
                 if actor.can_enter(self.board.get(other.pos)) {
-                    return Some(ActorMove {
+                    return Some(ActorMove::new(
                         actor_id,
-                        target_id: Some(other_id),
-                        action: Action::Eats(dir),
-                    });
+                        Action::Eats(dir, other_id),
+                    ));
                 }
             }
         }
@@ -146,30 +97,46 @@ impl<'t> WorldPlayer<'t> {
         )
     }
 
-    // this is a quick hack - the data model is about to change anyway
-    fn get_actor_id(&self, actor: Actor) -> Option<usize> {
-        for (id, a) in self.board.actors.iter().enumerate() {
-            if actor.pos == a.pos {
-                return Some(id);
+    fn nearest_fire_target(&self, actor_id: ActorId, actor: Actor) -> Option<(Actor, Int)> {
+        let mut nearest_target: Option<(Actor, Int)> = None; // actor, distance
+        for other_id in 0..self.board.actors.len() {
+            if other_id == actor_id {
+                continue;
+            }
+            let other = self.board.actors.by_id(other_id);
+            if !actor.fires_on(other) {
+                continue;
+            }
+            let dist = Pos::manhattan_distance(actor.pos, other.pos);
+            if match nearest_target {
+                Some((_, best_dist)) => best_dist > dist,
+                _ => true
+            } {
+                nearest_target = Some((other, dist));
             }
         }
-        None
+        nearest_target
     }
 
-    fn find_firer_move(&self, actor_id: usize, actor: Actor) -> Option<ActorMove> {
+    fn can_enter(&self, actor: Actor, pos: Pos) -> bool {
+        actor.can_enter(self.board.get(pos))
+            && !self.board.actors.has_pos(pos)
+    }
+
+
+    fn find_firer_move(&self, actor_id: ActorId, actor: Actor) -> Option<ActorMove> {
         // we first check whether we have a target in the firing line
         if let Some(dir) = actor.state.aim {
             let mut pos = actor.pos;
             for _ in 0..FIRING_RANGE {
                 pos = pos.in_dir(dir);
-                if let Some(other) = self.actor_pos_map.get(pos) {
-                    if actor.fires_on(other) {
+                if let Some((target_id, target)) = self.board.actors.id_actor_by_pos(pos) {
+                    if actor.fires_on(target) {
                         // fire!
-                        return Some(ActorMove {
+                        return Some(ActorMove::new(
                             actor_id,
-                            target_id: self.get_actor_id(other),
-                            action: Action::Fires(dir),
-                        });
+                            Action::Fires(dir, target_id),
+                        ));
                     }
                 }
                 if self.board.get(pos) == Terrain::Stone {
@@ -177,69 +144,36 @@ impl<'t> WorldPlayer<'t> {
                 }
             }
         }
-        let mut nearest_target: Option<(Pos, Int)> = None; // position, distance
-        for (other_id, other) in self.board.actors.iter().enumerate() {
-            if other_id == actor_id || self.killed[other_id] {
-                continue;
-            }
-            if !actor.fires_on(*other) {
-                continue;
-            }
-            let dist = Pos::manhattan_distance(actor.pos, other.pos);
+        // if there's a possible target in range, we try to lock aim on it
+        let nearest_target = self.nearest_fire_target(actor_id, actor);
+        if let Some((other, dist)) = nearest_target {
             if dist <= FIRING_RANGE {
                 let quadrant_dir = actor.pos.quadrant_to(other.pos);
-                return if let Some(dir) = actor.state.aim {
-                    // at this point we know the target isn't in the firing line
-                    // (or we would have fired)
-                    if dir != quadrant_dir {
-                        // target lost
-                        Some(ActorMove {
-                            actor_id,
-                            target_id: None,
-                            action: Action::StopsAiming,
-                        })
-                    } else {
-                        // go on aiming
-                        None
-                    }
-                } else {
+                // at this point we know the target isn't in the firing line
+                // (or we would have fired)
+                return match actor.state.aim {
+                    // keep aiming
+                    Some(dir) if dir==quadrant_dir => None,
                     // starts aiming
-                    Some(ActorMove {
-                        actor_id,
-                        target_id: None,
-                        action: Action::Aims(quadrant_dir),
-                    })
-                }
-            }
-            if actor.runs_after(*other) {
-                if match nearest_target {
-                    Some((_, best_dist)) => best_dist > dist,
-                    _ => true
-                } {
-                    nearest_target = Some((other.pos, dist));
-                }
+                    None => Some(ActorMove::new(actor_id, Action::Aims(quadrant_dir))),
+                    // target lost
+                    _ => Some(ActorMove::new(actor_id, Action::StopsAiming)),
+                };
             }
         }
         // at this point there's nothing on which to aim or fire, so
         // we should walk
         if actor.is_aiming() {
-            Some(ActorMove {
-                actor_id,
-                target_id: None,
-                action: Action::StopsAiming,
-            })
-        } else if actor.state.drunk {
+            return Some(ActorMove::new(actor_id, Action::StopsAiming));
+        }
+        if actor.state.drunk {
             nearest_target
-                .and_then(|(goal, _)|
+                .and_then(|(target, _)|
                     actor.pos
-                        .quadrants_to(goal)
+                        .quadrants_to(target.pos)
                         .iter()
                         .find(|&dir| self.can_enter(actor, actor.pos.in_dir(*dir)))
-                        .map(|&dir| ActorMove {
-                            actor_id,
-                            target_id: None,
-                            action: Action::Moves(dir),
-                        })
+                        .map(|&dir| ActorMove::new(actor_id, Action::Moves(dir)))
                 )
         } else {
             self.move_to_goal(
@@ -250,14 +184,9 @@ impl<'t> WorldPlayer<'t> {
         }
     }
 
-    fn can_enter(&self, actor: Actor, pos: Pos) -> bool {
-        actor.can_enter(self.board.get(pos))
-            && !self.actor_pos_map.has_key(pos)
-    }
-
-    fn find_actor_move(&self, actor_id: usize) -> Option<ActorMove> {
+    fn find_actor_move(&self, actor_id: ActorId) -> Option<ActorMove> {
         use ActorKind::*;
-        let actor = self.board.actors[actor_id];
+        let actor = self.board.actors.by_id(actor_id);
         match actor.kind {
             Fox => self.find_lapin_eater_move(actor_id, actor),
             Knight | Wolf => self.find_eater_move(actor_id, actor),
@@ -267,17 +196,13 @@ impl<'t> WorldPlayer<'t> {
         }
     }
 
-    pub fn play(mut self) -> WorldMove {
+    pub fn play(self) -> WorldMove {
         let mut actor_moves = Vec::new();
         // actor moves are computed sequentially so that the freed space
         // and the newly occupied place can be better taken into account.
         // Parallelizing would prevent optimal paths especially in case
         // of herds
         for id in 1..self.board.actors.len() {
-            let actor = self.board.actors[id];
-            if self.killed[id] {
-                continue;
-            }
             // let actor_move = time!(
             //     Debug,
             //     "move",
@@ -286,17 +211,6 @@ impl<'t> WorldPlayer<'t> {
             // );
             let actor_move = self.find_actor_move(id);
             if let Some(actor_move) = actor_move {
-                if let Some(other_id) = actor_move.target_id {
-                    self.killed[other_id] = true;
-                    self.actor_pos_map.remove(self.actor_pos(other_id));
-                }
-                match actor_move.action {
-                    Action::Eats(dir) | Action::Moves(dir) => {
-                        self.actor_pos_map.remove(actor.pos);
-                        self.actor_pos_map.set_some(actor.pos.in_dir(dir), actor);
-                    }
-                    _ => {}
-                }
                 actor_moves.push(actor_move);
             }
         }

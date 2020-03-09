@@ -58,7 +58,6 @@ pub enum Goal {
 pub struct PathFinder<'b> {
     actor: Actor,
     board: &'b Board,
-    actors_map: &'b ActorPosMap,
     seed: usize,
 }
 
@@ -66,13 +65,11 @@ impl<'b> PathFinder<'b> {
     pub fn new(
         actor: Actor,
         board: &'b Board,
-        actors_map: &'b ActorPosMap,
         seed: usize,
     ) -> Self {
         Self {
             actor,
             board,
-            actors_map,
             seed,
         }
     }
@@ -81,15 +78,15 @@ impl<'b> PathFinder<'b> {
     // This function will usually return false for the goal. It's
     // thus necessary to check the goal before calling this one.
     fn can_enter(&self, pos: Pos) -> bool {
-        self.actor.can_enter(self.board.get(pos)) && !self.actors_map.has_key(pos)
+        self.actor.can_enter(self.board.get(pos)) && !self.board.actors.has_pos(pos)
     }
 
     /// tells whether the pos is a/the goal
     fn reached(&self, pos: Pos, goal: Goal) -> bool {
         match goal {
             Goal::Pos(goal_pos) => goal_pos == pos,
-            Goal::Terrain(terrain) => self.board.get(pos) == terrain && !self.actors_map.has_key(pos),
-            Goal::ActorKinds(kinds) => self.actors_map.get(pos)
+            Goal::Terrain(terrain) => self.board.get(pos) == terrain && !self.board.actors.has_pos(pos),
+            Goal::ActorKinds(kinds) => self.board.actors.by_pos(pos)
                 .map_or(false, |actor| kinds.contains(&actor.kind) && self.actor.can_enter(self.board.get(pos))),
         }
     }
@@ -100,7 +97,7 @@ impl<'b> PathFinder<'b> {
         hint: Option<Pos>,
     ) -> Option<Vec<Pos>> {
         match hint {
-            // when we target a precise terrain or have a global direction,
+            // when we target a precise position or have a global direction,
             // there's nothing better than A*. This is especially true
             // in open spaces when there's no limits to moves
             Some(pos) => self.find_astar(goal, pos),

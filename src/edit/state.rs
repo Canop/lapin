@@ -12,9 +12,9 @@ use {
         },
         core::*,
         display::*,
-        level::Level,
         persist::{
             self,
+            Level,
             Bag,
             SerdeFormat,
         },

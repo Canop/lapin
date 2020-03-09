@@ -13,7 +13,7 @@ use {
             Status,
         },
         edit,
-        level::Level,
+        persist::Level,
         pos::*,
         win_db::{
             self,
@@ -156,9 +156,10 @@ impl State for PlayLevelState {
             if self.board.current_player == Player::World {
                 let world_player = WorldPlayer::new(&self.board, seed);
                 seed += 1;
-                let world_move = time!(Info, "world play", world_player.play());
-                BoardDrawer::new(&self.board, &screen).animate(con, &world_move)?;
-                let move_result = self.board.apply_world_move(world_move);
+                let mut world_move = time!(Info, "world play", world_player.play());
+                let actors = self.board.actors.clone();
+                let move_result = self.board.apply_world_move(&mut world_move);
+                BoardDrawer::new(&self.board, &screen).animate(con, &actors, &world_move)?;
                 BoardDrawer::new(&self.board, &screen).draw(con)?;
                 self.apply(move_result);
             } else {

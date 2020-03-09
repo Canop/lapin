@@ -16,7 +16,13 @@ use {
 
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, Hash)]
 pub struct ActorState {
+
+    #[serde(default)]
+    pub dead: bool,
+
     pub aim: Option<Dir>,
+
+    #[serde(default)]
     pub drunk: bool,
 }
 
@@ -121,7 +127,10 @@ impl ActorKind {
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Hash)]
 pub struct Actor {
     pub kind: ActorKind,
-    pub pos: Pos, // TODO remove and use Located<Actor> where the pos is needed?
+
+    pub pos: Pos,
+
+    #[serde(skip)]
     pub state: ActorState,
 }
 impl Actor {

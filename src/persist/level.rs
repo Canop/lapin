@@ -34,7 +34,6 @@ impl From<&Board> for Level {
         let mut level = Level::default();
         level.name = board.name.clone();
         level.default_terrain = board.terrains.default;
-        level.actors = board.actors.clone();
         for lc in board.terrains.iter() {
             if lc.v != level.default_terrain {
                 level.terrains.push(lc);
@@ -43,6 +42,7 @@ impl From<&Board> for Level {
         for lc in board.items.iter_some() {
             level.items.push(lc);
         }
+        level.actors = board.actors.vec();
         level
     }
 }

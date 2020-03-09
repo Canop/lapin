@@ -17,8 +17,6 @@ use {
     lapin::{
         app::*,
         campaign,
-        persist,
-        test_level,
     },
     log::LevelFilter,
     simplelog,
@@ -56,21 +54,6 @@ fn configure_log() {
     }
 }
 
-/// execute the "test" command, which doesn't need the TUI
-fn do_test_command(fromage: Fromage) -> Result<()> {
-    // testing serialization of level
-    let level = test_level::build();
-    let format = fromage.output_format()
-        .and_then(|key| persist::SerdeFormat::from_key(&key));
-    let bag = persist::Bag::from(level);
-    persist::write(
-        &mut std::io::stdout(),
-        &bag,
-        format.unwrap_or(persist::SerdeFormat::default()),
-        false,
-    )
-}
-
 /// execute a "campaign" command, which doesn't need the TUI
 fn do_campaign_command(cc: &CampaignCommand) -> Result<()> {
     match &cc.sub {
@@ -103,7 +86,6 @@ fn main() {
     debug!("fromage: {:?}", &fromage);
     let r = match &fromage.command {
         Some(Command::Campaign(cc)) => do_campaign_command(cc),
-        Some(Command::Test(_)) => do_test_command(fromage),
         _ => do_tui_command(fromage),
     };
     if let Err(e) = r {

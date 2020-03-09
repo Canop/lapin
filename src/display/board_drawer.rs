@@ -30,7 +30,6 @@ pub struct BoardDrawer<'d> {
     pub board: &'d Board,
     pub screen: &'d Screen,
     pub pos_converter: PosConverter,
-    pub actor_map: ActorPosMap,
 }
 impl<'d> BoardDrawer<'d> {
     pub fn new(
@@ -46,8 +45,7 @@ impl<'d> BoardDrawer<'d> {
         center: Pos,
     ) -> Self {
         let pos_converter = PosConverter::from(center, screen);
-        let actor_map = board.actor_pos_map();
-        Self { board, screen, pos_converter, actor_map }
+        Self { board, screen, pos_converter }
     }
 
     pub fn draw_chr_bg(
@@ -112,7 +110,7 @@ impl<'d> BoardDrawer<'d> {
                     con.w.queue(terrain.bg_command(&con.skin))?;
                     last_terrain = terrain;
                 }
-                if let Some(actor) = self.actor_map.get(pos) {
+                if let Some(actor) = self.board.actors.by_pos(pos) {
                     actor.skin(&con.skin).queue(con.w)?;
                     con.w.queue(terrain.bg_command(&con.skin))?;
                 } else if let Some(item) = self.board.items.get(pos) {

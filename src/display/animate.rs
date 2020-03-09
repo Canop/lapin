@@ -66,6 +66,7 @@ impl<'d> BoardDrawer<'d> {
     fn draw_move_step(
         &mut self,
         con: &mut Context,
+        actors: &ActorMap, // actors before the move
         start: Pos,
         dir: Dir,
         color: Color,
@@ -75,7 +76,7 @@ impl<'d> BoardDrawer<'d> {
         let dst = start.in_dir(dir);
         let sp_dst = self.pos_converter.to_screen(dst);
         let start_bg = self.board.get(start).bg(&con.skin);
-        let dst_bg = if let Some(dst_actor) = self.actor_map.get(dst) {
+        let dst_bg = if let Some(dst_actor) = actors.by_pos(dst) {
             dst_actor.kind.skin(&con.skin).get_fg().unwrap()
         } else {
             self.board.get(dst).bg(&con.skin)
@@ -106,18 +107,18 @@ impl<'d> BoardDrawer<'d> {
     fn draw_kill_step(
         &mut self,
         con: &mut Context,
+        actors: &ActorMap, // actors before the move
         start: Pos,
         dir: Dir,
         color: Color,
-        killed_id: Option<usize>,
+        killed_id: ActorId,
         av: usize, // in [0, 8]
     ) -> Result<()> {
         let dst = start.in_dir(dir);
         if av%2==1 {
             self.draw_chr(con, start, '█', color)?;
-            if let Some(kind) = killed_id.map(|id| self.board.actors[id].kind) {
-                self.draw_chr(con, dst, kind.skin(&con.skin).get_char(), Color::Red)?;
-            }
+            let kind = actors.by_id(killed_id).kind;
+            self.draw_chr(con, dst, kind.skin(&con.skin).get_char(), Color::Red)?;
         } else {
             self.draw_chr(con, start, ' ', color)?;
             self.draw_chr(con, dst, '█', color)?;
@@ -127,18 +128,17 @@ impl<'d> BoardDrawer<'d> {
     fn draw_fire_step(
         &mut self,
         con: &mut Context,
+        actors: &ActorMap, // actors before the move
         start: Pos,
         dir: Dir,
-        target_id: Option<usize>,
+        target_id: ActorId,
         av: usize, // in [0, 8]
     ) -> Result<()> {
         let mut pos = start;
         for _ in av/3..av {
             pos = pos.in_dir(dir);
-            if let Some(target_id) = target_id {
-                if self.board.actors[target_id].pos == pos {
-                    break;
-                }
+            if actors.by_id(target_id).pos == pos {
+                break;
             }
             let fg_skin = match dir {
                 Dir::Up | Dir::Down => con.skin.fire_vertical.clone(),
@@ -153,38 +153,42 @@ impl<'d> BoardDrawer<'d> {
     pub fn animate(
         &mut self,
         con: &mut Context,
+        actors: &ActorMap, // actors before the move
         world_move: &WorldMove,
     ) -> Result<()> {
         for av in 0..=8 {
             for actor_move in &world_move.actor_moves {
                 let actor_id = actor_move.actor_id;
-                let mut actor = self.board.actors[actor_id];
+                let mut actor = actors.by_id(actor_id);
                 match actor_move.action {
                     Action::Moves(dir) => {
                         self.draw_move_step(
                             con,
+                            actors,
                             actor.pos,
                             dir,
                             actor.kind.skin(&con.skin).get_fg().unwrap(),
                             av,
                         )?;
                     }
-                    Action::Eats(dir) => {
+                    Action::Eats(dir, target_id) => {
                         self.draw_kill_step(
                             con,
+                            actors,
                             actor.pos,
                             dir,
                             actor.kind.skin(&con.skin).get_fg().unwrap(),
-                            actor_move.target_id,
+                            target_id,
                             av,
                         )?;
                     }
-                    Action::Fires(dir) => {
+                    Action::Fires(dir, target_id) => {
                         self.draw_fire_step(
                             con,
+                            actors,
                             actor.pos,
                             dir,
-                            actor_move.target_id,
+                            target_id,
                             av,
                         )?;
                     }

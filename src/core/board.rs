@@ -1,6 +1,7 @@
 use {
+    anyhow::Result,
     crate::{
-        level::Level,
+        persist::Level,
         pos::*,
     },
     std::{
@@ -18,7 +19,7 @@ pub struct Board {
     pub name: String,
     pub area: PosArea,
     pub terrains: PosMap<Terrain>,
-    pub actors: Vec<Actor>, // Lapin always at index 0
+    pub actors: ActorMap,
     pub items: OptionPosMap<Item>,
     pub current_player: Player, // whose turn it is
 }
@@ -43,8 +44,7 @@ impl Board {
         default_terrain: Terrain,
     ) -> Self {
         let terrains = PosMap::new(area.clone(), default_terrain);
-        let mut actors = Vec::new();
-        actors.push(Actor::new(ActorKind::Lapin, 0, 0));
+        let actors = ActorMap::from(area.clone());
         let items = OptionPosMap::new(area.clone(), None);
         Self {
             name,
@@ -67,28 +67,23 @@ impl Board {
                 .map(|&lc| lc.pos)
         )
         .unwrap_or_default();
-        // FIXME check area not to wide
-        self.items = OptionPosMap::new(pos_distribution.area.clone(), None);
-        self.terrains = PosMap::new(pos_distribution.area, level.default_terrain);
-        self.actors = level.actors.clone();
+        self.terrains = PosMap::new(pos_distribution.area.clone(), level.default_terrain);
         for &lc in level.terrains.iter() {
             self.terrains.set_lc(lc);
         }
+        self.actors = ActorMap::new(pos_distribution.area.clone(), level.actors.clone());
+        self.items = OptionPosMap::new(pos_distribution.area.clone(), None);
         for lc in &level.items {
             self.items.set_some(lc.pos, lc.v);
         }
     }
 
     pub fn lapin_pos(&self) -> Pos {
-        self.actors[0].pos
+        self.actors.lapin().pos
     }
 
-    pub fn add_actor(&mut self, actor: Actor) {
-        self.actors.push(actor);
-    }
-
-    pub fn add_actor_in(&mut self, kind: ActorKind, x: Int, y: Int) {
-        self.actors.push(Actor::new(kind, x, y));
+    pub fn add_actor_in(&mut self, kind: ActorKind, x: Int, y: Int) -> Result<ActorRef> {
+        self.actors.add(Actor::new(kind, x, y))
     }
     pub fn add_item_in(&mut self, kind: ItemKind, x: Int, y: Int) {
         self.items.set_some(Pos::new(x, y), Item { kind });
@@ -113,24 +108,6 @@ impl Board {
         self.terrains.get(pos)
     }
 
-    /// return a pos_set with the positions of all actors preset
-    pub fn actor_pos_set(&self) -> PosSet {
-        let mut actor_pos_set = PosSet::from(self.area.clone());
-        for &actor in &self.actors {
-            actor_pos_set.insert(actor.pos);
-        }
-        actor_pos_set
-    }
-
-    /// return a pos_map referencing all the actors
-    pub fn actor_pos_map(&self) -> ActorPosMap {
-        let mut actor_pos_map = ActorPosMap::from(self.area.clone());
-        for &actor in &self.actors {
-            actor_pos_map.set(actor.pos, Some(actor));
-        }
-        actor_pos_map
-    }
-
     pub fn apply_player_move(&mut self, dir: Dir) -> MoveResult {
         if self.current_player != Player::Lapin {
             return MoveResult::Invalid;
@@ -141,23 +118,21 @@ impl Board {
             warn!("Lapin is too far!");
             return MoveResult::Invalid;
         }
-        if !self.actors[0].can_enter(self.get(pos)) {
+        if !self.actors.lapin().can_enter(self.get(pos)) {
             debug!("can't go there");
             return MoveResult::Invalid
         }
-        for i in 1..self.actors.len() {
-            if self.actors[i].pos == pos {
-                if self.actors[i].runs_after(self.actors[0]) {
-                    self.current_player = Player::None;
-                    return MoveResult::PlayerLose(format!(
-                        "You have been eaten by a *{:?}*.", self.actors[i].kind
-                    ));
-                } else {
-                    return MoveResult::Invalid;
-                }
+        if let Some(actor) = self.actors.by_pos(pos) {
+            if actor.runs_after(self.actors.lapin()) {
+                self.current_player = Player::None;
+                return MoveResult::PlayerLose(format!(
+                    "You have been eaten by a *{:?}*.", actor.kind
+                ));
+            } else {
+                return MoveResult::Invalid;
             }
         }
-        self.actors[0].pos = pos;
+        self.actors.move_lapin_to(pos);
         if self.get(pos) == Terrain::Grass {
             self.current_player = Player::None;
             return MoveResult::PlayerWin(
@@ -175,65 +150,81 @@ impl Board {
         MoveResult::Ok
     }
 
-    pub fn apply_world_move(&mut self, world_move: WorldMove) -> MoveResult {
-        let mut killed = vec![false; self.actors.len()];
-        let mut actor_pos_set = self.actor_pos_set();
+    pub fn apply_world_move(&mut self, world_move: &mut WorldMove) -> MoveResult {
         let mut result = MoveResult::Ok;
         self.current_player = Player::Lapin;
-        for actor_move in world_move.actor_moves {
+        let mut kept_moves = Vec::new();
+        for actor_move in &world_move.actor_moves {
             let actor_id = actor_move.actor_id;
-            actor_pos_set.remove(self.actors[actor_id].pos);
-            if let Some(target_id) = actor_move.target_id {
-                // following test is only valid now
-                if self.actors[target_id].kind.is_immune_to_fire() {
-                    debug!("target is is_immune_to_fire");
-                } else {
-                    killed[target_id] = true;
+            let actor = self.actors.by_id(actor_id);
+            if actor.state.dead {
+                debug!("move prevented because actor already dead");
+                continue;
+            }
+            match actor_move.action {
+                Action::Eats(dir, target_id) => {
+                    let target_state = self.actors.state_by_id_mut(target_id);
+                    if target_state.dead {
+                        debug!("eating prevented because target already dead");
+                        continue;
+                    }
+                    target_state.dead = true;
                     if target_id == 0 {
                         self.current_player = Player::None;
                         result = MoveResult::PlayerLose(
-                            format!("You have been killed by a *{:?}*.", self.actors[actor_id].kind)
+                            format!("You have been eaten by a *{:?}*.", self.actors.by_id(actor_id).kind)
                         );
                     }
+                    if let Err(e) = self.actors.move_by_id_in_dir(actor_id, dir) {
+                        debug!("{:?} can't eat in {:?} : {:?}", self.actors.by_id(actor_id).kind, dir, e);
+                        continue;
+                    }
                 }
-            }
-            match actor_move.action {
-                Action::Eats(dir) => {
-                    let new_pos = self.actors[actor_id].pos.in_dir(dir);
-                    self.actors[actor_id].pos = new_pos;
+                Action::Fires(_, target_id) => {
+                    if !self.actors.by_id(target_id).kind.is_immune_to_fire() {
+                        let target_state = self.actors.state_by_id_mut(target_id);
+                        if target_state.dead {
+                            debug!("firing prevented because target already dead");
+                            continue;
+                        }
+                        target_state.dead = true;
+                        if target_id == 0 {
+                            self.current_player = Player::None;
+                            result = MoveResult::PlayerLose(
+                                format!("You have been killed by a *{:?}*.", self.actors.by_id(actor_id).kind)
+                            );
+                        }
+                    }
                 }
                 Action::Moves(dir) => {
-                    let new_pos = self.actors[actor_id].pos.in_dir(dir);
-                    if actor_pos_set.has_key(new_pos) {
-                        debug!("move prevented because other actor present");
-                    } else {
-                        self.actors[actor_id].pos = new_pos;
-                        if self.actors[actor_id].kind.drinks_wine() {
-                            if let Some(Item{kind:ItemKind::Wine}) = self.items.get(new_pos) {
-                                self.items.remove(new_pos);
-                                info!("hunter drinks some wine");
-                                self.actors[actor_id].state.drunk = true;
+                    let new_pos = self.actors.by_id(actor_id).pos.in_dir(dir);
+                    match self.actors.move_by_id_to_pos(actor_id, new_pos) {
+                        Err(e) => {
+                            debug!("{:?} can't move in {:?}: {:?}", self.actors.by_id(actor_id).kind, dir, e);
+                            continue;
+                        }
+                        Ok(()) => {
+                            if self.actors.by_id(actor_id).kind.drinks_wine() {
+                                if let Some(Item{kind:ItemKind::Wine}) = self.items.get(new_pos) {
+                                    self.items.remove(new_pos);
+                                    info!("hunter drinks some wine");
+                                    self.actors.state_by_id_mut(actor_id).drunk = true;
+                                }
                             }
                         }
                     }
                 }
                 Action::Aims(dir) => {
-                    self.actors[actor_id].state.aim = Some(dir);
+                    self.actors.state_by_id_mut(actor_id).aim = Some(dir);
                 }
                 Action::StopsAiming => {
-                    self.actors[actor_id].state.aim = None;
+                    self.actors.state_by_id_mut(actor_id).aim = None;
                 }
-                _ => { }
             }
-            actor_pos_set.insert(self.actors[actor_id].pos);
+            kept_moves.push(*actor_move);
         }
-        let mut i = self.actors.len() - 1;
-        while i > 0 {
-            if killed[i] {
-                self.actors.remove(i);
-            }
-            i -= 1;
-        }
+        self.actors.remove_dead();
+        world_move.actor_moves = kept_moves;
         result
     }
 }

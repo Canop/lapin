@@ -2,8 +2,8 @@
 use {
     anyhow::Result,
     crate::{
-        level::Level,
         persist::{
+            Level,
             Bag,
         },
         win_db,

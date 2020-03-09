@@ -45,6 +45,12 @@ impl<V> PosMap<V>
             None
         }
     }
+    pub fn clear(&mut self) {
+        for c in self.grid.iter_mut() {
+            *c = self.default;
+        }
+        self.outliers.clear();
+    }
     fn pos_unchecked(&self, idx: usize) -> Pos {
         let dy = idx as Int / self.area.width();
         let dx = idx as Int % self.area.width();
