@@ -84,7 +84,7 @@ to create a new empty campaign. It's a clear JSON file you'll manually edit to r
 
 You don't have to distribute your campaign as a bunch of files. You may pack it, which embeds both the index and the levels into one unique file. You do so by running
 
-    lapin campaign pack my_unpacked_campaing.json my_new_packed_campaign.mpack
+    lapin campaign pack my_unpacked_campaign.json my_new_packed_campaign.mpack
 
 (it would be possible but pointless to use JSON for the packed campaign too)
 

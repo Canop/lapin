@@ -100,7 +100,7 @@ impl LoadedCampaign {
         }
     }
 
-    /// build a loaded campaing assuming the bag already
+    /// build a loaded campaign assuming the bag already
     /// contains all the levels.
     pub fn from_packed_bag(mut bag: Bag) -> Result<Self> {
         let campaign = bag.campaigns.pop().expect("bag without campaign");
