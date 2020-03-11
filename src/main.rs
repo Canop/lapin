@@ -8,7 +8,6 @@ use {
         cursor,
         event::{DisableMouseCapture, EnableMouseCapture},
         terminal::{
-            self,
             EnterAlternateScreen,
             LeaveAlternateScreen,
         },
@@ -67,13 +66,11 @@ fn do_tui_command(fromage: Fromage) -> Result<()> {
     let mut w = std::io::stderr();
     w.queue(EnterAlternateScreen)?;
     w.queue(cursor::Hide)?; // hiding the cursor
-    terminal::enable_raw_mode()?;
     w.queue(EnableMouseCapture)?;
     let mut dam = Dam::new()?;
     let mut app = App::new();
     let r = app.run(&mut w, &mut dam, fromage);
     w.queue(DisableMouseCapture)?;
-    terminal::disable_raw_mode()?;
     w.queue(cursor::Show)?;
     w.queue(LeaveAlternateScreen)?;
     w.flush()?;

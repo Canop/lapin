@@ -16,6 +16,7 @@ use {
         ink::*,
         inkwell::*,
     },
+    std::io::Write,
     termimad::{
         Area,
         InputField,
@@ -95,6 +96,7 @@ impl EditorHeadPanel {
             })?;
         }
 
+        con.w.flush()?;
         Ok(())
     }
 

@@ -16,6 +16,7 @@ use {
         },
         QueueableCommand,
     },
+    std::io::Write,
     super::*,
     termimad::{
         StyledChar,
@@ -32,14 +33,8 @@ pub struct BoardDrawer<'d> {
     pub pos_converter: PosConverter,
 }
 impl<'d> BoardDrawer<'d> {
-    pub fn new(
-        board: &'d Board,
-        screen: &'d Screen,
-    ) -> Self {
-        Self::new_around(board, screen, board.lapin_pos())
-    }
 
-    pub fn new_around(
+    pub fn new(
         board: &'d Board,
         screen: &'d Screen,
         center: Pos,
@@ -123,6 +118,7 @@ impl<'d> BoardDrawer<'d> {
             }
         }
 
+        con.w.flush()?;
         Ok(())
     }
 

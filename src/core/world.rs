@@ -6,7 +6,7 @@ use {
     super::*,
 };
 
-pub const FIRING_RANGE: Int = 6;
+pub const FIRING_RANGE: Int = 7;
 
 pub struct WorldPlayer<'t> {
     board: &'t Board,

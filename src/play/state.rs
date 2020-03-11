@@ -24,6 +24,7 @@ use {
         event::{
             KeyCode,
             KeyEvent,
+            KeyModifiers,
         },
     },
     std::{
@@ -39,6 +40,7 @@ pub struct PlayLevelState {
     level_signature: Signature,
     comes_from_editor: bool,
     board: Board,
+    center: Pos,    // the pos shown at center of the screen
     status: Status,
 }
 
@@ -63,10 +65,12 @@ impl PlayLevelState {
         );
         let level_signature = Signature::new(level)?;
         let comes_from_editor = previous_state == Some(edit::LABEL);
+        let center = board.lapin_pos();
         Ok(Self {
             level_signature,
             comes_from_editor,
             board,
+            center,
             status,
         })
     }
@@ -77,21 +81,44 @@ impl PlayLevelState {
     ) -> Option<StateTransition> {
         let move_result = self.board.apply_player_move(dir);
         self.apply(move_result);
+        self.center = self.board.lapin_pos();
+        None
+    }
+
+    fn handle_screen_dir(
+        &mut self,
+        dir: Dir,
+    ) -> Option<StateTransition> {
+        self.center = self.center.in_dir(dir);
+        None
+    }
+
+    fn center_on_lapin(&mut self) -> Option<StateTransition> {
+        self.center = self.board.lapin_pos();
         None
     }
 
     fn handle_key_event(
         &mut self,
-        code: KeyCode,
+        key_event: KeyEvent,
     ) -> Result<Option<StateTransition>> {
-        Ok(match code {
-            KeyCode::Esc => Some(StateTransition::Back),
-            KeyCode::Up => self.handle_player_dir(Dir::Up),
-            KeyCode::Right => self.handle_player_dir(Dir::Right),
-            KeyCode::Down => self.handle_player_dir(Dir::Down),
-            KeyCode::Left => self.handle_player_dir(Dir::Left),
-            KeyCode::Char('q') => Some(StateTransition::Quit),
-            KeyCode::Char('?') => Some(StateTransition::Help),
+        Ok(match (
+            self.comes_from_editor,
+            key_event.modifiers.contains(KeyModifiers::CONTROL),
+            key_event.code,
+        ) {
+            (_, false, KeyCode::Esc) => Some(StateTransition::Back),
+            (_, false, KeyCode::Up) => self.handle_player_dir(Dir::Up),
+            (_, false, KeyCode::Right) => self.handle_player_dir(Dir::Right),
+            (_, false, KeyCode::Down) => self.handle_player_dir(Dir::Down),
+            (_, false, KeyCode::Left) => self.handle_player_dir(Dir::Left),
+            (_, false, KeyCode::Char('q')) => Some(StateTransition::Quit),
+            (_, false, KeyCode::Char('?')) => Some(StateTransition::Help),
+            (true, false, KeyCode::Char('c')) => self.center_on_lapin(),
+            (true, true, KeyCode::Up) => self.handle_screen_dir(Dir::Up),
+            (true, true, KeyCode::Right) => self.handle_screen_dir(Dir::Right),
+            (true, true, KeyCode::Down) => self.handle_screen_dir(Dir::Down),
+            (true, true, KeyCode::Left) => self.handle_screen_dir(Dir::Left),
             _ => None,
         })
     }
@@ -151,7 +178,7 @@ impl State for PlayLevelState {
             .duration_since(SystemTime::UNIX_EPOCH)
             .map_or(0, |d| (d.as_secs()%7) as usize);
         loop {
-            BoardDrawer::new(&self.board, &screen).draw(con)?;
+            BoardDrawer::new(&self.board, &screen, self.center).draw(con)?;
             self.write_status(con, &screen)?;
             if self.board.current_player == Player::World {
                 let world_player = WorldPlayer::new(&self.board, seed);
@@ -159,16 +186,17 @@ impl State for PlayLevelState {
                 let mut world_move = time!(Info, "world play", world_player.play());
                 let actors = self.board.actors.clone();
                 let move_result = self.board.apply_world_move(&mut world_move);
-                BoardDrawer::new(&self.board, &screen).animate(con, &actors, &world_move)?;
-                BoardDrawer::new(&self.board, &screen).draw(con)?;
+                let mut bd = BoardDrawer::new(&self.board, &screen, self.center);
+                bd.animate(con, &actors, &world_move)?;
+                bd.draw(con)?;
                 self.apply(move_result);
             } else {
                 // we're here also after end of game, when current_player is None
                 let event = con.dam.next_event().unwrap();
                 con.dam.unblock();
                 match event {
-                    Event::Key(KeyEvent { code, .. }) => {
-                        let next_state = self.handle_key_event(code)?;
+                    Event::Key(ke) => {
+                        let next_state = self.handle_key_event(ke)?;
                         if let Some(next_state) = next_state {
                             return Ok(next_state);
                         }

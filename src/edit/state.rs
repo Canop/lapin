@@ -186,7 +186,7 @@ impl State for LevelEditor {
     ) -> Result<StateTransition> {
         let mut screen = Screen::new(LAYOUT);
         loop {
-            let mut bd = BoardDrawer::new_around(&self.board, &screen, self.center);
+            let mut bd = BoardDrawer::new(&self.board, &screen, self.center);
             bd.draw(con)?;
             let mut pen_panel = PenPanel::new(&mut self.pen, &screen);
             pen_panel.draw(con)?;

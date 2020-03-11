@@ -9,6 +9,7 @@ use {
     crossterm::{
         terminal::ClearType,
     },
+    std::io::Write,
     super::{
         ink::*,
         inkwell::*,
@@ -131,7 +132,7 @@ impl<'s> PenPanel<'s> {
         cs.clear(con.w, ClearType::UntilNewLine)?;
 
         self.draw_shape_pen_panel(con)?;
-
+        con.w.flush()?;
         Ok(())
     }
 
