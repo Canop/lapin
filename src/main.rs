@@ -22,7 +22,11 @@ use {
     std::{
         env,
         fs::File,
-        io::Write,
+        io::{
+            self,
+            BufWriter,
+            Write,
+        },
         str::FromStr,
     },
 };
@@ -63,7 +67,7 @@ fn do_campaign_command(cc: &CampaignCommand) -> Result<()> {
 
 /// execute all the commands which need the TUI
 fn do_tui_command(fromage: Fromage) -> Result<()> {
-    let mut w = std::io::stderr();
+    let mut w = BufWriter::new(io::stderr());
     w.queue(EnterAlternateScreen)?;
     w.queue(cursor::Hide)?; // hiding the cursor
     w.queue(EnableMouseCapture)?;

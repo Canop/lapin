@@ -29,6 +29,7 @@ use {
     },
     std::{
         convert::TryFrom,
+        io::Write,
         path::PathBuf,
     },
     super::{
@@ -192,6 +193,7 @@ impl State for LevelEditor {
             pen_panel.draw(con)?;
             self.head_panel.draw(con, &self.board, &screen)?;
             self.status.display(con, &screen)?;
+            con.w.flush()?;
             let event = con.dam.next_event().unwrap();
             con.dam.unblock();
             let next_state = match event {

@@ -20,7 +20,9 @@ use {
             KeyEvent,
         },
     },
-    std::fmt::Write,
+    std::{
+        io::Write,
+    },
     super::*,
     termimad::{
         Event,
@@ -62,6 +64,7 @@ impl ChooseLevelState {
     }
 
     fn markdown(&self) -> Result<String> {
+        use std::fmt::Write;
         let mut md = String::new();
         write!(md, "\n# {}\n", self.loaded_campaign.name())?;
         for (i, level) in self.loaded_campaign.levels.iter().enumerate() {
@@ -167,6 +170,7 @@ impl State for ChooseLevelState {
             );
             text_view.set_scroll(self.scroll as i32);
             text_view.write_on(con.w)?;
+            con.w.flush()?;
             let event = con.dam.next_event().unwrap();
             con.dam.unblock();
             match event {

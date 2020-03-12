@@ -28,6 +28,7 @@ use {
         },
     },
     std::{
+        io::Write,
         time::SystemTime,
     },
     super::LAYOUT,
@@ -180,6 +181,7 @@ impl State for PlayLevelState {
         loop {
             BoardDrawer::new(&self.board, &screen, self.center).draw(con)?;
             self.write_status(con, &screen)?;
+            con.w.flush()?;
             if self.board.current_player == Player::World {
                 let world_player = WorldPlayer::new(&self.board, seed);
                 seed += 1;
@@ -189,6 +191,7 @@ impl State for PlayLevelState {
                 let mut bd = BoardDrawer::new(&self.board, &screen, self.center);
                 bd.animate(con, &actors, &world_move)?;
                 bd.draw(con)?;
+                con.w.flush()?;
                 self.apply(move_result);
             } else {
                 // we're here also after end of game, when current_player is None

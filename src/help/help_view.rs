@@ -21,6 +21,7 @@ use {
             KeyEvent,
         },
     },
+    std::io::Write,
     termimad::{
         Event,
         MadView,
@@ -64,6 +65,7 @@ impl State for View {
             Status::from_message("Hit *esc* to close the help".to_string())
                 .display(con, &screen)?;
             mad_view.write_on(con.w)?;
+            con.w.flush()?;
             let event = con.dam.next_event().unwrap();
             con.dam.unblock();
             match event {

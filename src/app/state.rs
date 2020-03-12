@@ -12,6 +12,7 @@ use {
 
 
 /// One of the screens of Lapin.
+///
 pub trait State {
 
     /// a label used as hint for user of the state where
@@ -23,6 +24,10 @@ pub trait State {
     ///
     /// This function can be called several times (if there's
     /// a back to a previous state, it's ran again).
+    ///
+    /// All drawing on screen should be controlled from there
+    /// and all `con.w.flush` should be done only directly
+    /// in this function.
     fn run(
         &mut self,
         con: &mut Context,

@@ -1,4 +1,11 @@
 
+use {
+    std::io::{
+        BufWriter,
+        Stderr,
+    },
+};
+
 mod animate;
 mod board_drawer;
 mod layout;
@@ -7,7 +14,7 @@ mod screen;
 mod skin;
 mod status;
 
-pub type W = std::io::Stderr;
+pub type W = BufWriter<Stderr>;
 
 pub use {
     board_drawer::BoardDrawer,

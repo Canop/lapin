@@ -16,6 +16,7 @@ use {
         QueueableCommand,
     },
     std::{
+        io::Write,
         time::Duration,
     },
     super::*,
@@ -203,6 +204,7 @@ impl<'d> BoardDrawer<'d> {
                     _ => {}
                 }
             }
+            con.w.flush()?;
             if !con.dam.try_wait(Duration::from_millis(50)) {
                 break;
             }
