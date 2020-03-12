@@ -78,7 +78,7 @@ impl<'t> WorldPlayer<'t> {
                 continue;
             }
             let other = self.board.actors.by_id(other_id);
-            if !actor.hits(other) {
+            if !actor.eats(other) {
                 continue;
             }
             if let Some(dir) = actor.pos.dir_to(other.pos) {

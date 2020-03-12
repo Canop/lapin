@@ -28,11 +28,18 @@ use {
     },
 };
 
+/// A screen letting the user choose a level.
+///
+/// The current implementation is based on a raw text_view.
+/// A better one would (will?) be based on another termimad view,
+/// maybe a list_view or a new one.
 pub struct ChooseLevelState {
     status: Status,
     loaded_campaign: LoadedCampaign,
     selection: usize, // index of the selected level
     nb_playable_levels: usize,
+    scroll: usize,
+    area_height: usize,
 }
 
 impl ChooseLevelState {
@@ -42,13 +49,15 @@ impl ChooseLevelState {
         let status = Status::from_message(
             "Hit *↓* and *↑* to change the selection, *enter* to open it, *q* to quit".to_string()
         );
-        let selection = 0;
         let nb_playable_levels = 0; // will be updated on check wins
+        let area_height = 0; // will be updated on first draw
         Ok(Self {
             status,
             loaded_campaign,
-            selection,
+            selection: 0,
             nb_playable_levels,
+            scroll: 0,
+            area_height,
         })
     }
 
@@ -80,10 +89,16 @@ impl ChooseLevelState {
         Ok(match code {
             KeyCode::Up if self.selection > 0 => {
                 self.selection -= 1;
+                if self.scroll > 0 && self.selection < self.scroll + 3 {
+                    self.scroll -= 1;
+                }
                 None
             }
             KeyCode::Down if self.selection < self.nb_playable_levels - 1 => {
                 self.selection += 1;
+                if self.selection + 8 >= self.scroll + self.area_height {
+                    self.scroll += 1;
+                }
                 None
             }
             KeyCode::Enter => Some(StateTransition::PlayLevel {
@@ -144,11 +159,13 @@ impl State for ChooseLevelState {
         loop {
             self.write_status(con, &screen)?;
             let md = self.markdown()?;
+            self.area_height = screen.areas.board.height as usize;
             let text = skin.area_text(&md, &screen.areas.board);
-            let text_view = TextView::from(
+            let mut text_view = TextView::from(
                 &screen.areas.board,
                 &text,
             );
+            text_view.set_scroll(self.scroll as i32);
             text_view.write_on(con.w)?;
             let event = con.dam.next_event().unwrap();
             con.dam.unblock();
@@ -162,11 +179,6 @@ impl State for ChooseLevelState {
                 Event::Resize(width, height) => {
                     screen.set_terminal_size(width, height);
                 }
-                //Event::Click(x, y, ..) => {
-                //    let sp = ScreenPos{ x, y };
-                //    let pos_converter = PosConverter::from(self.board.lapin_pos(), &screen);
-                //    debug!("click in {:?}", pos_converter.to_real(sp));
-                //}
                 _ => {
                     debug!("ignored event: {:?}", event);
                 }
@@ -184,5 +196,4 @@ impl State for ChooseLevelState {
     }
 
 }
-
 

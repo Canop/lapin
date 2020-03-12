@@ -80,7 +80,7 @@ impl ActorKind {
             _ => false,
         }
     }
-    pub fn hits(self, other: Self) -> bool {
+    pub fn eats(self, other: Self) -> bool {
         use ActorKind::*;
         match (self, other) {
             (Fox, Lapin) => true,
@@ -161,8 +161,8 @@ impl Actor {
             _ => None,
         }
     }
-    pub fn hits(self, other: Actor) -> bool {
-        self.kind.hits(other.kind)
+    pub fn eats(self, other: Actor) -> bool {
+        self.kind.eats(other.kind)
     }
     pub fn fires_on(self, other: Actor) -> bool {
         use ActorKind::*;

@@ -5,7 +5,7 @@
 [s1]: https://miaou.dystroy.org/static/shields/room.svg
 [l1]: https://miaou.dystroy.org/3
 
-A game in which you move a lapin trying to reach grass without being eaten or fired at.
+A game in which you move a rabbit trying to reach grass without being eaten or fired at.
 
 ![citadel-corner](img/citadel-corner.png)
 
