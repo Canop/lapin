@@ -19,6 +19,10 @@ Clone this repository, then run
 
     cargo install
 
+### From the Snap store
+
+Pick it up at https://snapcraft.io/lapin
+
 ### From a precompiled executable
 
 You may download them on https://dystroy.org/lapin
