@@ -25,7 +25,7 @@ impl App {
     fn current_state(&mut self) -> &mut dyn State {
         self.states
             .last_mut()
-            .expect("No state has been pushed")
+            .expect("No state in stack")
             .as_mut()
     }
 

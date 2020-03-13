@@ -102,26 +102,27 @@ impl PlayLevelState {
     fn handle_key_event(
         &mut self,
         key_event: KeyEvent,
-    ) -> Result<Option<StateTransition>> {
-        Ok(match (
+    ) -> Option<StateTransition> {
+        use KeyCode::*;
+        match (
             self.comes_from_editor,
             key_event.modifiers.contains(KeyModifiers::CONTROL),
             key_event.code,
         ) {
-            (_, false, KeyCode::Esc) => Some(StateTransition::Back),
-            (_, false, KeyCode::Up) => self.handle_player_dir(Dir::Up),
-            (_, false, KeyCode::Right) => self.handle_player_dir(Dir::Right),
-            (_, false, KeyCode::Down) => self.handle_player_dir(Dir::Down),
-            (_, false, KeyCode::Left) => self.handle_player_dir(Dir::Left),
-            (_, false, KeyCode::Char('q')) => Some(StateTransition::Quit),
-            (_, false, KeyCode::Char('?')) => Some(StateTransition::Help),
-            (true, false, KeyCode::Char('c')) => self.center_on_lapin(),
-            (true, true, KeyCode::Up) => self.handle_screen_dir(Dir::Up),
-            (true, true, KeyCode::Right) => self.handle_screen_dir(Dir::Right),
-            (true, true, KeyCode::Down) => self.handle_screen_dir(Dir::Down),
-            (true, true, KeyCode::Left) => self.handle_screen_dir(Dir::Left),
+            (_,    false, Esc)       => Some(StateTransition::Back),
+            (_,    false, Up)        => self.handle_player_dir(Dir::Up),
+            (_,    false, Right)     => self.handle_player_dir(Dir::Right),
+            (_,    false, Down)      => self.handle_player_dir(Dir::Down),
+            (_,    false, Left)      => self.handle_player_dir(Dir::Left),
+            (_,    _,     Char('q')) => Some(StateTransition::Quit),
+            (_,    false, Char('?')) => Some(StateTransition::Help),
+            (true, false, Char('c')) => self.center_on_lapin(),
+            (true, true,  Up)        => self.handle_screen_dir(Dir::Up),
+            (true, true,  Right)     => self.handle_screen_dir(Dir::Right),
+            (true, true,  Down)      => self.handle_screen_dir(Dir::Down),
+            (true, true,  Left)      => self.handle_screen_dir(Dir::Left),
             _ => None,
-        })
+        }
     }
 
     fn set_end_status(&mut self, reason: &str, win: bool) {
@@ -199,7 +200,7 @@ impl State for PlayLevelState {
                 con.dam.unblock();
                 match event {
                     Event::Key(ke) => {
-                        let next_state = self.handle_key_event(ke)?;
+                        let next_state = self.handle_key_event(ke);
                         if let Some(next_state) = next_state {
                             return Ok(next_state);
                         }
