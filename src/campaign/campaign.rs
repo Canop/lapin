@@ -19,7 +19,8 @@ pub struct Campaign {
     /// (reserved for easier compatibility)
     pub description: String,
 
-    /// not yet used but should be in the future
+    /// whether the user can play any level without having
+    /// won the previous ones
     pub allow_all_levels: bool,
 
     /// levels in the order they should be done
