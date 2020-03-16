@@ -94,6 +94,6 @@ You don't have to distribute your campaign as a bunch of files. You may pack it,
 
 ## Discuss or contribute
 
-If you or your kids like the game, please come to [Miaou](https://miaou.dystroy.org/3) and tell me.
+If you or your kids like the game, if you made levels or want some, please come to [Miaou](https://miaou.dystroy.org/3) and tell me.
 
 If you want to discuss the code or improve it, you're welcome too!
