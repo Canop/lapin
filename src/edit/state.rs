@@ -129,9 +129,6 @@ impl LevelEditor {
             return None; // the event was handled by the input field
         }
         match code {
-            KeyCode::Char('q') => {
-                Some(StateTransition::Quit)
-            }
             KeyCode::Up => {
                 self.center.y -= 1;
                 None
@@ -147,6 +144,13 @@ impl LevelEditor {
             KeyCode::Left => {
                 self.center.x -= 1;
                 None
+            }
+            KeyCode::Char('c') => {
+                self.center = self.board.lapin_pos();
+                None
+            }
+            KeyCode::Char('q') => {
+                Some(StateTransition::Quit)
             }
             KeyCode::Char('r') => {
                 self.history.redo(&mut self.board);
