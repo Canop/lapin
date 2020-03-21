@@ -108,7 +108,7 @@ impl ChooseLevelState {
                 level_idx: self.selection,
             }),
             KeyCode::Char('?') => Some(StateTransition::Help),
-            KeyCode::Char('q') => Some(StateTransition::Quit),
+            KeyCode::Char('q') | KeyCode::Char('Q') => Some(StateTransition::Quit),
             _ => None,
         })
     }

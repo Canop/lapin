@@ -2,9 +2,9 @@
 use crate::display::Layout;
 
 mod help_text;
-mod help_view;
+mod state;
 
-pub use help_view::View;
+pub use state::HelpState;
 
 pub const LAYOUT: Layout = Layout {
     header_height: 0,
@@ -13,6 +13,6 @@ pub const LAYOUT: Layout = Layout {
 };
 
 /// return a help screen with the standard text and layout
-pub fn default_view() -> View {
-    View::new(help_text::MARKDOWN, LAYOUT)
+pub fn default_view() -> HelpState {
+    HelpState::new(help_text::MARKDOWN, LAYOUT)
 }

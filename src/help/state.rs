@@ -28,12 +28,12 @@ use {
     },
 };
 
-pub struct View {
+pub struct HelpState {
     layout: Layout,
     markdown: &'static str,
 }
 
-impl View {
+impl HelpState {
     pub fn new(
         markdown: &'static str,
         layout: Layout,
@@ -45,7 +45,7 @@ impl View {
     }
 }
 
-impl State for View {
+impl State for HelpState {
 
     fn label(&self) -> &'static str {
         "help"
@@ -83,7 +83,7 @@ impl State for View {
                         KeyCode::PageDown => {
                             mad_view.try_scroll_pages(1);
                         }
-                        KeyCode::Char('q') => {
+                        KeyCode::Char('q') | KeyCode::Char('Q') => {
                             return Ok(StateTransition::Quit);
                         }
                         KeyCode::Esc => {

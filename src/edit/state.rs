@@ -145,18 +145,18 @@ impl LevelEditor {
                 self.center.x -= 1;
                 None
             }
-            KeyCode::Char('c') => {
+            KeyCode::Char('c') | KeyCode::Char('C') => {
                 self.center = self.board.lapin_pos();
                 None
             }
-            KeyCode::Char('q') => {
+            KeyCode::Char('q') | KeyCode::Char('Q') => {
                 Some(StateTransition::Quit)
             }
-            KeyCode::Char('r') => {
+            KeyCode::Char('r') | KeyCode::Char('R') => {
                 self.history.redo(&mut self.board);
                 None
             }
-            KeyCode::Char('s') => {
+            KeyCode::Char('s') | KeyCode::Char('S') => {
                 match self.save_to_file() {
                     Err(e) => {
                         warn!("error while saving level: {:?}", e);
@@ -168,8 +168,8 @@ impl LevelEditor {
                 }
                 None
             }
-            KeyCode::Char('t') => Some(StateTransition::PlayLevel{ level_idx: 0 }),
-            KeyCode::Char('u') => {
+            KeyCode::Char('t') | KeyCode::Char('T') => Some(StateTransition::PlayLevel{ level_idx: 0 }),
+            KeyCode::Char('u') | KeyCode::Char('U') => {
                 self.history.undo(&mut self.board);
                 None
             }
