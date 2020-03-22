@@ -125,6 +125,10 @@ impl Board {
         if let Some(actor) = self.actors.by_pos(pos) {
             if actor.runs_after(self.actors.lapin()) {
                 self.current_player = Player::None;
+                // in order to move the lapin, we must mark
+                // it dead first (or an error would be thrown)
+                self.actors.state_by_id_mut(0).dead = true;
+                self.actors.move_by_id_to_pos(0, pos).unwrap();
                 return MoveResult::PlayerLose(format!(
                     "You have been eaten by a *{:?}*.", actor.kind
                 ));

@@ -121,30 +121,25 @@ impl ActorMap {
         self.actors[0].pos = dest;
         self.ref_pos_map.set(dest, ActorRef::lapin());
     }
-    /// if the dest is occupied, the move is prevented and an error is thrown
+    /// move the actor in the given direction
     pub fn move_by_id_in_dir(&mut self, id: ActorId, dir: Dir) -> Result<()> {
         let new_pos = self.actors[id].pos.in_dir(dir);
-        // sanity check, will be removed
-        if let Some(actor) = self.by_pos(new_pos) {
-            if !actor.state.dead {
-                Err(anyhow!("pos already occupied by {}", actor.kind))?;
-            }
-        }
-        self.ref_pos_map.unset(self.actors[id].pos);
-        self.actors[id].pos = new_pos;
-        self.ref_pos_map.set(new_pos, ActorRef::from_id(id));
-        Ok(())
+        self.move_by_id_to_pos(id, new_pos)
     }
+    /// move the actor to the new position
+    /// If there's already one actor in new_pos, one of them must
+    /// be dead (or the move is prevented and an error is thrown)
     pub fn move_by_id_to_pos(&mut self, id: ActorId, new_pos: Pos) -> Result<()> {
-        // sanity check, will be removed
         if let Some(actor) = self.by_pos(new_pos) {
-            if !actor.state.dead {
-                Err(anyhow!("pos already occupied by {}", actor.kind))?;
+            if !self.actors[0].state.dead && !actor.state.dead {
+                return Err(anyhow!("pos already occupied by {}", actor.kind))?;
             }
         }
-        self.ref_pos_map.unset(self.actors[id].pos);
+        self.ref_pos_map.unset(self.actors[id].pos); // we should test we're unsetting the right one
         self.actors[id].pos = new_pos;
-        self.ref_pos_map.set(new_pos, ActorRef::from_id(id));
+        if !self.actors[id].state.dead {
+            self.ref_pos_map.set(new_pos, ActorRef::from_id(id));
+        }
         Ok(())
     }
     pub fn iter(&self) -> std::slice::Iter<Actor> {
@@ -164,7 +159,7 @@ impl ActorMap {
     }
     pub fn remove_by_id(&mut self, id: ActorId) {
         if id == 0 {
-            warn!("attempt at removing the lapin by pos");
+            warn!("attempt at removing the lapin");
             return;
         }
         self.ref_pos_map.unset(self.actors[id].pos);
