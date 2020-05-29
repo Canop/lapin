@@ -29,6 +29,7 @@ pub struct Skin {
     pub lapin: StyledChar,
     pub sheep: StyledChar,
     pub wolf: StyledChar,
+    pub dragon: StyledChar,
     pub drunk_color: Color,
     // items
     pub carrot: StyledChar,
@@ -39,8 +40,10 @@ pub struct Skin {
     pub aiming_down: char,
     pub aiming_left: char,
     // animations
-    pub fire_horizontal: StyledChar,
-    pub fire_vertical: StyledChar,
+    pub hunter_fire_horizontal: StyledChar,
+    pub hunter_fire_vertical: StyledChar,
+    pub dragon_fire_horizontal: StyledChar,
+    pub dragon_fire_vertical: StyledChar,
     // texts
     pub normal_status: MadSkin,
     pub error_status: MadSkin,
@@ -63,6 +66,7 @@ impl Default for Skin {
             lapin: StyledChar::from_fg_char(gray(16), '▮'),
             sheep: StyledChar::from_fg_char(gray(19), '█'),
             wolf: StyledChar::from_fg_char(gray(0), '█'),
+            dragon: StyledChar::from_fg_char(ansi(51), '█'),
             drunk_color: ansi(160),
             // special states
             aiming_up: '▴',
@@ -73,8 +77,10 @@ impl Default for Skin {
             carrot: StyledChar::from_fg_char(ansi(172), '⬩'),
             wine: StyledChar::from_fg_char(ansi(160), '⬩'),
             // animations
-            fire_horizontal: StyledChar::from_fg_char(Color::White, '―'),
-            fire_vertical: StyledChar::from_fg_char(Color::White, '│'),
+            hunter_fire_horizontal: StyledChar::from_fg_char(Color::White, '―'),
+            hunter_fire_vertical: StyledChar::from_fg_char(Color::White, '│'),
+            dragon_fire_horizontal: StyledChar::from_fg_char(ansi(196), '―'),
+            dragon_fire_vertical: StyledChar::from_fg_char(ansi(196), '│'),
             // texts
             normal_status: make_normal_status_mad_skin(),
             error_status: make_error_status_mad_skin(),

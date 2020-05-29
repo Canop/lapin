@@ -34,6 +34,7 @@ pub enum ActorKind {
     Fox,
     Hunter,
     Sheep,
+    Dragon,
 }
 impl fmt::Display for ActorKind {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -45,6 +46,7 @@ impl fmt::Display for ActorKind {
             Fox => write!(f, "fox"),
             Hunter => write!(f, "hunter"),
             Sheep => write!(f, "sheep"),
+            Dragon => write!(f, "dragon"),
         }
     }
 }
@@ -55,6 +57,7 @@ pub static ACTORS: &[ActorKind] = &[
     ActorKind::Fox,
     ActorKind::Hunter,
     ActorKind::Sheep,
+    ActorKind::Dragon,
 ];
 pub static FOX_PREYS: &[ActorKind] = &[
     ActorKind::Lapin,
@@ -73,6 +76,13 @@ pub static WOLF_PREYS: &[ActorKind] = &[
     ActorKind::Lapin,
     ActorKind::Hunter,
 ];
+pub static DRAGON_PREYS: &[ActorKind] = &[
+    ActorKind::Lapin,
+    ActorKind::Hunter,
+    ActorKind::Wolf,
+    ActorKind::Fox,
+    ActorKind::Sheep,
+];
 impl ActorKind {
     pub fn drinks_wine(self) -> bool {
         match self {
@@ -90,6 +100,7 @@ impl ActorKind {
             (Wolf, Hunter) => true,
             (Wolf, Sheep) => true,
             (Wolf, Lapin) => true,
+            (Dragon, _) => true,
             _ => false,
         }
     }
@@ -102,13 +113,15 @@ impl ActorKind {
             (Wolf, Hunter) => true,
             (Wolf, Sheep) => true,
             (Wolf, Lapin) => true,
+            (Dragon, _) => true,
             _ => false,
         }
     }
-    pub fn is_immune_to_fire(self) -> bool {
-        match self {
-            Self::Knight => true,
-            _ => false,
+    pub fn is_immune_to_fire(self, firer: ActorKind) -> bool {
+        match (self, firer) {
+            (_, Self::Dragon) => false,
+            (Self::Knight, _) => true,
+             _ => false,
         }
     }
     pub fn skin(self, skin: &Skin) -> &StyledChar {
@@ -120,6 +133,7 @@ impl ActorKind {
             Lapin => &skin.lapin,
             Sheep => &skin.sheep,
             Wolf => &skin.wolf,
+            Dragon => &skin.dragon,
         }
     }
 }
@@ -148,6 +162,7 @@ impl Actor {
             (_, Grass) => true,
             (Knight, Sand) => false,
             (_, Sand) => true,
+            (Dragon, Water) => true, // dragon flies over water
             _ => false, // water and wall
         }
     }
@@ -158,6 +173,7 @@ impl Actor {
             Knight => Some(KNIGHT_PREYS),
             Hunter => Some(HUNTER_PREYS),
             Wolf => Some(WOLF_PREYS),
+            Dragon => Some(DRAGON_PREYS),
             _ => None,
         }
     }
@@ -167,6 +183,7 @@ impl Actor {
     pub fn fires_on(self, other: Actor) -> bool {
         use ActorKind::*;
         match self.kind {
+            Dragon => true,
             Hunter if self.state.drunk => true,
             Hunter => match other.kind {
                 Fox | Knight | Lapin | Wolf => true,

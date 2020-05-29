@@ -37,6 +37,7 @@ pub fn make(skin: &Skin) -> MadSkin {
     ms.special_chars.insert(Compound::raw_str("F").code(), skin.fox.clone());
     ms.special_chars.insert(Compound::raw_str("S").code(), skin.sheep.clone());
     ms.special_chars.insert(Compound::raw_str("W").code(), skin.wolf.clone());
+    ms.special_chars.insert(Compound::raw_str("D").code(), skin.dragon.clone());
     ms.special_chars.insert(Compound::raw_str("g").code(), Terrain::Grass.bg_as_styled_char(skin));
     ms.special_chars.insert(Compound::raw_str("s").code(), Terrain::Sand.bg_as_styled_char(skin));
     ms.special_chars.insert(Compound::raw_str("c").code(), carrot);

@@ -27,3 +27,12 @@ pub static ALL_DIRS: &[Dir] = &[
     Dir::DownLeft,
     Dir::LeftUp
 ];
+
+impl Dir {
+    pub fn is_vertical(self) -> bool {
+        match self {
+            Self::Up | Self::Down => true,
+            _ => false,
+        }
+    }
+}

@@ -45,6 +45,9 @@ There's wine `w`  too
 Of course a rabbit can't drink wine
 But hunters can and then they're drunk
 
+And Ice Dragons `D`!
+You'll discover how dangerous there are
+
 You can create and edit levels, which
 may be as fun as playing them
 Run ` lapin --help ` to know more

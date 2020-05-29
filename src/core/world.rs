@@ -192,6 +192,7 @@ impl<'t> WorldPlayer<'t> {
             Fox => self.find_lapin_eater_move(actor_id, actor),
             Knight | Wolf => self.find_eater_move(actor_id, actor),
             Hunter => self.find_firer_move(actor_id, actor),
+            Dragon => self.find_firer_move(actor_id, actor),
             Sheep => self.find_grazer_move(actor_id, actor),
             _ => None, // No AI
         }

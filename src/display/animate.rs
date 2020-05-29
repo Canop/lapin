@@ -132,6 +132,7 @@ impl<'d> BoardDrawer<'d> {
         actors: &ActorMap, // actors before the move
         start: Pos,
         dir: Dir,
+        actor_kind: ActorKind,
         target_id: ActorId,
         av: usize, // in [0, 8]
     ) -> Result<()> {
@@ -141,9 +142,11 @@ impl<'d> BoardDrawer<'d> {
             if actors.by_id(target_id).pos == pos {
                 break;
             }
-            let fg_skin = match dir {
-                Dir::Up | Dir::Down => con.skin.fire_vertical.clone(),
-                _ => con.skin.fire_horizontal.clone(),
+            let fg_skin = match (dir.is_vertical(), actor_kind) {
+                (true, ActorKind::Dragon) => con.skin.dragon_fire_vertical.clone(),
+                (true, _) => con.skin.hunter_fire_vertical.clone(),
+                (false, ActorKind::Dragon) => con.skin.dragon_fire_horizontal.clone(),
+                _ => con.skin.hunter_fire_horizontal.clone(),
             };
             self.draw_fg(con, pos, fg_skin)?;
         }
@@ -189,6 +192,7 @@ impl<'d> BoardDrawer<'d> {
                             actors,
                             actor.pos,
                             dir,
+                            actor.kind,
                             target_id,
                             av,
                         )?;

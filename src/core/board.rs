@@ -185,7 +185,7 @@ impl Board {
                     }
                 }
                 Action::Fires(_, target_id) => {
-                    if !self.actors.by_id(target_id).kind.is_immune_to_fire() {
+                    if !self.actors.by_id(target_id).kind.is_immune_to_fire(actor.kind) {
                         let target_state = self.actors.state_by_id_mut(target_id);
                         if target_state.dead {
                             debug!("firing prevented because target already dead");

@@ -36,6 +36,7 @@ pub static ACTOR_INKS: &[Ink] = &[
     Ink::Actor(ActorKind::Fox),
     Ink::Actor(ActorKind::Hunter),
     Ink::Actor(ActorKind::Sheep),
+    Ink::Actor(ActorKind::Dragon),
 ];
 
 impl fmt::Display for Ink {
