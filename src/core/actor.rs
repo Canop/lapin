@@ -167,19 +167,19 @@ impl Actor {
     pub fn fires_on(self, other: Actor) -> bool {
         use ActorKind::*;
         match self.kind {
-            Hunter => if self.state.drunk {
-                true
-            } else {
-                match other.kind {
-                    Fox => true,
-                    Knight => true,
-                    Lapin => true,
-                    Wolf => true,
-                    _ => false,
-                }
+            Hunter if self.state.drunk => true,
+            Hunter => match other.kind {
+                Fox | Knight | Lapin | Wolf => true,
+                _ => false,
             }
             _ => false,
         }
+        // soon : https://github.com/rust-lang/rust/issues/54883
+        // match (self.kind, other.kind) {
+        //     (Hunter, _) if self.state.drunk => true,
+        //     (Hunter, Fox | Knight | Lapin | Wolf) => true,
+        //     _ => false,
+        // }
     }
     pub fn runs_after(self, other: Actor) -> bool {
         self.kind.runs_after(other.kind)
