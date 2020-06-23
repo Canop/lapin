@@ -1,6 +1,6 @@
 [package]
 name = "lapin"
-version = "1.0.6"
+version = "1.0.7"
 authors = ["dystroy <denys.seguret@gmail.com>"]
 repository = "https://github.com/Canop/lapin"
 description = "a game with a pink knight - for kids and adults alike"

@@ -1,5 +1,5 @@
 //! Definition of the launch arguments of the lapin program
-//!
+
 use {
     argh::FromArgs,
     std::{
@@ -12,7 +12,7 @@ use {
 pub struct Fromage {
 
     #[argh(subcommand)]
-    pub command: Option<Command>, // TODO rename as "command" / "Command" ?
+    pub command: Option<Command>,
 
 }
 
@@ -25,10 +25,25 @@ pub enum Command {
     Campaign(CampaignCommand),
 }
 
+impl Fromage {
+    pub fn color_blind(&self) -> bool {
+        match &self.command {
+            Some(Command::Play(c)) => c.color_blind,
+            Some(Command::Edit(c)) => c.color_blind,
+            _ => false,
+        }
+    }
+}
+
 #[derive(FromArgs, PartialEq, Debug, Default, Clone)]
 /// play a campaign or level
 #[argh(subcommand, name = "play")]
 pub struct PlayCommand {
+
+    #[argh(switch, short='c')]
+    /// use letters for actors
+    pub color_blind: bool,
+
     #[argh(positional)]
     /// optional path to a level file
     pub path: Option<PathBuf>,
@@ -38,6 +53,10 @@ pub struct PlayCommand {
 /// create/edit a level
 #[argh(subcommand, name = "edit")]
 pub struct EditCommand {
+
+    #[argh(switch, short='c')]
+    /// color blind friendly display
+    pub color_blind: bool,
 
     /// format of the written level file (same as input if not precised)
     #[argh(option, short='f')]
@@ -95,3 +114,5 @@ pub struct PackCampaignCommand {
     pub packed_path: PathBuf,
 
 }
+
+

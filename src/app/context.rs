@@ -1,5 +1,6 @@
 
 use {
+    super::Fromage,
     crate::{
         display::{
             mad_skin,
@@ -14,8 +15,7 @@ use {
 };
 
 
-/// The context of execution passed to the currently ran
-/// app state.
+/// The context of execution passed to the currently ran app state
 pub struct Context<'c> {
 
     /// the dam which releases events and stops long tasks
@@ -35,8 +35,9 @@ impl<'c> Context<'c> {
     pub fn new(
         dam: &'c mut Dam,
         w: &'c mut W,
+        fromage: &Fromage,
     ) -> Self {
-        let skin = Skin::new();
+        let skin = Skin::new(fromage.color_blind());
         let mad_skin = mad_skin::make(&skin);
         Self {
             dam,

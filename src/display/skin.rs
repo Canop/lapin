@@ -51,22 +51,35 @@ pub struct Skin {
     pub editor_circle: Color,
 }
 
-impl Default for Skin {
-    fn default() -> Self {
+fn actor_char(
+    letter: char,
+    color: Color,
+    color_blind: bool,
+) -> StyledChar {
+    if color_blind {
+        let style = CompoundStyle::new(Some(color), None, Attribute::Bold.into());
+        StyledChar::new(style, letter)
+    } else {
+        StyledChar::from_fg_char(color, '█')
+    }
+}
+
+impl Skin {
+    pub fn new(color_blind: bool) -> Self {
         Self {
-            mud: gray(3),  // FIELD
+            mud: gray(4),  // FIELD
             stone: ansi(59), // WALL
             grass: ansi(22), // GRASS
             water: ansi(25), // WATER
             sand: ansi(137), // SAND
             // actors
-            fox: StyledChar::from_fg_char(ansi(166), '█'),
-            hunter: StyledChar::from_fg_char(ansi(58), '█'),
-            knight: StyledChar::from_fg_char(ansi(206), '█'),
+            fox: actor_char('F', ansi(166), color_blind),
+            hunter: actor_char('H', ansi(58), color_blind),
+            knight: actor_char('K', ansi(206), color_blind),
             lapin: StyledChar::from_fg_char(gray(16), '▮'),
-            sheep: StyledChar::from_fg_char(gray(19), '█'),
-            wolf: StyledChar::from_fg_char(gray(0), '█'),
-            dragon: StyledChar::from_fg_char(ansi(51), '█'),
+            sheep: actor_char('S', gray(19), color_blind),
+            wolf: actor_char('W', gray(0), color_blind),
+            dragon: actor_char('D', ansi(51), color_blind),
             drunk_color: ansi(160),
             // special states
             aiming_up: '▴',
@@ -87,12 +100,6 @@ impl Default for Skin {
             editor: make_editor_mad_skin(),
             editor_circle: Color::White,
         }
-    }
-}
-
-impl Skin {
-    pub fn new() -> Self {
-        Self::default()
     }
 }
 

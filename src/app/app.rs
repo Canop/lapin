@@ -40,7 +40,7 @@ impl App {
         debug!("fromage: {:?}", &fromage);
         use StateTransition::*;
         self.states.push(initial_state::make(&fromage)?);
-        let mut con = Context::new(dam, w);
+        let mut con = Context::new(dam, w, &fromage);
         loop {
             let label = self.current_state().label();
             info!("opening state {:?}", label);
