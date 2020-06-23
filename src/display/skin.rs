@@ -51,16 +51,17 @@ pub struct Skin {
     pub editor_circle: Color,
 }
 
-fn actor_char(
-    letter: char,
+fn object_char(
+    std_letter: char,
+    cb_letter: char,
     color: Color,
     color_blind: bool,
 ) -> StyledChar {
     if color_blind {
         let style = CompoundStyle::new(Some(color), None, Attribute::Bold.into());
-        StyledChar::new(style, letter)
+        StyledChar::new(style, cb_letter)
     } else {
-        StyledChar::from_fg_char(color, '█')
+        StyledChar::from_fg_char(color, std_letter)
     }
 }
 
@@ -73,13 +74,13 @@ impl Skin {
             water: ansi(25), // WATER
             sand: ansi(137), // SAND
             // actors
-            fox: actor_char('F', ansi(166), color_blind),
-            hunter: actor_char('H', ansi(58), color_blind),
-            knight: actor_char('K', ansi(206), color_blind),
+            fox: object_char('█', 'F', ansi(166), color_blind),
+            hunter: object_char('█', 'H', ansi(58), color_blind),
+            knight: object_char('█', 'K', ansi(206), color_blind),
             lapin: StyledChar::from_fg_char(gray(16), '▮'),
-            sheep: actor_char('S', gray(19), color_blind),
-            wolf: actor_char('W', gray(0), color_blind),
-            dragon: actor_char('D', ansi(51), color_blind),
+            sheep: object_char('█', 'S', gray(19), color_blind),
+            wolf: object_char('█', 'W', gray(0), color_blind),
+            dragon: object_char('█', 'D', ansi(51), color_blind),
             drunk_color: ansi(160),
             // special states
             aiming_up: '▴',
@@ -87,8 +88,8 @@ impl Skin {
             aiming_down: '▾',
             aiming_left: '◂',
             // items
-            carrot: StyledChar::from_fg_char(ansi(172), '⬩'),
-            wine: StyledChar::from_fg_char(ansi(160), '⬩'),
+            carrot: object_char('⬩', 'c', ansi(172), color_blind),
+            wine: object_char('w', 'c', ansi(160), color_blind),
             // animations
             hunter_fire_horizontal: StyledChar::from_fg_char(Color::White, '―'),
             hunter_fire_vertical: StyledChar::from_fg_char(Color::White, '│'),
