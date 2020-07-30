@@ -17,7 +17,9 @@ You need the rust toolchain, which is best installed through https://rustup.rs
 
 Clone this repository, then run
 
-    cargo install
+    cargo install --path PATH
+    
+where PATH is the path to the directory.  
 
 ### From the Snap store
 
